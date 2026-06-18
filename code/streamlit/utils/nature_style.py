@@ -2,7 +2,7 @@
 nature_style.py
 ===============
 Reusable Matplotlib configurator that strictly enforces the
-Nature Reviews / Scientific Reports Artwork Guidelines.
+ Reviews / Scientific Reports Artwork Guidelines.
 
 Usage
 -----
@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Literal, Sequence
 
 # ---------------------------------------------------------------------------
-# 1. Dimensional constants (Nature Reviews Artwork Guidelines)
+# 1. Dimensional constants ( Reviews Artwork Guidelines)
 # ---------------------------------------------------------------------------
 # Single-column : 89 mm  → 3.504 inches
 # Double-column : 183 mm → 7.205 inches
@@ -95,7 +95,7 @@ NATURE_ORANGE= ['#F6DECC', '#EFBE9B', '#E29762', '#CE6B2B', '#A14E1A', '#71320F'
 
 def configure_rc() -> None:
     """
-    Apply all Nature Reviews Artwork Guidelines to Matplotlib's global rc
+    Apply all  Reviews Artwork Guidelines to Matplotlib's global rc
     parameters.  Call once at module load — side-effect free otherwise.
     """
     rc: dict = {
@@ -176,7 +176,7 @@ def apply_nature_style(
     **subplot_kw,
 ) -> tuple[plt.Figure, np.ndarray]:
     """
-    Create a Nature-compliant Figure + Axes array.
+    Create a -compliant Figure + Axes array.
 
     Parameters
     ----------

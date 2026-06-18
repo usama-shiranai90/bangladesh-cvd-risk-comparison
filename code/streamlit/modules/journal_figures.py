@@ -1,12 +1,12 @@
 """
-Journal Figures — Nature Scientific Reports
+Figures
 =============================================
 Generates 8 publication-ready display items (combined figures + tables)
 for the manuscript: "Estimation of CVD Risk in Low-Resource Settings:
 Evidence from a Comparison of Laboratory and Non-Laboratory WHO CVD
 Risk Models in Bangladesh".
 
-Display-item budget (Nature Sci Rep limit: 8 combined):
+Display-item budget ( Sci Rep limit: 8 combined):
   Figure 1  – Study design flow diagram & cohort overview (double-column)
   Figure 2  – Risk distribution: non-lab vs lab by sex and age (double-column)
   Figure 3  – Agreement & proportional bias (double-column)
@@ -18,7 +18,7 @@ Display-item budget (Nature Sci Rep limit: 8 combined):
 
 Supplementary items are referenced as "Supplementary Fig. S1", etc.
 
-All figures strictly adhere to Nature / Nature Reviews Artwork Guidelines:
+All figures strictly adhere to  /  Reviews Artwork Guidelines:
   • Font: Arial/Helvetica (sans-serif), 7 pt base, 5 pt minimum, 8 pt panel labels
   • Panel labels: 8 pt, bold, upright, lowercase (a, b, c) — no parentheses
   • Single-column: 89 mm (3.5 in); Double-column: 183 mm (7.2 in)
@@ -27,7 +27,7 @@ All figures strictly adhere to Nature / Nature Reviews Artwork Guidelines:
   • NO background gridlines, NO drop-shadows, NO patterns
   • Axis lines and tick marks required on all plots
   • Color text forbidden — black text + colored boxes / keylines only
-  • Official Nature-branded hierarchical color palette (RGB)
+  • Official -branded hierarchical color palette (RGB)
   • pdf.fonttype = 42  (TrueType embedded, editable text layer)
   • Output: PDF + SVG vector graphics at ≥ 450 DPI
   • Colorblind-accessible: teal/orange/olive primaries; distinct marker shapes
@@ -38,6 +38,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
@@ -56,60 +57,61 @@ warnings.filterwarnings("ignore")
 # ─────────────────────────────────────────────────────────────────────
 # NATURE ARTWORK GLOBALS
 # ─────────────────────────────────────────────────────────────────────
-SINGLE_COL_W = 3.50   # inches (89 mm)
-DOUBLE_COL_W = 7.20   # inches (183 mm)
-MAX_HEIGHT   = 9.72   # inches (247 mm)
+SINGLE_COL_W = 3.50  # inches (89 mm)
+DOUBLE_COL_W = 7.20  # inches (183 mm)
+MAX_HEIGHT = 9.72  # inches (247 mm)
 
-# ── Official Nature-branded hierarchical color palette (RGB) ──────────
+# ── Official -branded hierarchical color palette (RGB) ──────────
 # Main Backgrounds (Contextual)
-nature_stone  = ['#F3F2E9', '#E6E2D1', '#CFCBA9', '#B2AD81', '#8C8861', '#666345']
-nature_grey   = ['#EBECEF', '#D1D4DB', '#A8AEBD', '#7E869B', '#5A6175', '#393E4D']
+nature_stone = ['#F3F2E9', '#E6E2D1', '#CFCBA9', '#B2AD81', '#8C8861', '#666345']
+nature_grey = ['#EBECEF', '#D1D4DB', '#A8AEBD', '#7E869B', '#5A6175', '#393E4D']
 
 # Main Accents (Primary Data / Main Action)
-nature_red    = ['#F6CDCD', '#EFA0A0', '#E26D6D', '#CE3737', '#A12626', '#711A1A']
-nature_blue   = ['#CDE3F6', '#A0CBEF', '#6DABDE', '#3783CE', '#2661A1', '#1A4271']
+nature_red = ['#F6CDCD', '#EFA0A0', '#E26D6D', '#CE3737', '#A12626', '#711A1A']
+nature_blue = ['#CDE3F6', '#A0CBEF', '#6DABDE', '#3783CE', '#2661A1', '#1A4271']
 nature_yellow = ['#F6EECD', '#EFDCA0', '#E2C66D', '#CEAD37', '#A18626', '#715D1A']
 
 # Extended Palette (Complex Categories)
-nature_olive  = ['#EEF4B8', '#DCE87C', '#C2D148', '#99A82B', '#6D7A1A', '#454F0D']
-nature_green  = ['#D1E8CC', '#A5D49B', '#72BB62', '#3D9B2B', '#27701A', '#154A0F']
-nature_teal   = ['#CAEAEB', '#92D7D9', '#54BDC1', '#219DA1', '#127073', '#0A494B']
+nature_olive = ['#EEF4B8', '#DCE87C', '#C2D148', '#99A82B', '#6D7A1A', '#454F0D']
+nature_green = ['#D1E8CC', '#A5D49B', '#72BB62', '#3D9B2B', '#27701A', '#154A0F']
+nature_teal = ['#CAEAEB', '#92D7D9', '#54BDC1', '#219DA1', '#127073', '#0A494B']
 nature_purple = ['#E4CAEA', '#CD92D9', '#B154C1', '#8F21A1', '#651273', '#400A4B']
 nature_orange = ['#F6DECC', '#EFBE9B', '#E29762', '#CE6B2B', '#A14E1A', '#71320F']
 
-# ── Semantic aliases derived from Nature palette ──────────────────────
+# ── Semantic aliases derived from  palette ──────────────────────
 # Primary model comparison: teal (lab) vs orange (non-lab) — colorblind-safe
-CLR_LAB    = nature_teal[3]    # '#219DA1'
+CLR_LAB = nature_teal[3]  # '#219DA1'
 CLR_NONLAB = nature_orange[3]  # '#CE6B2B'
 
 # Gender: blue (male) vs purple (female) — avoids red-green
-CLR_MALE   = nature_blue[3]    # '#3783CE'
+CLR_MALE = nature_blue[3]  # '#3783CE'
 CLR_FEMALE = nature_purple[3]  # '#8F21A1'
 
 # Legacy convenience aliases (used in helper functions)
-OI_BLUE      = nature_blue[3]
-OI_ORANGE    = nature_orange[3]
-OI_GREEN     = nature_green[3]
+OI_BLUE = nature_blue[3]
+OI_ORANGE = nature_orange[3]
+OI_GREEN = nature_green[3]
 OI_VERMILION = nature_red[3]
-OI_SKY       = nature_teal[2]
-OI_PURPLE    = nature_purple[2]
-OI_YELLOW    = nature_yellow[2]
-OI_BLACK     = '#000000'
+OI_SKY = nature_teal[2]
+OI_PURPLE = nature_purple[2]
+OI_YELLOW = nature_yellow[2]
+OI_BLACK = '#000000'
 
 # Risk-band solid colours — distinct, no red-green pair, colorblind-accessible
 RISK_COLORS = {
-    "<5%":         nature_teal[1],    # '#92D7D9' light teal
-    "5% to <10%":  nature_olive[2],   # '#C2D148' olive
+    "<5%": nature_teal[1],  # '#92D7D9' light teal
+    "5% to <10%": nature_olive[2],  # '#C2D148' olive
     "10% to <20%": nature_orange[2],  # '#E29762' orange
-    "20% to <30%": nature_red[3],     # '#CE3737' red
-    "≥30%":        nature_purple[3],  # '#8F21A1' purple
+    "20% to <30%": nature_red[3],  # '#CE3737' red
+    "≥30%": nature_purple[3],  # '#8F21A1' purple
 }
 
+
 # ─────────────────────────────────────────────────────────────────────
-# MATPLOTLIB RC (Nature Artwork — strict compliance)
+# MATPLOTLIB RC ( Artwork — strict compliance)
 # ─────────────────────────────────────────────────────────────────────
 def _apply_nature_rc():
-    """Configure matplotlib rcParams for full Nature artwork compliance.
+    """Configure matplotlib rcParams for full  artwork compliance.
 
     Key rules enforced:
       - Font: Arial/Helvetica sans-serif; 7 pt base, 5 pt min, 8 pt panel labels
@@ -122,73 +124,73 @@ def _apply_nature_rc():
     """
     plt.rcParams.update({
         # ── Typography ──────────────────────────────────────────────
-        "font.family":            "sans-serif",
-        "font.sans-serif":        ["Arial", "Helvetica", "DejaVu Sans"],
-        "font.size":              7,        # general text max 7 pt
-        "axes.labelsize":         7,        # axis labels 7 pt
-        "axes.titlesize":         8,        # panel titles 8 pt
-        "xtick.labelsize":        6,        # tick labels 6 pt (min 5)
-        "ytick.labelsize":        6,
-        "legend.fontsize":        6,
-        "legend.title_fontsize":  7,
+        "font.family": "sans-serif",
+        "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans"],
+        "font.size": 7,  # general text max 7 pt
+        "axes.labelsize": 7,  # axis labels 7 pt
+        "axes.titlesize": 8,  # panel titles 8 pt
+        "xtick.labelsize": 6,  # tick labels 6 pt (min 5)
+        "ytick.labelsize": 6,
+        "legend.fontsize": 6,
+        "legend.title_fontsize": 7,
 
         # ── Lines & ticks (0.5–1 pt) ────────────────────────────────
-        "axes.linewidth":         0.5,
-        "xtick.major.width":      0.5,
-        "ytick.major.width":      0.5,
-        "xtick.minor.width":      0.3,
-        "ytick.minor.width":      0.3,
-        "xtick.major.size":       3.0,
-        "ytick.major.size":       3.0,
-        "lines.linewidth":        0.75,
-        "patch.linewidth":        0.5,
-        "errorbar.capsize":       2.5,
+        "axes.linewidth": 0.5,
+        "xtick.major.width": 0.5,
+        "ytick.major.width": 0.5,
+        "xtick.minor.width": 0.3,
+        "ytick.minor.width": 0.3,
+        "xtick.major.size": 3.0,
+        "ytick.major.size": 3.0,
+        "lines.linewidth": 0.75,
+        "patch.linewidth": 0.5,
+        "errorbar.capsize": 2.5,
 
         # ── Ticks outward; require bottom + left spines ──────────────
-        "xtick.direction":        "out",
-        "ytick.direction":        "out",
-        "xtick.bottom":           True,
-        "ytick.left":             True,
+        "xtick.direction": "out",
+        "ytick.direction": "out",
+        "xtick.bottom": True,
+        "ytick.left": True,
 
         # ── Spines: remove top/right; keep bottom/left ───────────────
-        "axes.spines.top":        False,
-        "axes.spines.right":      False,
-        "axes.spines.bottom":     True,
-        "axes.spines.left":       True,
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+        "axes.spines.bottom": True,
+        "axes.spines.left": True,
 
         # ── NO gridlines (absolute prohibition) ─────────────────────
-        "axes.grid":              False,
+        "axes.grid": False,
 
         # ── Text & Math formatting fixes ────────────────────────────
         "axes.formatter.use_mathtext": False,
-        "axes.unicode_minus":     False,  # Prevent $\mathdefault{}$ ParseException
+        "axes.unicode_minus": False,  # Prevent $\mathdefault{}$ ParseException
 
         # ── Backgrounds (white, RGB) ─────────────────────────────────
-        "axes.facecolor":         "white",
-        "figure.facecolor":       "white",
-        "savefig.facecolor":      "white",
+        "axes.facecolor": "white",
+        "figure.facecolor": "white",
+        "savefig.facecolor": "white",
 
         # ── Output quality ──────────────────────────────────────────
-        "savefig.dpi":            450,      # ≥ 300 required; 450 preferred
-        "savefig.bbox":           "tight",
-        "savefig.pad_inches":     0.05,
-        "figure.dpi":             150,      # screen preview
+        "savefig.dpi": 450,  # ≥ 300 required; 450 preferred
+        "savefig.bbox": "tight",
+        "savefig.pad_inches": 0.05,
+        "figure.dpi": 150,  # screen preview
 
         # ── Font embedding (CRITICAL) ────────────────────────────────
         # pdf.fonttype=42 → TrueType; text stays as editable text layer
-        "pdf.fonttype":           42,
-        "ps.fonttype":            42,
-        "svg.fonttype":           "none",   # text as text in SVG
+        "pdf.fonttype": 42,
+        "ps.fonttype": 42,
+        "svg.fonttype": "none",  # text as text in SVG
     })
 
 
 def _add_panel_label(ax, label, x=-0.08, y=1.08):
-    """Add a bold, upright, lowercase panel label per Nature guidelines.
+    """Add a bold, upright, lowercase panel label per  guidelines.
 
-    Nature spec: 8 pt, bold, lowercase letter (a, b, c…), NO parentheses,
+     spec: 8 pt, bold, lowercase letter (a, b, c…), NO parentheses,
     black text only.
     """
-    ax.text(x, y, label,          # plain letter — no parentheses
+    ax.text(x, y, label,  # plain letter — no parentheses
             transform=ax.transAxes,
             fontsize=8, fontweight="bold", fontstyle="normal",
             color="black", va="top", ha="left")
@@ -197,7 +199,7 @@ def _add_panel_label(ax, label, x=-0.08, y=1.08):
 def _save_figure(fig, name, out_dir):
     """Save figure as PDF + SVG at ≥ 450 DPI with embedded TrueType fonts.
 
-    PDF is the preferred submission format per Nature guidelines.
+    PDF is the preferred submission format per  guidelines.
     SVG is saved as a secondary editable vector.
     Both use pdf.fonttype=42 (set globally in _apply_nature_rc) so that
     text remains an editable text layer and is NOT outlined.
@@ -216,7 +218,7 @@ def _save_figure(fig, name, out_dir):
 # ─────────────────────────────────────────────────────────────────────
 RISK_ORDER = ["<5%", "5% to <10%", "10% to <20%", "20% to <30%", "≥30%"]
 AGE_LABELS = ["40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74"]
-AGE_BINS   = [40, 45, 50, 55, 60, 65, 70, 75]
+AGE_BINS = [40, 45, 50, 55, 60, 65, 70, 75]
 
 
 def _ensure_cats(df):
@@ -251,9 +253,9 @@ def _wilson_ci(successes, total, z=1.96):
     if total <= 0:
         return np.nan, np.nan
     p = successes / total
-    denom = 1 + z**2 / total
-    center = (p + z**2 / (2 * total)) / denom
-    half = z * np.sqrt((p * (1 - p) / total) + (z**2 / (4 * total**2))) / denom
+    denom = 1 + z ** 2 / total
+    center = (p + z ** 2 / (2 * total)) / denom
+    half = z * np.sqrt((p * (1 - p) / total) + (z ** 2 / (4 * total ** 2))) / denom
     return (center - half) * 100, (center + half) * 100
 
 
@@ -336,9 +338,9 @@ def _method_comparison_metrics(df_who_lab):
             valid_cat["risk_nonlab_cat"].astype(str),
         )
         exact_agreement = (
-            valid_cat["risk_lab_cat"].astype(str)
-            == valid_cat["risk_nonlab_cat"].astype(str)
-        ).mean() * 100
+                                  valid_cat["risk_lab_cat"].astype(str)
+                                  == valid_cat["risk_nonlab_cat"].astype(str)
+                          ).mean() * 100
 
     risk_band_bias = {}
     for cat in RISK_ORDER:
@@ -410,7 +412,7 @@ def _fig1_study_flow(df_nonlab, df_lab, df_who_nonlab, df_who_lab, out_dir):
     (b) Sample retention bar chart (funnel)
     (c) WHO risk chart input comparison schematic
     """
-    fig = plt.figure(figsize=(DOUBLE_COL_W, 6.0)) # slightly taller for breathing room
+    fig = plt.figure(figsize=(DOUBLE_COL_W, 6.0))  # slightly taller for breathing room
     gs = gridspec.GridSpec(1, 3, figure=fig, width_ratios=[1.3, 0.9, 1.0], wspace=0.4)
 
     # --- (a) STROBE flow diagram ---
@@ -421,16 +423,15 @@ def _fig1_study_flow(df_nonlab, df_lab, df_who_nonlab, df_who_lab, out_dir):
     _add_panel_label(ax_flow, "a) Cohort Selection Process", x=0, y=1.02)
 
     n_initial = 46040
-    n_total  = len(df_nonlab) if df_nonlab is not None else 35768
+    n_total = len(df_nonlab) if df_nonlab is not None else 35768
     n_who_nl = len(df_who_nonlab) if df_who_nonlab is not None else 14085
-    n_lab    = len(df_lab) if df_lab is not None else 3241
-    n_who_l  = len(df_who_lab) if df_who_lab is not None else 1762
+    n_lab = len(df_lab) if df_lab is not None else 3241
+    n_who_l = len(df_who_lab) if df_who_lab is not None else 1762
 
     # Y-coordinates for the 5 main boxes
     y_pos = [9.4, 7.4, 5.4, 3.5, 1.5]
     x_main = 2.5
     x_excl = 9.0
-
 
     # Main boxes text (Data Science Terminology)
     boxes_text = [
@@ -450,35 +451,35 @@ def _fig1_study_flow(df_nonlab, df_lab, df_who_nonlab, df_who_lab, out_dir):
     ]
 
     # Styles
-    box_kw       = dict(boxstyle="round,pad=0.4", facecolor=nature_stone[0],
-                        edgecolor=nature_grey[4], lw=0.8)
+    box_kw = dict(boxstyle="round,pad=0.4", facecolor=nature_stone[0],
+                  edgecolor=nature_grey[4], lw=0.8)
     final_box_kw = dict(boxstyle="round,pad=0.5", facecolor=nature_blue[0],
                         edgecolor=nature_blue[3], lw=1.0)
-    excl_kw      = dict(boxstyle="round,pad=0.3", facecolor=nature_red[0],
-                        edgecolor=nature_red[3], lw=0.6)
-    arrow_kw     = dict(arrowstyle="-|>", color=nature_grey[4], lw=1.0)
+    excl_kw = dict(boxstyle="round,pad=0.3", facecolor=nature_red[0],
+                   edgecolor=nature_red[3], lw=0.6)
+    arrow_kw = dict(arrowstyle="-|>", color=nature_grey[4], lw=1.0)
     excl_arrow_kw = dict(arrowstyle="-|>", color=nature_grey[2], lw=0.7, ls=":")
 
     # Draw main boxes
     for i, (y, txt) in enumerate(zip(y_pos, boxes_text)):
         kw = final_box_kw if i == len(y_pos) - 1 else box_kw
         font_weight = "bold" if i == len(y_pos) - 1 else "normal"
-        ax_flow.text(x_main, y, txt, ha="center", va="center", fontsize=7, 
+        ax_flow.text(x_main, y, txt, ha="center", va="center", fontsize=7,
                      fontweight=font_weight, bbox=kw, zorder=3)
 
     # Draw arrows and exclusions
     for i in range(len(y_pos) - 1):
         y_top = y_pos[i]
-        y_bot = y_pos[i+1]
-        
+        y_bot = y_pos[i + 1]
+
         # Vertical arrow between main boxes
         # Subtract slightly more from y_top to avoid crossing the border
         ax_flow.annotate("", xy=(x_main, y_bot + 0.65), xytext=(x_main, y_top - 0.65),
                          arrowprops=arrow_kw, zorder=1)
-        
+
         # Exclusion box (y_mid = midpoint between consecutive flow nodes)
         y_mid = (y_top + y_bot) / 2
-        # Text must be black (Nature: no coloured text; colour via box keyline only)
+        # Text must be black (: no coloured text; colour via box keyline only)
         ax_flow.text(x_excl, y_mid, excl_text[i], ha="center", va="center",
                      fontsize=6, color="black", bbox=excl_kw, zorder=3)
 
@@ -490,35 +491,34 @@ def _fig1_study_flow(df_nonlab, df_lab, df_who_nonlab, df_who_lab, out_dir):
     ax_bar = fig.add_subplot(gs[1])
     _add_panel_label(ax_bar, "b) Sample Retention", x=-0.15, y=1.02)
 
-
     stages = ["Initial", "Eligible", "WHO (Non-Lab)", "WHO (Lab)", "Paired Cohort"]
     sizes = np.array([n_initial, n_total, n_who_nl, n_lab, n_who_l])
     pcts = sizes / n_initial * 100
-    
+
     # Elegant symmetric funnel visualization
     colors = [nature_grey[2], nature_grey[3], CLR_NONLAB, CLR_LAB, nature_blue[4]]
-    
+
     y_bar = np.arange(len(stages))[::-1]  # from top to bottom
-    
+
     # Draw funnel bars symmetrically
     for i, (size, clr, pct, stg) in enumerate(zip(sizes, colors, pcts, stages)):
         half = size / 2.0
         ax_bar.barh(y_bar[i], size, left=-half, color=clr, edgecolor="none", height=0.7, alpha=0.9)
-        
+
         # Overlay absolute number in center
         font_col = "white" if i >= 3 else "#F8FAFC"
         if i == 0: font_col = "white"
-        
+
         # If the bar is too small internally, put text on the side
         if pct < 15:
-            ax_bar.text(0, y_bar[i], f"{size:,} ({pct:.1f}%)", va="center", ha="center", 
-                        fontsize=6.5, fontweight="bold", color="#1E293B", 
+            ax_bar.text(0, y_bar[i], f"{size:,} ({pct:.1f}%)", va="center", ha="center",
+                        fontsize=6.5, fontweight="bold", color="#1E293B",
                         bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="none", alpha=0.8))
         else:
-            ax_bar.text(0, y_bar[i], f"{size:,}", va="center", ha="center", 
+            ax_bar.text(0, y_bar[i], f"{size:,}", va="center", ha="center",
                         fontsize=6.5, fontweight="bold", color=font_col)
             # Retention percentage on right outside
-            ax_bar.text(half + max(sizes)*0.05, y_bar[i], f"{pct:.1f}%", 
+            ax_bar.text(half + max(sizes) * 0.05, y_bar[i], f"{pct:.1f}%",
                         va="center", ha="left", fontsize=6, fontweight="bold", color="#64748B")
 
     # Connect the edges of the bars via a smooth line
@@ -528,7 +528,7 @@ def _fig1_study_flow(df_nonlab, df_lab, df_who_nonlab, df_who_lab, out_dir):
 
     ax_bar.set_yticks(y_bar)
     ax_bar.set_yticklabels(stages, fontsize=7, rotation=90, va="center")
-    
+
     # Remove x-axis entirely for a cleaner funnel look
     ax_bar.set_xticks([])
     # ax_bar.spines["bottom"].set_visible(False)
@@ -698,6 +698,7 @@ def _fig1_study_flow(df_nonlab, df_lab, df_who_nonlab, df_who_lab, out_dir):
 
     return fig
 
+
 # ─────────────────────────────────────────────────────────────────────
 # FIGURE 2 – RISK DISTRIBUTION: NON-LAB vs LAB
 # ─────────────────────────────────────────────────────────────────────
@@ -710,7 +711,7 @@ def _fig2_risk_distribution(df_who_nonlab, df_who_lab, out_dir):
     (d) Urban/rural risk prevalence comparison
     """
     df_nl = _ensure_cats(df_who_nonlab) if df_who_nonlab is not None else None
-    df_l  = _ensure_cats(df_who_lab) if df_who_lab is not None else None
+    df_l = _ensure_cats(df_who_lab) if df_who_lab is not None else None
 
     fig = plt.figure(figsize=(DOUBLE_COL_W, 6.0))
     gs = gridspec.GridSpec(2, 2, figure=fig, hspace=0.45, wspace=0.30)
@@ -727,15 +728,15 @@ def _fig2_risk_distribution(df_who_nonlab, df_who_lab, out_dir):
 
         x = np.arange(len(RISK_ORDER))
         w = 0.35
-        ax_a.bar(x - w/2, nl_pct, w, label="Non-laboratory", color=CLR_NONLAB,
+        ax_a.bar(x - w / 2, nl_pct, w, label="Non-laboratory", color=CLR_NONLAB,
                  edgecolor="white", linewidth=0.3)
-        ax_a.bar(x + w/2, l_pct, w, label="Laboratory", color=CLR_LAB,
+        ax_a.bar(x + w / 2, l_pct, w, label="Laboratory", color=CLR_LAB,
                  edgecolor="white", linewidth=0.3)
         ax_a.set_xticks(x)
         ax_a.set_xticklabels(RISK_ORDER, fontsize=6)
         ax_a.set_ylabel("Proportion (%)")
         ax_a.set_title("Risk category distribution", fontsize=8, fontweight="bold",
-                        pad=4)
+                       pad=4)
         ax_a.legend(frameon=False, loc="upper right", fontsize=6)
 
     # --- (b) Age × sex mean risk (non-lab) ---
@@ -757,7 +758,7 @@ def _fig2_risk_distribution(df_who_nonlab, df_who_lab, out_dir):
             try:
                 g_num = pd.to_numeric(df_nl_b["gender"], errors="coerce")
                 df_nl_b["_gender_norm"] = np.where(g_num == 1, "Male",
-                                           np.where(g_num == 2, "Female", None))
+                                                   np.where(g_num == 2, "Female", None))
             except Exception:
                 pass
 
@@ -767,7 +768,7 @@ def _fig2_risk_distribution(df_who_nonlab, df_who_lab, out_dir):
                 continue
             grouped = sub_df.groupby("age_band", observed=False)["risk_nonlab"]
             means = grouped.mean().dropna()
-            sems  = grouped.sem().reindex(means.index).fillna(0)
+            sems = grouped.sem().reindex(means.index).fillna(0)
             if means.empty:
                 continue
             x_pos = np.arange(len(means))
@@ -780,16 +781,16 @@ def _fig2_risk_distribution(df_who_nonlab, df_who_lab, out_dir):
     if not _plotted_b:
         # Robust fallback: use ALL non-lab data ignoring gender grouping,
         # but show both sexes using canonical literature-derived trajectories
-        male_means   = np.array([4.8, 6.2, 8.5, 11.4, 14.8, 18.3, 22.1])
-        female_means = np.array([2.9, 3.8, 5.1,  7.2, 10.1, 13.4, 17.0])
-        male_sem     = np.array([0.3, 0.4, 0.5,  0.6,  0.7,  0.9,  1.1])
-        female_sem   = np.array([0.2, 0.3, 0.4,  0.5,  0.6,  0.8,  1.0])
+        male_means = np.array([4.8, 6.2, 8.5, 11.4, 14.8, 18.3, 22.1])
+        female_means = np.array([2.9, 3.8, 5.1, 7.2, 10.1, 13.4, 17.0])
+        male_sem = np.array([0.3, 0.4, 0.5, 0.6, 0.7, 0.9, 1.1])
+        female_sem = np.array([0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1.0])
         n_bands = len(AGE_LABELS)
         x_pos = np.arange(n_bands)
-        ax_b.errorbar(x_pos, male_means[:n_bands], yerr=1.96*male_sem[:n_bands],
-                      fmt="o-", label="Male",   color=CLR_MALE,
+        ax_b.errorbar(x_pos, male_means[:n_bands], yerr=1.96 * male_sem[:n_bands],
+                      fmt="o-", label="Male", color=CLR_MALE,
                       markersize=3.5, capsize=2, capthick=0.5, linewidth=0.75)
-        ax_b.errorbar(x_pos, female_means[:n_bands], yerr=1.96*female_sem[:n_bands],
+        ax_b.errorbar(x_pos, female_means[:n_bands], yerr=1.96 * female_sem[:n_bands],
                       fmt="s-", label="Female", color=CLR_FEMALE,
                       markersize=3.5, capsize=2, capthick=0.5, linewidth=0.75)
         ax_b.text(0.97, 0.04, "\u2020 Reference trajectory",
@@ -801,7 +802,7 @@ def _fig2_risk_distribution(df_who_nonlab, df_who_lab, out_dir):
     ax_b.set_xlabel("Age group (years)")
     ax_b.set_ylabel("Mean 10-year CVD risk (%)")
     ax_b.set_title("Risk escalation by age and sex", fontsize=8,
-                    fontweight="bold", pad=4)
+                   fontweight="bold", pad=4)
     ax_b.legend(frameon=False, fontsize=6)
 
     # --- (c) Paired risk histograms ---
@@ -819,7 +820,7 @@ def _fig2_risk_distribution(df_who_nonlab, df_who_lab, out_dir):
         ax_c.set_xlabel("10-year CVD risk (%)")
         ax_c.set_ylabel("Density")
         ax_c.set_title("Paired risk score distributions", fontsize=8,
-                        fontweight="bold", pad=4)
+                       fontweight="bold", pad=4)
         ax_c.legend(frameon=False, fontsize=6)
 
     # --- (d) Urban / rural / semi-urban prevalence ---
@@ -841,15 +842,15 @@ def _fig2_risk_distribution(df_who_nonlab, df_who_lab, out_dir):
             ldf = pd.DataFrame(loc_data)
             x = np.arange(len(ldf))
             w = 0.30
-            ax_d.bar(x - w/2, ldf["≥10% risk"], w, label="≥10% risk",
+            ax_d.bar(x - w / 2, ldf["≥10% risk"], w, label="≥10% risk",
                      color=OI_ORANGE, edgecolor="white", linewidth=0.3)
-            ax_d.bar(x + w/2, ldf["≥20% risk"], w, label="≥20% risk",
+            ax_d.bar(x + w / 2, ldf["≥20% risk"], w, label="≥20% risk",
                      color=OI_VERMILION, edgecolor="white", linewidth=0.3)
             ax_d.set_xticks(x)
             ax_d.set_xticklabels(ldf["Location"], fontsize=6)
             ax_d.set_ylabel("Prevalence (%)")
             ax_d.set_title("High-risk prevalence by location",
-                            fontsize=8, fontweight="bold", pad=4)
+                           fontsize=8, fontweight="bold", pad=4)
             ax_d.legend(frameon=False, fontsize=6)
     else:
         ax_d.text(0.5, 0.5, "Location data\nnot available",
@@ -864,7 +865,6 @@ def _fig2_risk_distribution(df_who_nonlab, df_who_lab, out_dir):
 # FIGURE 3 – AGREEMENT & PROPORTIONAL BIAS
 # ─────────────────────────────────────────────────────────────────────
 def _fig3_agreement(df_who_lab, out_dir):
-
     df = _ensure_cats(df_who_lab) if df_who_lab is not None else None
 
     fig = plt.figure(figsize=(DOUBLE_COL_W, 3.8))
@@ -884,14 +884,14 @@ def _fig3_agreement(df_who_lab, out_dir):
         pct = ct / total * 100
 
         cmap = LinearSegmentedColormap.from_list("blue_heat",
-            ["#f7fbff", "#deebf7", "#9ecae1", "#3182bd", "#08306b"])
+                                                 ["#f7fbff", "#deebf7", "#9ecae1", "#3182bd", "#08306b"])
         sns.heatmap(pct, annot=ct.values, fmt="d", cmap=cmap, ax=ax_a,
                     linewidths=0.3, linecolor="white", cbar_kws={"shrink": 0.6,
-                    "label": "%"}, annot_kws={"fontsize": 6})
+                                                                 "label": "%"}, annot_kws={"fontsize": 6})
         ax_a.set_xlabel("Laboratory Model Risk", fontsize=7)
         ax_a.set_ylabel("Non-laboratory Model Risk", fontsize=7)
         ax_a.set_title("Agreement Heatmap", fontsize=8,
-                        fontweight="bold", pad=4)
+                       fontweight="bold", pad=4)
         ax_a.tick_params(axis="both", labelsize=5.5, rotation=0)
         # rotate x labels
         ax_a.set_xticklabels(ax_a.get_xticklabels(), rotation=35, ha="right")
@@ -926,7 +926,7 @@ def _fig3_agreement(df_who_lab, out_dir):
         ax_b.set_xlabel("Mean of two scores (pp)")
         ax_b.set_ylabel("Difference (Non-lab − Lab, pp)")
         ax_b.set_title("Bland–Altman plot", fontsize=8, fontweight="bold",
-                        pad=4)
+                       pad=4)
         ax_b.legend(frameon=False, fontsize=5.5, loc="lower left")
 
         # LoA annotation
@@ -957,16 +957,16 @@ def _fig3_agreement(df_who_lab, out_dir):
             bdf = pd.DataFrame(bias_data)
             x = np.arange(len(bdf))
             bars = ax_c.bar(x, bdf["Mean bias"], color=[RISK_COLORS.get(b, "#ccc")
-                            for b in bdf["Band"]], edgecolor="white", linewidth=0.3)
+                                                        for b in bdf["Band"]], edgecolor="white", linewidth=0.3)
             ax_c.errorbar(x, bdf["Mean bias"], yerr=bdf["SD"], fmt="none",
                           ecolor="#333", capsize=3, capthick=0.5, elinewidth=0.5)
             ax_c.axhline(0, color="#999", lw=0.3)
             ax_c.set_xticks(x)
             ax_c.set_xticklabels(bdf["Band"], fontsize=5.5, rotation=25,
-                                  ha="right")
+                                 ha="right")
             ax_c.set_ylabel("Mean bias (pp)")
             ax_c.set_title("Bias by lab risk band", fontsize=8,
-                            fontweight="bold", pad=4)
+                           fontweight="bold", pad=4)
 
             # Add underestimation % labels
             for i, row in bdf.iterrows():
@@ -998,16 +998,16 @@ def _fig3_1_bland_altman(df_who_lab, out_dir):
         return fig
 
     df["mean_risk"] = (df["risk_nonlab"] + df["risk_lab"]) / 2
-    df["diff_risk"]  = df["risk_nonlab"] - df["risk_lab"]
+    df["diff_risk"] = df["risk_nonlab"] - df["risk_lab"]
 
     # -- shared helper: draw bias lines + regression trend --
     def _ba_lines(ax, d_arr, m_arr, show_labels=True):
-        mb  = d_arr.mean()
+        mb = d_arr.mean()
         sdb = d_arr.std()
         loa_hi = mb + 1.96 * sdb
         loa_lo = mb - 1.96 * sdb
-        ax.axhline(0,      color="#94A3B8", lw=0.5, zorder=1)
-        ax.axhline(mb,     color="#B91C1C", lw=1.0, ls="-",  zorder=3,
+        ax.axhline(0, color="#94A3B8", lw=0.5, zorder=1)
+        ax.axhline(mb, color="#B91C1C", lw=1.0, ls="-", zorder=3,
                    label=f"Bias {mb:+.2f} pp" if show_labels else None)
         ax.axhline(loa_hi, color="#B91C1C", lw=0.6, ls="--", zorder=3,
                    label=f"+1.96 SD ({loa_hi:+.1f})" if show_labels else None)
@@ -1031,7 +1031,7 @@ def _fig3_1_bland_altman(df_who_lab, out_dir):
     d_all = df["diff_risk"].values
     if len(df) > 500:
         hb = ax_a.hexbin(m_all, d_all, gridsize=45, cmap="YlOrRd",
-                          mincnt=1, alpha=0.85, linewidths=0, zorder=2)
+                         mincnt=1, alpha=0.85, linewidths=0, zorder=2)
         cb = fig.colorbar(hb, ax=ax_a, pad=0.02, shrink=0.85)
         cb.set_label("Count", fontsize=5.5)
         cb.ax.tick_params(labelsize=5)
@@ -1054,8 +1054,8 @@ def _fig3_1_bland_altman(df_who_lab, out_dir):
         m_mask = g_raw.str.startswith("M")
         f_mask = g_raw.str.startswith("F")
         strata = [
-            (m_mask, OI_BLUE,   "o",  5,  "Male"),
-            (f_mask, OI_PURPLE, "^",  5,  "Female"),
+            (m_mask, OI_BLUE, "o", 5, "Male"),
+            (f_mask, OI_PURPLE, "^", 5, "Female"),
         ]
         for mask, clr, mkr, sz, lbl in strata:
             sub = df[mask]
@@ -1078,8 +1078,8 @@ def _fig3_1_bland_altman(df_who_lab, out_dir):
         y_mask = df["age"] < 60
         o_mask = df["age"] >= 60
         strata = [
-            (y_mask, OI_SKY,    "s",  5, "<60 yr"),
-            (o_mask, OI_ORANGE, "D",  5, "≥60 yr"),
+            (y_mask, OI_SKY, "s", 5, "<60 yr"),
+            (o_mask, OI_ORANGE, "D", 5, "≥60 yr"),
         ]
         for mask, clr, mkr, sz, lbl in strata:
             sub = df[mask]
@@ -1104,9 +1104,9 @@ def _fig3_1_bland_altman(df_who_lab, out_dir):
             labels=["Normal (<25)", "Overweight (25-30)", "Obese (≥30)"]
         )
         bmi_cfg = [
-            ("Normal (<25)",     OI_GREEN,    "o",  5),
-            ("Overweight (25-30)", OI_SKY,    "v",  5),
-            ("Obese (≥30)",      OI_VERMILION, "p",  6),
+            ("Normal (<25)", OI_GREEN, "o", 5),
+            ("Overweight (25-30)", OI_SKY, "v", 5),
+            ("Obese (≥30)", OI_VERMILION, "p", 6),
         ]
         for cat, clr, mkr, sz in bmi_cfg:
             sub = df[df["bmi_cat"] == cat]
@@ -1129,6 +1129,7 @@ def _fig3_1_bland_altman(df_who_lab, out_dir):
     _save_figure(fig, "Fig3_1_bland_altman", out_dir)
     return fig
 
+
 # ─────────────────────────────────────────────────────────────────────
 # FIGURE 3.2 – CONCORDANCE (HEATMAP + SANKEY)
 # ─────────────────────────────────────────────────────────────────────
@@ -1142,13 +1143,13 @@ def _fig3_2_concordance(df_who_lab, out_dir):
     import matplotlib.patches as mpatches
 
     df = _ensure_cats(df_who_lab) if df_who_lab is not None else None
-    
+
     fig = plt.figure(figsize=(DOUBLE_COL_W, 4.2))
     gs = gridspec.GridSpec(1, 2, figure=fig, width_ratios=[1, 1.3], wspace=0.35)
-    
+
     if df is None or "risk_nonlab_cat" not in df.columns or "risk_lab_cat" not in df.columns:
         return fig
-        
+
     ct = pd.crosstab(df["risk_nonlab_cat"], df["risk_lab_cat"])
     ct = ct.reindex(index=RISK_ORDER, columns=RISK_ORDER, fill_value=0)
     total = ct.values.sum()
@@ -1158,16 +1159,16 @@ def _fig3_2_concordance(df_who_lab, out_dir):
     # --- (a) Custom Heatmap ---
     ax_a = fig.add_subplot(gs[0])
     _add_panel_label(ax_a, "a", x=-0.15)
-    
+
     ax_a.set_xlim(0, 5)
     ax_a.set_ylim(5, 0)  # Invert Y to put <5% at the top
-    
+
     for i, nl_cat in enumerate(RISK_ORDER):
         for j, lab_cat in enumerate(RISK_ORDER):
             val = ct.loc[nl_cat, lab_cat]
             row_tot = row_totals[nl_cat]
             pct = (val / row_tot * 100) if row_tot > 0 else 0
-            
+
             # Colors matching the requested zones
             if i == j:
                 fc = "#E0F2FE"  # Blue diagonal (Concordant)
@@ -1175,15 +1176,15 @@ def _fig3_2_concordance(df_who_lab, out_dir):
                 fc = "#FFEDD5"  # Orange off-diagonal (Upward reclassification)
             else:
                 fc = "#F8FAFC"  # Grey below diagonal (Downward reclassification)
-            
+
             rect = plt.Rectangle((j, i), 1, 1, facecolor=fc, edgecolor="white", lw=1.5, zorder=1)
             ax_a.add_patch(rect)
-            
+
             if val > 0:
                 text = f"{val}\n({pct:.1f}%)"
                 weight = "bold" if pct >= 10 else "normal"
                 color = "#0F172A" if i == j else "#334155"
-                ax_a.text(j + 0.5, i + 0.5, text, ha="center", va="center", 
+                ax_a.text(j + 0.5, i + 0.5, text, ha="center", va="center",
                           fontsize=5.5, color=color, fontweight=weight, zorder=3)
 
     # Dashed orange diagonal reference line
@@ -1194,11 +1195,11 @@ def _fig3_2_concordance(df_who_lab, out_dir):
     ax_a.set_xticklabels(RISK_ORDER, rotation=35, ha="right", fontsize=6.5)
     ax_a.set_yticks(np.arange(5) + 0.5)
     ax_a.set_yticklabels(RISK_ORDER, fontsize=6.5)
-    
+
     ax_a.set_xlabel("Laboratory model (WHO risk)", fontsize=7.5, fontweight="bold", labelpad=6)
     ax_a.set_ylabel("Non-laboratory model\n(WHO risk)", fontsize=7.5, fontweight="bold", labelpad=6)
     ax_a.set_title("Cross-classification Heatmap", fontsize=8.5, fontweight="bold", pad=8)
-    
+
     # Hide outer frame
     for spine in ax_a.spines.values():
         spine.set_visible(False)
@@ -1206,23 +1207,23 @@ def _fig3_2_concordance(df_who_lab, out_dir):
     # --- (b) Sankey Reclassification Flow ---
     ax_b = fig.add_subplot(gs[1])
     _add_panel_label(ax_b, "b", x=-0.05)
-    
+
     gap = total * 0.08
     y_nl, y_lab = 0, 0
     nl_coords, lab_coords = {}, {}
-    
+
     for cat in RISK_ORDER:
         cat_nl_tot = row_totals[cat]
         nl_coords[cat] = [y_nl, y_nl + cat_nl_tot]
         y_nl += cat_nl_tot + gap
-        
+
         cat_lab_tot = lab_totals[cat]
         lab_coords[cat] = [y_lab, y_lab + cat_lab_tot]
         y_lab += cat_lab_tot + gap
-        
+
     current_y_nl = {k: v[0] for k, v in nl_coords.items()}
     current_y_lab = {k: v[0] for k, v in lab_coords.items()}
-    
+
     def _add_sankey_flow(ax, x0, y0_bottom, y0_top, x1, y1_bottom, y1_top, color, alpha=0.5):
         cp_x0 = x0 + (x1 - x0) * 0.45
         cp_x1 = x1 - (x1 - x0) * 0.45
@@ -1234,51 +1235,58 @@ def _fig3_2_concordance(df_who_lab, out_dir):
             mpath.Path.MOVETO, mpath.Path.CURVE4, mpath.Path.CURVE4, mpath.Path.CURVE4,
             mpath.Path.LINETO, mpath.Path.CURVE4, mpath.Path.CURVE4, mpath.Path.CURVE4, mpath.Path.CLOSEPOLY
         ]
-        ax.add_patch(mpatches.PathPatch(mpath.Path(verts, codes), facecolor=color, edgecolor='none', alpha=alpha, zorder=2))
+        ax.add_patch(
+            mpatches.PathPatch(mpath.Path(verts, codes), facecolor=color, edgecolor='none', alpha=alpha, zorder=2))
 
     for i, nl_cat in enumerate(RISK_ORDER):
         for j, lab_cat in enumerate(RISK_ORDER):
             val = ct.loc[nl_cat, lab_cat]
             if val == 0: continue
-            
+
             if i == j:
                 color, alpha = "#38BDF8", 0.45  # Blue concordant
             elif i < j:
-                color, alpha = "#FB923C", 0.6   # Orange upward
+                color, alpha = "#FB923C", 0.6  # Orange upward
             else:
-                color, alpha = "#CBD5E1", 0.4   # Grey downward
-                
+                color, alpha = "#CBD5E1", 0.4  # Grey downward
+
             y0_b = current_y_nl[nl_cat]
             y0_t = y0_b + val
             y1_b = current_y_lab[lab_cat]
             y1_t = y1_b + val
-            
+
             _add_sankey_flow(ax_b, 0, y0_b, y0_t, 1, y1_b, y1_t, color=color, alpha=alpha)
-            
+
             current_y_nl[nl_cat] = y0_t
             current_y_lab[lab_cat] = y1_t
 
     w = 0.06
     ax_b.set_xlim(-w - 0.25, 1 + w + 0.25)
-    ax_b.set_ylim(max(y_nl, y_lab) - gap, -gap*1.5)
+    ax_b.set_ylim(max(y_nl, y_lab) - gap, -gap * 1.5)
     ax_b.axis("off")
-    
+
     # Headers for Sankey
-    ax_b.text(-w/2, -gap*0.7, "Non-laboratory\nModel", ha="right", va="bottom", fontsize=8, fontweight="bold", color=OI_ORANGE)
-    ax_b.text(1 + w/2, -gap*0.7, "Laboratory\nModel", ha="left", va="bottom", fontsize=8, fontweight="bold", color=OI_BLUE)
+    ax_b.text(-w / 2, -gap * 0.7, "Non-laboratory\nModel", ha="right", va="bottom", fontsize=8, fontweight="bold",
+              color=OI_ORANGE)
+    ax_b.text(1 + w / 2, -gap * 0.7, "Laboratory\nModel", ha="left", va="bottom", fontsize=8, fontweight="bold",
+              color=OI_BLUE)
     ax_b.set_title("Individual-level Reclassification Migration", fontsize=8.5, fontweight="bold", pad=8)
 
     # Draw the risk category nodes
     for cat in RISK_ORDER:
         # Left (Non-lab)
         y0, y1 = nl_coords[cat]
-        ax_b.add_patch(plt.Rectangle((0 - w, y0), w, max(y1 - y0, 10), facecolor=OI_ORANGE, edgecolor="white", lw=0.5, zorder=4))
-        ax_b.text(-w - 0.03, (y0+y1)/2, cat, ha="right", va="center", fontsize=6, fontweight="bold", color="#334155")
-        
+        ax_b.add_patch(
+            plt.Rectangle((0 - w, y0), w, max(y1 - y0, 10), facecolor=OI_ORANGE, edgecolor="white", lw=0.5, zorder=4))
+        ax_b.text(-w - 0.03, (y0 + y1) / 2, cat, ha="right", va="center", fontsize=6, fontweight="bold",
+                  color="#334155")
+
         # Right (Lab)
         y0_l, y1_l = lab_coords[cat]
-        ax_b.add_patch(plt.Rectangle((1, y0_l), w, max(y1_l - y0_l, 10), facecolor=OI_BLUE, edgecolor="white", lw=0.5, zorder=4))
-        ax_b.text(1 + w + 0.03, (y0_l+y1_l)/2, cat, ha="left", va="center", fontsize=6, fontweight="bold", color="#334155")
+        ax_b.add_patch(
+            plt.Rectangle((1, y0_l), w, max(y1_l - y0_l, 10), facecolor=OI_BLUE, edgecolor="white", lw=0.5, zorder=4))
+        ax_b.text(1 + w + 0.03, (y0_l + y1_l) / 2, cat, ha="left", va="center", fontsize=6, fontweight="bold",
+                  color="#334155")
 
     fig.suptitle("Concordance: Heatmap + Sankey Reclassification", fontsize=10, fontweight="bold", y=1.03)
     _save_figure(fig, "Fig3_2_concordance", out_dir)
@@ -1298,7 +1306,7 @@ def _fig4_age_divergence(df_who_nonlab, df_who_lab, out_dir):
     fig, axes = plt.subplots(1, 3, figsize=(DOUBLE_COL_W, 3.2))
 
     df_nl = _ensure_cats(df_who_nonlab) if df_who_nonlab is not None else None
-    df_l  = _ensure_cats(df_who_lab) if df_who_lab is not None else None
+    df_l = _ensure_cats(df_who_lab) if df_who_lab is not None else None
 
     def _compute_prev(df, risk_col, threshold):
         """Compute prevalence with 95% Wilson CI by age band."""
@@ -1314,9 +1322,9 @@ def _fig4_age_divergence(df_who_nonlab, df_who_lab, out_dir):
             p = k / n
             # Wilson CI
             z = 1.96
-            denom = 1 + z**2 / n
-            centre = (p + z**2 / (2 * n)) / denom
-            delta = z * np.sqrt((p * (1 - p) + z**2 / (4 * n)) / n) / denom
+            denom = 1 + z ** 2 / n
+            centre = (p + z ** 2 / (2 * n)) / denom
+            delta = z * np.sqrt((p * (1 - p) + z ** 2 / (4 * n)) / n) / denom
             results.append({"age_band": ab, "prev": p * 100,
                             "lo": max(0, (centre - delta)) * 100,
                             "hi": min(1, (centre + delta)) * 100,
@@ -1324,12 +1332,12 @@ def _fig4_age_divergence(df_who_nonlab, df_who_lab, out_dir):
         return pd.DataFrame(results)
 
     for idx, (thr, title_str) in enumerate([(10, "≥10% threshold"),
-                                              (20, "≥20% threshold")]):
+                                            (20, "≥20% threshold")]):
         ax = axes[idx]
         _add_panel_label(ax, chr(ord("a") + idx))
 
         prev_nl = _compute_prev(df_nl, "risk_nonlab", thr)
-        prev_l  = _compute_prev(df_l, "risk_lab", thr)
+        prev_l = _compute_prev(df_l, "risk_lab", thr)
 
         if not prev_nl.empty:
             x_nl = np.arange(len(prev_nl))
@@ -1363,7 +1371,7 @@ def _fig4_age_divergence(df_who_nonlab, df_who_lab, out_dir):
         gaps = []
         for ab in AGE_LABELS:
             nl_sub = df_nl[df_nl["age_band"] == ab]
-            l_sub  = df_l[df_l["age_band"] == ab]
+            l_sub = df_l[df_l["age_band"] == ab]
             if len(nl_sub) == 0 or len(l_sub) == 0:
                 continue
             gap_10 = ((l_sub["risk_lab"] >= 10).mean() -
@@ -1375,18 +1383,18 @@ def _fig4_age_divergence(df_who_nonlab, df_who_lab, out_dir):
             gdf = pd.DataFrame(gaps)
             x = np.arange(len(gdf))
             w = 0.30
-            ax_c.bar(x - w/2, gdf["Gap ≥10%"], w, label="≥10% gap",
+            ax_c.bar(x - w / 2, gdf["Gap ≥10%"], w, label="≥10% gap",
                      color=OI_ORANGE, edgecolor="white", linewidth=0.3)
-            ax_c.bar(x + w/2, gdf["Gap ≥20%"], w, label="≥20% gap",
+            ax_c.bar(x + w / 2, gdf["Gap ≥20%"], w, label="≥20% gap",
                      color=OI_VERMILION, edgecolor="white", linewidth=0.3)
             ax_c.set_xticks(x)
             ax_c.set_xticklabels(gdf["age_band"], fontsize=5.5, rotation=30,
-                                  ha="right")
+                                 ha="right")
             ax_c.axhline(0, color="#999", lw=0.3)
             ax_c.set_ylabel("Prevalence gap (pp)")
             ax_c.set_xlabel("Age group (years)")
             ax_c.set_title("Absolute prevalence gap\n(Lab − Non-lab)",
-                            fontsize=8, fontweight="bold", pad=4)
+                           fontsize=8, fontweight="bold", pad=4)
             ax_c.legend(frameon=False, fontsize=5.5)
 
     fig.tight_layout()
@@ -1417,7 +1425,7 @@ def _fig5_clinical_utility(df_who_lab, out_dir):
 
     if df is not None:
         lab_pos = (df["risk_lab"] >= 20)
-        nl_pos  = (df["risk_nonlab"] >= 20)
+        nl_pos = (df["risk_nonlab"] >= 20)
         tp = (lab_pos & nl_pos).sum()
         fn = (lab_pos & ~nl_pos).sum()
         fp = (~lab_pos & nl_pos).sum()
@@ -1428,17 +1436,17 @@ def _fig5_clinical_utility(df_who_lab, out_dir):
                            [f"FN\n{fn}", f"TP\n{tp}"]])
 
         cmap_cm = LinearSegmentedColormap.from_list("cm",
-            ["#f0f4f8", OI_BLUE])
+                                                    ["#f0f4f8", OI_BLUE])
         sns.heatmap(cm, annot=labels, fmt="", cmap=cmap_cm, ax=ax_a,
                     linewidths=0.5, linecolor="white", cbar=False,
                     annot_kws={"fontsize": 7, "fontweight": "bold"})
         ax_a.set_xticklabels(["Negative", "Positive"], fontsize=6)
         ax_a.set_yticklabels(["Lab < 20%", "Lab ≥ 20%"], fontsize=6,
-                              rotation=0)
+                             rotation=0)
         ax_a.set_xlabel("Non-lab prediction", fontsize=7)
         ax_a.set_ylabel("Laboratory reference", fontsize=7)
         ax_a.set_title("Confusion matrix (≥20%)", fontsize=8,
-                        fontweight="bold", pad=4)
+                       fontweight="bold", pad=4)
 
         # Performance annotation
         sens = tp / (tp + fn) * 100 if (tp + fn) > 0 else 0
@@ -1485,7 +1493,7 @@ def _fig5_clinical_utility(df_who_lab, out_dir):
         ax_b.set_xlabel("Non-lab threshold (%)")
         ax_b.set_ylabel("Performance (%)")
         ax_b.set_title("Detection of lab-defined\n≥20% risk", fontsize=8,
-                        fontweight="bold", pad=4)
+                       fontweight="bold", pad=4)
         ax_b.legend(frameon=False, fontsize=5.5)
         ax_b.set_ylim(0, 105)
 
@@ -1510,12 +1518,12 @@ def _fig5_clinical_utility(df_who_lab, out_dir):
         bars = ax_c.bar(categories, values, color=colors_bar,
                         edgecolor="white", linewidth=0.3)
         for bar, v in zip(bars, values):
-            ax_c.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 15,
+            ax_c.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 15,
                       f"{v:,}", ha="center", va="bottom", fontsize=6)
 
         ax_c.set_ylabel("Number of lab tests")
         ax_c.set_title("Two-stage screening\nefficiency", fontsize=8,
-                        fontweight="bold", pad=4)
+                       fontweight="bold", pad=4)
 
         # Annotation
         ax_c.text(0.5, -0.18,
@@ -1536,7 +1544,7 @@ def _fig6_sex_age_heatmap(df_who_nonlab, df_who_lab, out_dir):
     Figure 6 (a–b): Sex-stratified mean 10-year CVD risk heatmap.
     (a) Non-laboratory model: age × sex grid of mean predicted risk (%).
     (b) Laboratory model: same grid, paired for direct comparison.
-    Colour encodes absolute risk using a sequential Nature palette.
+    Colour encodes absolute risk using a sequential  palette.
     """
     import matplotlib.colors as mcolors
 
@@ -1571,12 +1579,12 @@ def _fig6_sex_age_heatmap(df_who_nonlab, df_who_lab, out_dir):
 
     # Fallback grids (literature-derived for non-lab, estimated for lab)
     fallback_nl = np.array([
-        [4.8, 6.2,  8.5, 11.4, 14.8, 18.3, 22.1],  # Male
-        [2.9, 3.8,  5.1,  7.2, 10.1, 13.4, 17.0],  # Female
+        [4.8, 6.2, 8.5, 11.4, 14.8, 18.3, 22.1],  # Male
+        [2.9, 3.8, 5.1, 7.2, 10.1, 13.4, 17.0],  # Female
     ])
     fallback_l = np.array([
-        [6.5,  9.1, 12.8, 17.2, 22.1, 27.6, 33.4],  # Male
-        [4.1,  5.6,  8.0, 11.8, 16.4, 21.2, 27.0],  # Female
+        [6.5, 9.1, 12.8, 17.2, 22.1, 27.6, 33.4],  # Male
+        [4.1, 5.6, 8.0, 11.8, 16.4, 21.2, 27.0],  # Female
     ])
 
     grid_nl = _build_grid(df_who_nonlab, "risk_nonlab")
@@ -1596,12 +1604,12 @@ def _fig6_sex_age_heatmap(df_who_nonlab, df_who_lab, out_dir):
     # Shared colour scale
     vmin, vmax = 0, max(np.nanmax(grid_nl), np.nanmax(grid_l)) * 1.05
     cmap = mcolors.LinearSegmentedColormap.from_list("risk_heat",
-        [nature_teal[0], nature_teal[2], nature_yellow[2],
-         nature_orange[3], nature_red[3], nature_purple[3]])
+                                                     [nature_teal[0], nature_teal[2], nature_yellow[2],
+                                                      nature_orange[3], nature_red[3], nature_purple[3]])
 
     for panel_idx, (ax_key, grid, model_lbl, is_fb) in enumerate([
         ("a", grid_nl, "Non-laboratory", is_fallback_nl),
-        ("b", grid_l,  "Laboratory",     is_fallback_l)
+        ("b", grid_l, "Laboratory", is_fallback_l)
     ]):
         ax = fig.add_subplot(gs[panel_idx])
         _add_panel_label(ax, ax_key)
@@ -1638,7 +1646,7 @@ def _fig6_sex_age_heatmap(df_who_nonlab, df_who_lab, out_dir):
     # Shared colorbar
     cbar_ax = fig.add_axes([0.92, 0.18, 0.015, 0.64])
     sm = plt.cm.ScalarMappable(cmap=cmap,
-                                norm=plt.Normalize(vmin=vmin, vmax=vmax))
+                               norm=plt.Normalize(vmin=vmin, vmax=vmax))
     sm.set_array([])
     cb = fig.colorbar(sm, cax=cbar_ax)
     cb.set_label("Mean CVD risk (%)", fontsize=6)
@@ -1670,10 +1678,10 @@ def _fig7_decision_curve(df_who_lab, out_dir):
     def _net_benefit(df, pred_col, outcome_col_thresh, thresh):
         """DCA net benefit = (TP/n) − (FP/n)×(pt/(1−pt))"""
         if df is None: return np.nan
-        tp = ((df[pred_col] >= thresh*100) & (df[outcome_col_thresh] >= 20)).sum()
-        fp = ((df[pred_col] >= thresh*100) & (df[outcome_col_thresh] < 20)).sum()
-        n  = len(df)
-        return (tp/n) - (fp/n) * (thresh/(1-thresh))
+        tp = ((df[pred_col] >= thresh * 100) & (df[outcome_col_thresh] >= 20)).sum()
+        fp = ((df[pred_col] >= thresh * 100) & (df[outcome_col_thresh] < 20)).sum()
+        n = len(df)
+        return (tp / n) - (fp / n) * (thresh / (1 - thresh))
 
     def _treat_all(df, thresh):
         if df is None: return np.nan
@@ -1681,37 +1689,37 @@ def _fig7_decision_curve(df_who_lab, out_dir):
         n = len(df)
         tp = prev
         fp = (1 - prev)
-        return tp - fp * (thresh/(1-thresh))
+        return tp - fp * (thresh / (1 - thresh))
 
     df = df_who_lab
 
-    nb_nl     = []
-    nb_lab    = []
-    nb_all    = []
-    nb_none   = [0.0] * len(thresholds)
+    nb_nl = []
+    nb_lab = []
+    nb_all = []
+    nb_none = [0.0] * len(thresholds)
 
     for pt in thresholds:
         nb_nl.append(_net_benefit(df, "risk_nonlab", "risk_lab", pt))
-        nb_lab.append(_net_benefit(df, "risk_lab",   "risk_lab", pt))
+        nb_lab.append(_net_benefit(df, "risk_lab", "risk_lab", pt))
         nb_all.append(_treat_all(df, pt))
 
     # Clip below zero for display (convention: show only where beneficial)
-    nb_nl   = np.clip(nb_nl,  0, None)
-    nb_lab  = np.clip(nb_lab, 0, None)
-    nb_all  = np.clip(nb_all, 0, None)
+    nb_nl = np.clip(nb_nl, 0, None)
+    nb_lab = np.clip(nb_lab, 0, None)
+    nb_all = np.clip(nb_all, 0, None)
 
     # --- (a) Net Benefit curves ---
     ax_a = fig.add_subplot(gs[0])
     _add_panel_label(ax_a, "a")
 
     pt_pct = thresholds * 100
-    ax_a.plot(pt_pct, nb_lab,  color=CLR_LAB,    lw=1.0, label="Laboratory model",     zorder=3)
-    ax_a.plot(pt_pct, nb_nl,   color=CLR_NONLAB,  lw=1.0, ls="--",
+    ax_a.plot(pt_pct, nb_lab, color=CLR_LAB, lw=1.0, label="Laboratory model", zorder=3)
+    ax_a.plot(pt_pct, nb_nl, color=CLR_NONLAB, lw=1.0, ls="--",
               label="Non-laboratory model", zorder=3)
-    ax_a.plot(pt_pct, nb_all,  color=nature_grey[3], lw=0.7, ls=":",
-              label="Treat all",            zorder=2)
-    ax_a.plot(pt_pct, nb_none, color="#bbb",       lw=0.7, ls="-",
-              label="Treat none",           zorder=1)
+    ax_a.plot(pt_pct, nb_all, color=nature_grey[3], lw=0.7, ls=":",
+              label="Treat all", zorder=2)
+    ax_a.plot(pt_pct, nb_none, color="#bbb", lw=0.7, ls="-",
+              label="Treat none", zorder=1)
 
     # Mark clinical thresholds
     for xv, lbl in [(10, "≥10%"), (20, "≥20%")]:
@@ -1759,191 +1767,6 @@ def _fig7_decision_curve(df_who_lab, out_dir):
 
 
 # ─────────────────────────────────────────────────────────────────────
-# FIGURE 8 – MULTIVARIATE FOREST PLOT (RISK FACTOR EFFECT SIZES)
-# ─────────────────────────────────────────────────────────────────────
-def _fig8_forest_plot(df_who_nonlab, df_who_lab, out_dir):
-    """
-    Figure 8 (a–b): Multivariate association forest plot.
-    (a) Regression coefficients (standardised β ± 95% CI) for Non-Lab model.
-    (b) Same for Lab model. Allows direct visual comparison of driver importance.
-    Computed via OLS on available numeric predictors.
-    """
-    from scipy import stats as sp_stats
-
-    fig = plt.figure(figsize=(DOUBLE_COL_W, 4.5))
-    gs = gridspec.GridSpec(1, 2, figure=fig, wspace=0.55)
-
-    # Predictor display labels
-    PREDICTOR_MAP = {
-        "age":             "Age (years)",
-        "sbp":             "Systolic BP (mmHg)",
-        "bmi":             "BMI (kg/m²)",
-        "smoker_who":      "Current smoker",
-        "gender_male":     "Male sex",
-        "cholesterol_mmol":"Total cholesterol (mmol/L)",
-        "has_diabetes":    "Diabetes mellitus",
-    }
-    COLOR_MAP = {
-        "age":             nature_teal[4],
-        "sbp":             nature_orange[4],
-        "bmi":             nature_olive[4],
-        "smoker_who":      nature_purple[3],
-        "gender_male":     nature_blue[4],
-        "cholesterol_mmol":nature_yellow[4],
-        "has_diabetes":    nature_red[4],
-    }
-
-    def _run_ols(df, outcome_col, predictors):
-        """Standardised OLS regression; return DataFrame of coefficients."""
-        rows = []
-        if df is None: return pd.DataFrame()
-        tmp = df.copy()
-        
-        # Binary encode gender
-        if "gender" in tmp.columns:
-            g_raw = tmp["gender"].astype(str).str.strip().str.upper()
-            tmp["gender_male"] = (
-                g_raw.str.startswith("M") | g_raw.isin(["1"])
-            ).astype(float)
-            
-        # Binary encode smoking
-        if "smoker_who" in tmp.columns:
-            s_raw = tmp["smoker_who"].astype(str).str.strip().str.upper()
-            tmp["smoker_who"] = (
-                s_raw.isin(["1", "1.0", "YES", "TRUE"]) | (s_raw.str.contains("SMOKER") & ~s_raw.str.contains("NON"))
-            ).astype(float)
-            
-        # Binary encode diabetes
-        if "has_diabetes" in tmp.columns:
-            d_raw = tmp["has_diabetes"].astype(str).str.strip().str.upper()
-            tmp["has_diabetes"] = (
-                d_raw.isin(["1", "1.0", "YES", "TRUE"]) | (d_raw.str.contains("DIABETIC") & ~d_raw.str.contains("NON"))
-            ).astype(float)
-            
-        avail = [p for p in predictors if p in tmp.columns]
-        if outcome_col not in tmp.columns or not avail:
-            return pd.DataFrame()
-            
-        subset = tmp[[outcome_col] + avail].copy()
-        # Coerce to numeric in case there are other unhandled strings
-        for col in avail + [outcome_col]:
-            subset[col] = pd.to_numeric(subset[col], errors="coerce")
-            
-        subset = subset.dropna()
-        if len(subset) < 30: return pd.DataFrame()
-        
-        # Standardise
-        X = subset[avail]
-        X_std = (X - X.mean()) / X.std(ddof=1)
-        y = subset[outcome_col]
-        for pred in avail:
-            slope, intercept, r, p, se = sp_stats.linregress(X_std[pred], y)
-            ci_lo = slope - 1.96 * se
-            ci_hi = slope + 1.96 * se
-            rows.append({
-                "predictor": pred,
-                "label": PREDICTOR_MAP.get(pred, pred),
-                "beta":  round(slope, 3),
-                "ci_lo": round(ci_lo, 3),
-                "ci_hi": round(ci_hi, 3),
-                "p":     p,
-                "color": COLOR_MAP.get(pred, "#888"),
-            })
-        return pd.DataFrame(rows).sort_values("beta", ascending=True)
-
-    nl_predictors = ["age", "sbp", "bmi", "smoker_who", "gender_male"]
-    l_predictors  = ["age", "sbp", "cholesterol_mmol", "smoker_who",
-                     "has_diabetes", "gender_male"]
-
-    # Fallback forest-plot data (standardised betas from literature)
-    fallback_nl = pd.DataFrame([
-        {"predictor":"bmi",         "label":"BMI (kg/m\u00b2)",          "beta":0.52, "ci_lo":0.44, "ci_hi":0.60, "p":1e-6, "color":COLOR_MAP["bmi"]},
-        {"predictor":"smoker_who",  "label":"Current smoker",           "beta":0.71, "ci_lo":0.60, "ci_hi":0.82, "p":1e-8, "color":COLOR_MAP["smoker_who"]},
-        {"predictor":"sbp",         "label":"Systolic BP (mmHg)",       "beta":0.88, "ci_lo":0.82, "ci_hi":0.94, "p":1e-9, "color":COLOR_MAP["sbp"]},
-        {"predictor":"gender_male", "label":"Male sex",                 "beta":1.12, "ci_lo":1.01, "ci_hi":1.23, "p":1e-9, "color":COLOR_MAP["gender_male"]},
-        {"predictor":"age",         "label":"Age (years)",              "beta":1.48, "ci_lo":1.39, "ci_hi":1.57, "p":1e-12,"color":COLOR_MAP["age"]},
-    ])
-    fallback_l = pd.DataFrame([
-        {"predictor":"smoker_who",      "label":"Current smoker",           "beta":0.65, "ci_lo":0.54, "ci_hi":0.76, "p":1e-8,  "color":COLOR_MAP["smoker_who"]},
-        {"predictor":"has_diabetes",    "label":"Diabetes mellitus",        "beta":0.79, "ci_lo":0.66, "ci_hi":0.92, "p":1e-8,  "color":COLOR_MAP["has_diabetes"]},
-        {"predictor":"sbp",             "label":"Systolic BP (mmHg)",       "beta":0.94, "ci_lo":0.88, "ci_hi":1.00, "p":1e-10, "color":COLOR_MAP["sbp"]},
-        {"predictor":"cholesterol_mmol","label":"Total cholesterol (mmol/L)","beta":1.05, "ci_lo":0.94, "ci_hi":1.16, "p":1e-9,  "color":COLOR_MAP["cholesterol_mmol"]},
-        {"predictor":"gender_male",     "label":"Male sex",                 "beta":1.18, "ci_lo":1.07, "ci_hi":1.29, "p":1e-10, "color":COLOR_MAP["gender_male"]},
-        {"predictor":"age",             "label":"Age (years)",              "beta":1.61, "ci_lo":1.52, "ci_hi":1.70, "p":1e-13, "color":COLOR_MAP["age"]},
-    ])
-
-    res_nl = _run_ols(df_who_nonlab, "risk_nonlab", nl_predictors)
-    if res_nl.empty: res_nl = fallback_nl
-
-    res_l = _run_ols(df_who_lab, "risk_lab", l_predictors)
-    if res_l.empty: res_l = fallback_l
-
-    sig_threshold = 0.05
-
-    for panel_idx, (ax_key, res_df, model_lbl) in enumerate([
-        ("a", res_nl, "Non-laboratory model"),
-        ("b", res_l,  "Laboratory model"),
-    ]):
-        ax = fig.add_subplot(gs[panel_idx])
-        _add_panel_label(ax, ax_key)
-
-        n_rows = len(res_df)
-        y_pos = np.arange(n_rows)
-
-        for i, (_, row) in enumerate(res_df.iterrows()):
-            # Point estimate
-            clr = row["color"]
-            alpha = 1.0 if row["p"] < sig_threshold else 0.45
-            ax.plot(row["beta"], i, "o", color=clr, ms=4.5,
-                    alpha=alpha, zorder=3)
-            # CI bar
-            ax.hlines(i, row["ci_lo"], row["ci_hi"], colors=clr,
-                      lw=1.2, alpha=alpha, zorder=2)
-            # Significance marker
-            if row["p"] < 0.001:
-                sig_txt = "***"
-            elif row["p"] < 0.01:
-                sig_txt = "**"
-            elif row["p"] < 0.05:
-                sig_txt = "*"
-            else:
-                sig_txt = "ns"
-            ax.text(row["ci_hi"] + 0.02, i, sig_txt,
-                    fontsize=5.5, va="center", color=clr)
-
-            # Beta value annotation
-            ax.text(row["ci_lo"] - 0.04, i,
-                    f"β={row['beta']:.2f}",
-                    fontsize=5, va="center", ha="right",
-                    color="#475569")
-
-        ax.axvline(0, color="#94A3B8", lw=0.5, ls="--", zorder=0)
-        ax.set_yticks(y_pos)
-        ax.set_yticklabels(res_df["label"].values, fontsize=6.5)
-        ax.set_xlabel("Standardised regression coefficient (β)", fontsize=7)
-        ax.set_title(f"{model_lbl}\nMultivariate associations with 10-yr CVD risk",
-                     fontsize=8, fontweight="bold", pad=4)
-
-        # Significance legend (text-based, no coloured text — box only)
-        legend_txt = "* p<0.05  ** p<0.01  *** p<0.001  ns not significant"
-        ax.text(0.99, -0.17, legend_txt,
-                transform=ax.transAxes, fontsize=5,
-                ha="right", va="top", color="#64748B",
-                bbox=dict(boxstyle="round,pad=0.3", fc=nature_stone[0],
-                          ec=nature_grey[2], lw=0.5))
-
-        ax.spines["top"].set_visible(False)
-        ax.spines["right"].set_visible(False)
-
-    fig.suptitle(
-        "Multivariate Risk-Factor Associations: Standardised Regression Coefficients",
-        fontsize=9, fontweight="bold", y=1.02
-    )
-    _save_figure(fig, "Fig8_forest_plot", out_dir)
-    return fig
-
-
-# ─────────────────────────────────────────────────────────────────────
 # TABLE BUILDERS
 # ─────────────────────────────────────────────────────────────────────
 def _table1_baseline(df_nonlab, df_lab, df_who_nonlab, df_who_lab):
@@ -1957,7 +1780,7 @@ def _table1_baseline(df_nonlab, df_lab, df_who_nonlab, df_who_lab):
         if kind == "mean":
             return f"{s.mean():.1f} ± {s.std():.1f}"
         elif kind == "pct":
-            return f"{s.sum():,} ({s.mean()*100:.1f}%)"
+            return f"{s.sum():,} ({s.mean() * 100:.1f}%)"
         elif kind == "n":
             return f"{len(s):,}"
         return "—"
@@ -1973,9 +1796,9 @@ def _table1_baseline(df_nonlab, df_lab, df_who_nonlab, df_who_lab):
     rows.append({"Variable": "Age, mean ± SD (yr)"} |
                 {l: _stat(d, "age") for l, d in zip(labels, dfs)})
     rows.append({"Variable": "Female, n (%)"} |
-                {l: (f'{(d["gender"]=="Female").sum():,} '
-                     f'({(d["gender"]=="Female").mean()*100:.1f}%)')
-                 if d is not None and "gender" in d.columns else "—"
+                {l: (f'{(d["gender"] == "Female").sum():,} '
+                     f'({(d["gender"] == "Female").mean() * 100:.1f}%)')
+                if d is not None and "gender" in d.columns else "—"
                  for l, d in zip(labels, dfs)})
     rows.append({"Variable": "SBP, mean ± SD (mmHg)"} |
                 {l: _stat(d, "sbp") for l, d in zip(labels, dfs)})
@@ -1983,13 +1806,13 @@ def _table1_baseline(df_nonlab, df_lab, df_who_nonlab, df_who_lab):
                 {l: _stat(d, "bmi") for l, d in zip(labels, dfs)})
 
     for col_name, col_key in [("Current smoker, n (%)", "smoker_who"),
-                               ("Diabetes, n (%)", "has_diabetes")]:
+                              ("Diabetes, n (%)", "has_diabetes")]:
         r = {"Variable": col_name}
         for l, d in zip(labels, dfs):
             if d is not None and col_key in d.columns:
                 s = d[col_key].dropna()
                 pos = (s == 1).sum() if s.dtype in [int, float, np.int64, np.float64] else s.astype(bool).sum()
-                r[l] = f"{pos:,} ({pos/len(d)*100:.1f}%)"
+                r[l] = f"{pos:,} ({pos / len(d) * 100:.1f}%)"
             else:
                 r[l] = "—"
         rows.append(r)
@@ -2014,7 +1837,7 @@ def _table2_bias_gradient(df_who_lab):
             "n": len(sub),
             "Mean bias (pp)": f"{d.mean():.2f}",
             "SD (pp)": f"{d.std():.2f}",
-            "Underestimated (%)": f"{(d < 0).mean()*100:.1f}",
+            "Underestimated (%)": f"{(d < 0).mean() * 100:.1f}",
         })
 
     # Overall
@@ -2024,7 +1847,7 @@ def _table2_bias_gradient(df_who_lab):
         "n": len(df),
         "Mean bias (pp)": f"{d_all.mean():.2f}",
         "SD (pp)": f"{d_all.std():.2f}",
-        "Underestimated (%)": f"{(d_all < 0).mean()*100:.1f}",
+        "Underestimated (%)": f"{(d_all < 0).mean() * 100:.1f}",
     })
     return pd.DataFrame(rows)
 
@@ -2232,48 +2055,55 @@ def _supp_table_s1_literature():
         ["NCD-CVD Bangladesh Study", 2021, "Bangladesh", "8,400", "86.0%", "−6.1 pp"],
         ["WHO Risk Chart Pilot", 2020, "Sri Lanka", "12,100", "90.5%", "−3.9 pp"]
     ]
-    return pd.DataFrame(data, columns=["Study / Cohort", "Year", "Location", "Sample Size (N)", "Reported Concordance", "Mean Bias (Non-Lab − Lab)"])
+    return pd.DataFrame(data, columns=["Study / Cohort", "Year", "Location", "Sample Size (N)", "Reported Concordance",
+                                       "Mean Bias (Non-Lab − Lab)"])
+
 
 def _supp_table_s2_sites(df):
     if df is None: return pd.DataFrame()
     col = "site" if "site" in df.columns else ("location_type" if "location_type" in df.columns else None)
     if not col: return pd.DataFrame([{"Note": "Site data unavailable in this cohort"}])
-    
+
     res = df.groupby(col, observed=False).agg(
         N=("risk_lab", "count"),
         Mean_NonLab=("risk_nonlab", "mean"),
         Mean_Lab=("risk_lab", "mean"),
         Prev_Lab_20=("risk_lab", lambda x: (x >= 20).mean() * 100)
-    ).reset_index().sort_values("N", ascending=False).head(20) # Top 20 for display
-    
+    ).reset_index().sort_values("N", ascending=False).head(20)  # Top 20 for display
+
     res["Mean_NonLab"] = res["Mean_NonLab"].round(1)
     res["Mean_Lab"] = res["Mean_Lab"].round(1)
     res["Prevalence_Lab_≥20%"] = res.pop("Prev_Lab_20").round(1).astype(str) + "%"
     return res.rename(columns={col: "Site / Location"})
 
+
 def _supp_table_s3_crosstab(df):
     if df is None or "risk_nonlab_cat" not in df.columns: return pd.DataFrame()
-    ct = pd.crosstab(df["risk_nonlab_cat"], df[" risk_lab_cat"] if " risk_lab_cat" in df.columns else df["risk_lab_cat"])
+    ct = pd.crosstab(df["risk_nonlab_cat"],
+                     df[" risk_lab_cat"] if " risk_lab_cat" in df.columns else df["risk_lab_cat"])
     return ct.reindex(index=RISK_ORDER, columns=RISK_ORDER, fill_value=0)
+
 
 def _supp_table_s4_missed_profiles(df):
     if df is None or "risk_nonlab" not in df.columns: return pd.DataFrame()
     missed = df[(df["risk_nonlab"] < 10) & (df["risk_lab"] >= 20)]
     captured = df[(df["risk_nonlab"] >= 10) & (df["risk_lab"] >= 20)]
-    
+
     cols = ["age", "sbp", "bmi", "cholesterol_mmol"]
     avail_cols = [c for c in cols if c in df.columns]
-    
+
     if not avail_cols: return pd.DataFrame()
-    
+
     m_mean = missed[avail_cols].mean().round(1)
     c_mean = captured[avail_cols].mean().round(1)
     return pd.DataFrame({"Missed High-Risk (Non-Lab <10%)": m_mean, "Captured High-Risk (Non-Lab ≥10%)": c_mean}).T
 
+
 def _supp_fig_s3_site_prevalence(df, out_dir):
     fig = plt.figure(figsize=(DOUBLE_COL_W, 3.5))
     if df is not None and "location_type" in df.columns:
-        s = df.groupby("location_type", observed=False)["risk_lab"].apply(lambda x: (x >= 20).mean() * 100).sort_values()
+        s = df.groupby("location_type", observed=False)["risk_lab"].apply(
+            lambda x: (x >= 20).mean() * 100).sort_values()
         plt.scatter(s.values, s.index, color=OI_BLUE, s=40)
         plt.axvline(s.mean(), color=OI_VERMILION, ls="--", lw=1)
         plt.xlabel("Prevalence of Laboratory Risk ≥20% (%)")
@@ -2281,6 +2111,7 @@ def _supp_fig_s3_site_prevalence(df, out_dir):
     fig.tight_layout()
     _save_figure(fig, "FigS3_site_prevalence", out_dir)
     return fig
+
 
 def _supp_fig_s4_slopegraph(df, out_dir):
     fig = plt.figure(figsize=(DOUBLE_COL_W, 4))
@@ -2295,6 +2126,7 @@ def _supp_fig_s4_slopegraph(df, out_dir):
     fig.tight_layout()
     _save_figure(fig, "FigS4_slopegraph", out_dir)
     return fig
+
 
 def _supp_fig_s5_interaction(df, out_dir):
     fig = plt.figure(figsize=(DOUBLE_COL_W, 4))
@@ -2349,7 +2181,7 @@ def _fig9_risk_calibration(df_who_nonlab, df_who_lab, out_dir):
 
     _CAL_STYLES = [
         (df_who_nonlab, "risk_nonlab", CLR_NONLAB, "o", "Non-lab model"),
-        (df_who_lab,    "risk_lab",    CLR_LAB,    "s", "Lab model"),
+        (df_who_lab, "risk_lab", CLR_LAB, "s", "Lab model"),
     ]
     for df_, col, clr, mkr, lbl in _CAL_STYLES:
         if df_ is None or col not in df_.columns:
@@ -2381,7 +2213,7 @@ def _fig9_risk_calibration(df_who_nonlab, df_who_lab, out_dir):
     _add_panel_label(ax_b, "b")
     for df_, col, clr, lbl, offset in [
         (df_who_nonlab, "risk_nonlab", CLR_NONLAB, "Non-lab", -0.18),
-        (df_who_lab,    "risk_lab",    CLR_LAB,    "Lab",      0.18),
+        (df_who_lab, "risk_lab", CLR_LAB, "Lab", 0.18),
     ]:
         if df_ is None or col not in df_.columns:
             continue
@@ -2400,7 +2232,7 @@ def _fig9_risk_calibration(df_who_nonlab, df_who_lab, out_dir):
                      marker="D" if "Non" in lbl else "^", s=10, zorder=5,
                      label=f"{lbl} observed" if offset < 0 else None)
     ax_b.set_xticks(np.arange(10))
-    ax_b.set_xticklabels([f"D{i+1}" for i in range(10)], fontsize=5)
+    ax_b.set_xticklabels([f"D{i + 1}" for i in range(10)], fontsize=5)
     ax_b.set_xlabel("Risk decile")
     ax_b.set_ylabel("Mean CVD risk (%)")
     ax_b.set_title("Hosmer-Lemeshow: Predicted vs. Observed\nby Decile",
@@ -2415,7 +2247,7 @@ def _fig9_risk_calibration(df_who_nonlab, df_who_lab, out_dir):
     for sex, clr_s in [("M", OI_BLUE), ("F", OI_PURPLE)]:
         for ab in ["40-54", "55-64", "65-74"]:
             strata_labels.append(f"{sex}/{ab}")
-            rng = np.random.default_rng(hash((sex, ab)) % (2**31))
+            rng = np.random.default_rng(hash((sex, ab)) % (2 ** 31))
             slopes_nl.append(rng.uniform(0.78, 1.12))
             slopes_l.append(rng.uniform(0.82, 1.10))
     if df_who_nonlab is not None and df_who_lab is not None:
@@ -2426,11 +2258,12 @@ def _fig9_risk_calibration(df_who_nonlab, df_who_lab, out_dir):
         ]):
             for df_, col, sl_list in [
                 (df_who_nonlab, "risk_nonlab", slopes_nl),
-                (df_who_lab,    "risk_lab",    slopes_l),
+                (df_who_lab, "risk_lab", slopes_l),
             ]:
                 g_raw = df_["gender"].astype(str).str.strip().str.upper() if "gender" in df_.columns else pd.Series()
                 mask_g = g_raw.str.startswith(sex) if len(g_raw) else pd.Series(False, index=df_.index)
-                mask_a = (df_["age"] >= ab_lo) & (df_["age"] < ab_hi) if "age" in df_.columns else pd.Series(False, index=df_.index)
+                mask_a = (df_["age"] >= ab_lo) & (df_["age"] < ab_hi) if "age" in df_.columns else pd.Series(False,
+                                                                                                             index=df_.index)
                 sub = df_[mask_g & mask_a][[col]].dropna()
                 if len(sub) > 30:
                     try:
@@ -2443,12 +2276,12 @@ def _fig9_risk_calibration(df_who_nonlab, df_who_lab, out_dir):
 
     x_pos = np.arange(len(strata_labels))
     w = 0.30
-    bars_nl = ax_c.bar(x_pos - w/2, slopes_nl, w, color=CLR_NONLAB,
+    bars_nl = ax_c.bar(x_pos - w / 2, slopes_nl, w, color=CLR_NONLAB,
                        alpha=0.85, edgecolor="white", linewidth=0.3,
                        label="Non-lab")
-    bars_l  = ax_c.bar(x_pos + w/2, slopes_l, w, color=CLR_LAB,
-                       alpha=0.85, edgecolor="white", linewidth=0.3,
-                       label="Lab")
+    bars_l = ax_c.bar(x_pos + w / 2, slopes_l, w, color=CLR_LAB,
+                      alpha=0.85, edgecolor="white", linewidth=0.3,
+                      label="Lab")
     ax_c.axhline(1.0, color="#B91C1C", lw=0.7, ls="--", label="Ideal slope=1")
     ax_c.axhspan(0.8, 1.2, color="#DCFCE7", alpha=0.25, zorder=0)
     ax_c.set_xticks(x_pos)
@@ -2473,7 +2306,7 @@ def _fig9_risk_calibration(df_who_nonlab, df_who_lab, out_dir):
                 sub = df_who_lab[
                     g_raw.str.startswith(sex) &
                     (df_who_lab["age"] >= lo) & (df_who_lab["age"] < hi)
-                ]
+                    ]
                 if len(sub) > 10 and "risk_nonlab" in df_who_lab.columns and "risk_lab" in df_who_lab.columns:
                     citl_data[si, ai] = (sub["risk_nonlab"] - sub["risk_lab"]).mean()
     cmap_citl = plt.cm.RdBu_r
@@ -2507,212 +2340,6 @@ def _fig9_risk_calibration(df_who_nonlab, df_who_lab, out_dir):
 
 
 # ─────────────────────────────────────────────────────────────────────
-# FIGURE 10 – POPULATION-LEVEL EPIDEMIOLOGICAL RISK BURDEN
-# ─────────────────────────────────────────────────────────────────────
-def _fig10_epidemiological_burden(df_who_nonlab, df_who_lab, out_dir):
-    """
-    Figure 10: Population-Level Epidemiological Risk Burden (a-c).
-    (a) Population pyramid with embedded dual-band risk prevalence per age band.
-    (b) Absolute excess-risk waterfall — model disagreement by age x sex stratum.
-    (c) Attributable-risk decomposition stacked bars by risk factor category.
-    """
-    import matplotlib.ticker as mticker
-    from matplotlib.patches import FancyArrowPatch
-
-    fig = plt.figure(figsize=(DOUBLE_COL_W, 7.2))
-    gs = gridspec.GridSpec(2, 2, figure=fig, hspace=0.42, wspace=0.34,
-                           height_ratios=[1.15, 1])
-
-    df_nl = _ensure_cats(df_who_nonlab) if df_who_nonlab is not None else None
-    df_l  = _ensure_cats(df_who_lab)    if df_who_lab    is not None else None
-
-    # --- (a) Population pyramid with embedded risk bands (spans 2 cols) ---
-    ax_a = fig.add_subplot(gs[0, :])
-    _add_panel_label(ax_a, "a")
-
-    age_labels_pyr = list(reversed(AGE_LABELS))
-    age_bins_pyr   = list(reversed(list(zip(AGE_BINS[:-1], AGE_BINS[1:]))))
-
-    male_counts, female_counts = [], []
-    male_risk_lo, male_risk_hi = [], []
-    female_risk_lo, female_risk_hi = [], []
-
-    for lo, hi in age_bins_pyr:
-        pass
-
-    # Build pyramid from df_l if available; otherwise use synthetic values
-    rng_pyr = np.random.default_rng(77)
-    if df_l is not None and "gender" in df_l.columns and "age" in df_l.columns:
-        g_raw = df_l["gender"].astype(str).str.strip().str.upper()
-        for lo, hi in age_bins_pyr:
-            mask_a = (df_l["age"] >= lo) & (df_l["age"] < hi)
-            m_sub = df_l[mask_a & g_raw.str.startswith("M")]
-            f_sub = df_l[mask_a & g_raw.str.startswith("F")]
-            male_counts.append(len(m_sub))
-            female_counts.append(len(f_sub))
-            col = "risk_lab" if "risk_lab" in df_l.columns else None
-            if col:
-                m_hi_pct = (m_sub[col] >= 20).mean() * len(m_sub) if len(m_sub) else 0
-                m_lo_pct = ((m_sub[col] >= 10) & (m_sub[col] < 20)).mean() * len(m_sub) if len(m_sub) else 0
-                f_hi_pct = (f_sub[col] >= 20).mean() * len(f_sub) if len(f_sub) else 0
-                f_lo_pct = ((f_sub[col] >= 10) & (f_sub[col] < 20)).mean() * len(f_sub) if len(f_sub) else 0
-                male_risk_hi.append(m_hi_pct)
-                male_risk_lo.append(m_lo_pct)
-                female_risk_hi.append(f_hi_pct)
-                female_risk_lo.append(f_lo_pct)
-            else:
-                male_risk_hi.append(0); male_risk_lo.append(0)
-                female_risk_hi.append(0); female_risk_lo.append(0)
-    else:
-        for _ in age_labels_pyr:
-            m = rng_pyr.integers(300, 1800)
-            f = rng_pyr.integers(280, 1700)
-            male_counts.append(m); female_counts.append(f)
-            male_risk_hi.append(m * rng_pyr.uniform(0.05, 0.3))
-            male_risk_lo.append(m * rng_pyr.uniform(0.05, 0.2))
-            female_risk_hi.append(f * rng_pyr.uniform(0.02, 0.15))
-            female_risk_lo.append(f * rng_pyr.uniform(0.03, 0.12))
-
-    y_pos = np.arange(len(age_labels_pyr))
-    ax_a.barh(y_pos, [-v for v in male_counts], height=0.75,
-              color="#BFDBFE", edgecolor="white", linewidth=0.3, label="Male", zorder=2)
-    ax_a.barh(y_pos, female_counts, height=0.75,
-              color="#FBCFE8", edgecolor="white", linewidth=0.3, label="Female", zorder=2)
-    # Embedded risk bars
-    ax_a.barh(y_pos, [-v for v in male_risk_lo], height=0.75,
-              color=OI_ORANGE, alpha=0.6, zorder=3, label="Male ≥10%")
-    ax_a.barh(y_pos, [-v for v in male_risk_hi], height=0.75,
-              color=OI_VERMILION, alpha=0.8, zorder=4, label="Male ≥20%")
-    ax_a.barh(y_pos, female_risk_lo, height=0.75,
-              color=OI_ORANGE, alpha=0.6, zorder=3)
-    ax_a.barh(y_pos, female_risk_hi, height=0.75,
-              color=OI_VERMILION, alpha=0.8, zorder=4, label="Female ≥20%")
-    ax_a.axvline(0, color="#475569", lw=0.8)
-    ax_a.set_yticks(y_pos)
-    ax_a.set_yticklabels(age_labels_pyr, fontsize=5.5)
-    # Symmetric x-axis label
-    max_count = max(max(male_counts), max(female_counts))
-    ax_a.set_xlim(-max_count * 1.15, max_count * 1.15)
-    ax_a.xaxis.set_major_formatter(
-        mticker.FuncFormatter(lambda x, _: f"{abs(int(x)):,}")
-    )
-    ax_a.text(-max_count * 0.58, len(age_labels_pyr) - 0.2, "Male",
-              fontsize=7, fontweight="bold", color=OI_BLUE, ha="center")
-    ax_a.text( max_count * 0.58, len(age_labels_pyr) - 0.2, "Female",
-              fontsize=7, fontweight="bold", color=OI_PURPLE, ha="center")
-    ax_a.set_xlabel("Participant count")
-    ax_a.set_ylabel("Age group (years)")
-    ax_a.set_title(
-        "Population Pyramid with Embedded CVD Risk Prevalence\n"
-        "(Orange ≥10%; Red ≥20% laboratory-model threshold)",
-        fontsize=7.5, fontweight="bold", pad=4
-    )
-    ax_a.legend(frameon=True, framealpha=0.92, edgecolor="#E2E8F0",
-                fontsize=5, loc="lower right", ncol=2)
-
-    # --- (b) Absolute excess-risk waterfall by sex x age stratum ---
-    ax_b = fig.add_subplot(gs[1, 0])
-    _add_panel_label(ax_b, "b")
-    stratum_keys, excess_10, excess_20 = [], [], []
-    rng_b = np.random.default_rng(55)
-    for sex_s in ["M", "F"]:
-        for lo, hi, label_s in [
-            (40, 55, "40-54"), (55, 65, "55-64"), (65, 75, "65-74")
-        ]:
-            stratum_keys.append(f"{sex_s}/{label_s}")
-            if df_nl is not None and df_l is not None and \
-               "gender" in df_nl.columns and "age" in df_nl.columns:
-                g_nl = df_nl["gender"].astype(str).str.strip().str.upper()
-                g_l  = df_l["gender"].astype(str).str.strip().str.upper()
-                mask_nl = g_nl.str.startswith(sex_s) & (df_nl["age"] >= lo) & (df_nl["age"] < hi)
-                mask_l  = g_l.str.startswith(sex_s)  & (df_l["age"]  >= lo) & (df_l["age"]  < hi)
-                sub_nl = df_nl[mask_nl]
-                sub_l  = df_l[mask_l]
-                r10 = 0.0; r20 = 0.0
-                if len(sub_nl) > 10 and "risk_nonlab" in sub_nl.columns and "risk_lab" in sub_l.columns:
-                    r10 = ((sub_l["risk_lab"] >= 10).mean() - (sub_nl["risk_nonlab"] >= 10).mean()) * 100
-                    r20 = ((sub_l["risk_lab"] >= 20).mean() - (sub_nl["risk_nonlab"] >= 20).mean()) * 100
-                excess_10.append(r10); excess_20.append(r20)
-            else:
-                excess_10.append(rng_b.uniform(-4, 8))
-                excess_20.append(rng_b.uniform(-2, 5))
-
-    x_b = np.arange(len(stratum_keys))
-    w_b = 0.35
-    bars10 = ax_b.bar(x_b - w_b/2, excess_10, w_b, color=OI_ORANGE,
-                      edgecolor="white", linewidth=0.3, label="Excess ≥10% (pp)", alpha=0.88)
-    bars20 = ax_b.bar(x_b + w_b/2, excess_20, w_b, color=OI_VERMILION,
-                      edgecolor="white", linewidth=0.3, label="Excess ≥20% (pp)", alpha=0.88)
-    # Annotate bar tops
-    for xi, (v10, v20) in enumerate(zip(excess_10, excess_20)):
-        ax_b.text(xi - w_b/2, v10 + (0.3 if v10 >= 0 else -0.8),
-                  f"{v10:+.1f}", ha="center", fontsize=4.5, color="#1e293b")
-        ax_b.text(xi + w_b/2, v20 + (0.3 if v20 >= 0 else -0.8),
-                  f"{v20:+.1f}", ha="center", fontsize=4.5, color="#1e293b")
-    ax_b.axhline(0, color="#475569", lw=0.6)
-    ax_b.set_xticks(x_b)
-    ax_b.set_xticklabels(stratum_keys, fontsize=5, rotation=38, ha="right")
-    ax_b.set_ylabel("Excess prevalence: Lab minus Non-lab (pp)")
-    ax_b.set_xlabel("Sex / Age stratum")
-    ax_b.set_title("Absolute Excess-Risk Waterfall\n(Lab model relative to Non-lab model)",
-                   fontsize=7.5, fontweight="bold", pad=4)
-    ax_b.legend(frameon=True, framealpha=0.92, edgecolor="#E2E8F0", fontsize=5.5)
-
-    # --- (c) Attributable-risk decomposition stacked bars ---
-    ax_c = fig.add_subplot(gs[1, 1])
-    _add_panel_label(ax_c, "c")
-    risk_factor_groups = [
-        "Age\n(decade)", "Sex\n(M vs F)", "SBP\n(per SD)", "Smoking",
-        "Diabetes", "BMI\n(per SD)", "Cholesterol\n(per SD)"
-    ]
-    # PAF estimates from WHO literature (approximate, for illustrative decomposition)
-    paf_nonlab = np.array([0.22, 0.15, 0.18, 0.12, 0.08, 0.14, 0.00])
-    paf_lab    = np.array([0.20, 0.13, 0.17, 0.11, 0.09, 0.13, 0.09])
-    paf_nonlab /= paf_nonlab.sum(); paf_lab /= paf_lab.sum()
-
-    bar_colors = [OI_BLUE, OI_PURPLE, OI_ORANGE, OI_VERMILION,
-                  OI_GREEN, OI_SKY, nature_purple[2]]
-    x_c  = np.array([0, 0.55])
-    btm_nl = 0.0; btm_l = 0.0
-    for i, (grp, pnl, pl, clr) in enumerate(
-        zip(risk_factor_groups, paf_nonlab, paf_lab, bar_colors)
-    ):
-        ax_c.bar(x_c[0], pnl, bottom=btm_nl, width=0.38, color=clr,
-                 edgecolor="white", linewidth=0.4, label=grp, zorder=3)
-        ax_c.bar(x_c[1], pl,  bottom=btm_l,  width=0.38, color=clr,
-                 edgecolor="white", linewidth=0.4, zorder=3)
-        mid_nl = btm_nl + pnl / 2
-        mid_l  = btm_l  + pl  / 2
-        if pnl > 0.04:
-            ax_c.text(x_c[0], mid_nl, f"{pnl*100:.0f}%",
-                      ha="center", va="center", fontsize=4.5, color="white",
-                      fontweight="bold")
-        if pl > 0.04:
-            ax_c.text(x_c[1], mid_l, f"{pl*100:.0f}%",
-                      ha="center", va="center", fontsize=4.5, color="white",
-                      fontweight="bold")
-        btm_nl += pnl; btm_l += pl
-
-    ax_c.set_xticks(x_c)
-    ax_c.set_xticklabels(["Non-lab\nModel", "Lab\nModel"], fontsize=6.5)
-    ax_c.set_ylabel("Proportion of attributable CVD risk")
-    ax_c.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=1.0))
-    ax_c.set_title("Attributable-Risk Decomposition\n(Relative contribution by risk-factor domain)",
-                   fontsize=7.5, fontweight="bold", pad=4)
-    ax_c.legend(frameon=True, framealpha=0.92, edgecolor="#E2E8F0",
-                fontsize=5, loc="lower right", ncol=1, reverse=True)
-
-    fig.suptitle(
-        "Population-Level Epidemiological CVD Risk Burden\n"
-        "(a) Pyramid with risk prevalence  (b) Excess-risk waterfall  "
-        "(c) Attributable-risk decomposition",
-        fontsize=8.5, fontweight="bold", y=1.03
-    )
-    _save_figure(fig, "Fig10_epidemiological_burden", out_dir)
-    return fig
-
-
-# ─────────────────────────────────────────────────────────────────────
 # STREAMLIT RENDER FUNCTION
 # ─────────────────────────────────────────────────────────────────────
 def render_journal_figures(datasets):
@@ -2720,10 +2347,10 @@ def render_journal_figures(datasets):
     _apply_nature_rc()
 
     # --- Load data ---
-    df_nonlab    = datasets.get("nonlab")
-    df_lab       = datasets.get("lab")
+    df_nonlab = datasets.get("nonlab")
+    df_lab = datasets.get("lab")
     df_who_nonlab = datasets.get("who_nonlab")
-    df_who_lab   = datasets.get("who_lab")
+    df_who_lab = datasets.get("who_lab")
 
     if df_who_lab is None and df_who_nonlab is None:
         st.error("No data loaded. Please ensure WHO-domain datasets are available.")
@@ -2734,7 +2361,6 @@ def render_journal_figures(datasets):
                            "cvd", "resource", "images", "Journal")
 
     st.info(f"Vector figures (PDF + SVG) will be saved to: `{out_dir}`")
-
 
     # ═══════════════════════════════════════════════════════════════
     # DISPLAY ITEM INVENTORY
@@ -2893,22 +2519,6 @@ def render_journal_figures(datasets):
     plt.close(fig7)
 
     # ═══════════════════════════════════════════════════════════════
-    # FIGURE 8 — FOREST PLOT
-    # ═══════════════════════════════════════════════════════════════
-    st.markdown("---")
-    st.subheader("Figure 8 — Multivariate Forest Plot: Risk-Factor Effect Sizes")
-    st.caption(
-        "Standardised regression coefficients (β) with 95% confidence intervals "
-        "for all clinical predictors in the non-laboratory (panel **a**) and "
-        "laboratory (panel **b**) WHO CVD risk models. "
-        "Asterisks denote significance: * p<0.05, ** p<0.01, *** p<0.001."
-    )
-    with st.spinner("Generating Figure 8..."):
-        fig8 = _fig8_forest_plot(df_who_nonlab, df_who_lab, out_dir)
-    st.pyplot(fig8)
-    plt.close(fig8)
-
-    # ═══════════════════════════════════════════════════════════════
     # FIGURE 9 — MULTI-STRATUM RISK CALIBRATION
     # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
@@ -2923,23 +2533,6 @@ def render_journal_figures(datasets):
         fig9 = _fig9_risk_calibration(df_who_nonlab, df_who_lab, out_dir)
     st.pyplot(fig9)
     plt.close(fig9)
-
-    # ═══════════════════════════════════════════════════════════════
-    # FIGURE 10 — POPULATION EPIDEMIOLOGICAL BURDEN
-    # ═══════════════════════════════════════════════════════════════
-    st.markdown("---")
-    st.subheader("Figure 10 — Population-Level Epidemiological CVD Risk Burden")
-    st.caption(
-        "**(a)** Population pyramid with embedded dual-band CVD risk prevalence "
-        "(≥10% orange, ≥20% red) per age-sex stratum. "
-        "**(b)** Absolute excess-risk waterfall showing model divergence. "
-        "**(c)** Attributable-risk decomposition by risk-factor domain "
-        "(both models side-by-side as 100% stacked bars)."
-    )
-    with st.spinner("Generating Figure 10..."):
-        fig10 = _fig10_epidemiological_burden(df_who_nonlab, df_who_lab, out_dir)
-    st.pyplot(fig10)
-    plt.close(fig10)
 
     # ═══════════════════════════════════════════════════════════════
     # TABLE 1
@@ -2986,9 +2579,11 @@ def render_journal_figures(datasets):
     st.markdown("---")
     st.subheader("Supplementary Information (referenced in-text)")
 
-    st.markdown("The following items are designated for **Supplementary Information** to remain within the 8 display-item limit:")
+    st.markdown(
+        "The following items are designated for **Supplementary Information** to remain within the 8 display-item limit:")
 
-    supp_tabs = st.tabs(["S1 Literature", "S2 Site Stats", "S3 Crosstab", "S4 Missed Profiles", "Fig S3 Prevelance", "Fig S4 Trajectories", "Fig S5 Interactions"])
+    supp_tabs = st.tabs(["S1 Literature", "S2 Site Stats", "S3 Crosstab", "S4 Missed Profiles", "Fig S3 Prevelance",
+                         "Fig S4 Trajectories", "Fig S5 Interactions"])
 
     with supp_tabs[0]:
         st.markdown("**Supplementary Table S1:** Comparison with prior literature (SEAR-D validation)")
@@ -3049,7 +2644,7 @@ def render_journal_figures(datasets):
                         data=fh.read(),
                         file_name=f,
                         mime="application/pdf" if f.endswith(".pdf")
-                             else "image/svg+xml",
+                        else "image/svg+xml",
                         key=f"dl_{f}"
                     )
         else:

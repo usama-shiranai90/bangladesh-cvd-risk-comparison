@@ -3127,7 +3127,7 @@ def render_rq0(df_merged, datasets=None, selected_dataset_name=None):
                     # Configuration
                     CATS = ['<5%', '5% to <10%', '10% to <20%', '20% to <30%', '≥30%']
                     
-                    # Colors (SciencePlots / Nature)
+                    # Colors (SciencePlots / )
                     COLOR_LAB_BAR = "#0C5DA5"      # Blue
                     COLOR_NONLAB_BAR = "#845B97"   # Purple
                     

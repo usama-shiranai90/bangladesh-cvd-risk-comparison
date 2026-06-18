@@ -49,10 +49,10 @@ def setup_scienceplots_style():
 SCIENCEPLOTS_AVAILABLE = setup_scienceplots_style()
 
 # =============================================================================
-# COLOR PALETTES (Nature-inspired)
+# COLOR PALETTES (-inspired)
 # =============================================================================
 
-# Primary colors (Nature journal style)
+# Primary colors (Journal style)
 NATURE_COLORS = {
     'blue': '#0C5DA5',
     'orange': '#FF9500',
@@ -112,7 +112,7 @@ def get_figure_and_ax(figsize=(10, 6), nrows=1, ncols=1, **kwargs):
 
 def apply_nature_style(ax, title=None, xlabel=None, ylabel=None, legend=True, grid=True):
     """
-    Apply Nature journal-like styling to an axis.
+    Apply Journal-like styling to an axis.
     
     Args:
         ax: Matplotlib axis

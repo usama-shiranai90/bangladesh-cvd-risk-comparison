@@ -1,11 +1,11 @@
 """
 figure_generators.py
 ====================
-Programmatically creates all six Nature-compliant journal figures for the
+Programmatically creates all six -compliant journal figures for the
 CVD risk manuscript.  Every figure is generated fresh from the real data —
 no pre-existing image files are used.
 
-All figures conform strictly to Nature Reviews Artwork Guidelines via
+All figures conform strictly to  Reviews Artwork Guidelines via
 the shared `utils.nature_style` module.
 
 Public API
