@@ -1,4 +1,4 @@
-# BMJ HCI Journal Figures and Tables Plan
+# Manuscript Figures and Tables Plan
 
 **Source dataset:** `cvd/resource/analyzed/v2.30`  
 **Study:** Comparing laboratory and non-laboratory WHO models for estimating ten-year cardiovascular disease risk in low-resource primary care settings in Bangladesh.
@@ -119,6 +119,6 @@
 ## Quality Check
 
 - Values in this file were validated against the v2.30 analytic dataset.
-- No participant-level dataset was copied into the BMJ publication folder.
+- No participant-level dataset was copied into the publication repository.
 - Stale placeholder values and older cohort numbers have been replaced.
 

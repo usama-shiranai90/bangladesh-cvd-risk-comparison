@@ -96,7 +96,7 @@ RISK_COLORS = {
 
 
 def _apply_nature_rc():
-    """Configure matplotlib rcParams for full  artwork compliance."""
+    """Configure matplotlib rcParams for standard publication artwork compliance."""
     plt.rcParams.update({
         "font.family": "sans-serif",
         "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans"],

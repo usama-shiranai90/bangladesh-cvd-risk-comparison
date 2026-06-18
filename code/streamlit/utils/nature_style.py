@@ -2,7 +2,7 @@
 nature_style.py
 ===============
 Reusable Matplotlib configurator that strictly enforces the
- Reviews / Scientific Reports Artwork Guidelines.
+standard publication artwork guidelines.
 
 Usage
 -----

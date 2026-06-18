@@ -1,6 +1,6 @@
 # Comparing Laboratory and Non-Laboratory WHO CVD Risk Models in Bangladesh
 
-**Target journal:** BMJ Health & Care Informatics  
+**Target venue:** Peer-reviewed journal  
 **Source dataset:** `cvd/resource/analyzed/v2.30`  
 
 
@@ -195,10 +195,10 @@ At the ≥20% pharmacotherapy threshold, sensitivity was **22.6%** and specifici
 
 ---
 
-## Interpretation for BMJ HCI Manuscript
+## Interpretation for Manuscript
 
 The v2.30 dataset supports the main manuscript conclusion: the non-laboratory WHO chart preserves rank ordering reasonably well but materially under-identifies adults who cross clinically actionable laboratory-based risk thresholds. The discrepancy is most important at the >=20% threshold, where laboratory-based assessment identifies **177 (10.0%)** high-risk adults compared with **49 (2.8%)** by the non-laboratory chart.
 
 ## Reproducibility Note
 
-All values in this report were regenerated from `cvd/resource/analyzed/v2.30`. The BMJ publication folder contains only aggregate outputs, figures, tables, and code; it does not contain participant-level data.
+All values in this report were regenerated from `cvd/resource/analyzed/v2.30`. The publication repository contains only aggregate outputs, figures, tables, and code; it does not contain participant-level data.

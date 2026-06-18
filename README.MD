@@ -7,7 +7,7 @@ Repository for the study:
 ## Contents
 
 - `code/` - Analysis scripts and Streamlit source code used to calculate WHO CVD risk, compare laboratory and non-laboratory models, and generate publication outputs.
-- `figures/` - Manuscript figures prepared for the BMJ journal submission.
+- `figures/` - Manuscript figures prepared for the manuscript submission.
 - `tables/` - Aggregate manuscript tables and summary CSV/XLSX outputs.
 - `results/` - Generated aggregate outputs, manuscript drafts, and findings reports.
 - `data/` - Placeholder only. Raw, cleaned, imputed, or participant-level datasets are intentionally excluded.
@@ -32,7 +32,7 @@ The current shared outputs are already included as aggregate tables, summary res
 
 ## Data Availability
 
-No participant-level data are included in this repository. See `DATA_AVAILABILITY.md` for the repository-level data sharing note to adapt for the final BMJ submission.
+No participant-level data are included in this repository. See `DATA_AVAILABILITY.md` for the repository-level data sharing note to adapt for the final submission.
 
 ## Citation
 
