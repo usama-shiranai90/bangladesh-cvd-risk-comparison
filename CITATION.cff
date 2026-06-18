@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this repository, please cite the associated journal article."
+title: "Comparing Laboratory and Non-Laboratory WHO Models for Estimating Ten-Year Cardiovascular Disease Risk in Low-Resource Primary Care Settings in Bangladesh"
+authors:
+  - family-names: "Bukhari"
+    given-names: "Syed Usama Hussain Shah"
+  - family-names: "Chowdhury"
+    given-names: "Md Jobayer Hossain"
+  - family-names: "Wahiduzzaman"
+    given-names: "Mohammad"
+  - family-names: "Nakashima"
+    given-names: "Naoki"
+  - family-names: "Ahmed"
+    given-names: "Ashir"
+license: "MIT"
+version: "1.0.0"
+date-released: "2026-06-18"

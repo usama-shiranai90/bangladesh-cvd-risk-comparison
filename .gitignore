@@ -1,0 +1,35 @@
+# Local study data are intentionally excluded from the publication repository.
+data/raw/*
+data/processed/*
+data/interim/*
+data/external/*
+!data/README.md
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Prevent accidental commits of row-level spreadsheet exports.
+*.csv
+*.tsv
+*.xlsx
+*.xls
+!tables/*.csv
+!tables/*.xlsx
+
+# Secrets and local environment files.
+.env
+.env.*
+
+# Python/cache artifacts.
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# OS/editor files.
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

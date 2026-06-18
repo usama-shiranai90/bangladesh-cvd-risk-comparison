@@ -1,0 +1,16 @@
+branca
+folium
+geopandas
+ipython
+matplotlib
+numpy
+openpyxl
+pandas
+plotly
+scienceplots
+scikit-learn
+scipy
+seaborn
+statsmodels
+streamlit
+xgboost
