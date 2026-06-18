@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 from utils.helpers import get_risk_cat, RISK_PALETTE
 
-# Try importing CVD library
 try:
     from cvd.library import feature_engineering as fe
     from cvd.library import risk_data as rd
@@ -13,6 +12,7 @@ except ImportError as e:
     rd = None
 
 def render_calculator():
+    """Render calculator."""
     st.title("❤️ Individual Risk Calculator")
     st.markdown("Estimate 10-year cardiovascular disease risk using WHO charts for South Asia (SEAR D).")
     
@@ -37,7 +37,6 @@ def render_calculator():
             diab_in = "with_diabetes" if is_diab == "Yes" else "no_diabetes"
 
     if st.button("Calculate Risk", type="primary"):
-        # Fix SBP labels
         fe.SBP_LABELS = ["<120", "120-139", "140-159", "160-179", ">="]
         
         demo_df = pd.DataFrame([{
@@ -48,17 +47,13 @@ def render_calculator():
         }])
         
      
-
-        # st.info(rd.risk_data['non_lab']['men'])
         demo_df = fe.prepare_who_analysis_df(demo_df)
         demo_df = fe.add_who_risks(demo_df, rd.risk_data)
         res = demo_df.iloc[0]
-        # st.dataframe(res)
         col_res1, col_res2 = st.columns(2)
         with col_res1:
             r = res['risk_nonlab']
             if pd.notna(r):
-                # Map color
                 cat = get_risk_cat(r)
                 c = RISK_PALETTE.get(cat, "#333")
                 st.markdown(f"""

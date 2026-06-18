@@ -1,6 +1,7 @@
 import streamlit as st
 
 def render_browser(df_merged):
+    """Render browser."""
     st.title("📂 Data Browser")
     st.info("Explore the underlying dataset for Bangladesh")
     

@@ -23,7 +23,6 @@ from utils.risk_engines import (
     add_all_risk_scores, compute_discordance_matrix,
 )
 
-# ─────────────────────────  Color helpers  ─────────────────────────
 MODEL_COLORS = {
     "WHO Non-Lab": "#2a9d8f",
     "WHO Lab": "#264653",
@@ -60,6 +59,7 @@ def _card(label: str, value: str, color: str, subtitle: str = ""):
 
 
 def _section_header(icon: str, title: str, desc: str = ""):
+    """Section header."""
     st.markdown(f"""
     <div style='margin:28px 0 12px;'>
         <h3 style='margin:0;'>{icon} {title}</h3>
@@ -67,19 +67,8 @@ def _section_header(icon: str, title: str, desc: str = ""):
     </div>""", unsafe_allow_html=True)
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# MAIN RENDER FUNCTION
-# ═══════════════════════════════════════════════════════════════════════════
-
 def render_multi_risk(datasets: dict):
-    """
-    Main entry point for the Multi-Model Risk Analysis page.
-
-    Parameters
-    ----------
-    datasets : dict with keys 'who_nonlab', 'who_lab', 'paired', etc.
-    """
-    # ── Page header ──
+    """Main entry point for the Multi-Model Risk Analysis page."""
     st.markdown("""
     <div style='background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);
                 padding:32px 28px;border-radius:16px;margin-bottom:24px;
@@ -92,7 +81,6 @@ def render_multi_risk(datasets: dict):
         </p>
     </div>""", unsafe_allow_html=True)
 
-    # ── Tabs ──
     tab_calc, tab_batch, tab_compare, tab_subgroup, tab_globo, tab_tables = st.tabs([
         "🧮 Individual Calculator",
         "📊 Batch Computation",
@@ -102,48 +90,27 @@ def render_multi_risk(datasets: dict):
         "📋 Publication Tables",
     ])
 
-    # ──────────────────────────────────────────────────────────────────
-    # TAB 1 — Individual Calculator
-    # ──────────────────────────────────────────────────────────────────
     with tab_calc:
         _render_individual_calculator()
 
-    # ──────────────────────────────────────────────────────────────────
-    # TAB 2 — Batch Computation on Dataset
-    # ──────────────────────────────────────────────────────────────────
     with tab_batch:
         _render_batch_computation(datasets)
 
-    # ──────────────────────────────────────────────────────────────────
-    # TAB 3 — Model Comparison & Discordance
-    # ──────────────────────────────────────────────────────────────────
     with tab_compare:
         _render_model_comparison(datasets)
 
-    # ──────────────────────────────────────────────────────────────────
-    # TAB 4 — Subgroup Deep-Dive
-    # ──────────────────────────────────────────────────────────────────
     with tab_subgroup:
         _render_subgroup_analysis(datasets)
 
-    # ──────────────────────────────────────────────────────────────────
-    # TAB 5 — Globorisk Focus
-    # ──────────────────────────────────────────────────────────────────
     with tab_globo:
         _render_globorisk_focus(datasets)
 
-    # ──────────────────────────────────────────────────────────────────
-    # TAB 6 — Publication Tables
-    # ──────────────────────────────────────────────────────────────────
     with tab_tables:
         _render_publication_tables(datasets)
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# TAB 1 — Individual Calculator
-# ═══════════════════════════════════════════════════════════════════════════
-
 def _render_individual_calculator():
+    """Render individual calculator."""
     _section_header("🧮", "Individual Multi-Model Risk Calculator",
                     "Compute 10-year CVD risk side-by-side across all four models.")
 
@@ -170,26 +137,22 @@ def _render_individual_calculator():
         diab_bool = diab_in == "Yes"
 
         results = {}
-        # FRS
         if has_lab and tc_in and hdl_in:
             results["FRS Lab"] = compute_frs_lab(
                 age_in, sex_key, sbp_in, tc_in, hdl_in, smoke_bool, diab_bool)
         results["FRS Non-Lab"] = compute_frs_nonlab(
             age_in, sex_key, sbp_in, bmi_in, smoke_bool, diab_bool)
-        # SCORE2-AP
         results["SCORE2-AP"] = compute_score2_ap(
             age_in, sex_key, sbp_in,
             tc_in if has_lab else None,
             hdl_in if has_lab else None,
             bmi_in, smoke_bool, diab_bool)
-        # Globorisk
         results["Globorisk"] = compute_globorisk(
             age_in, sex_key, sbp_in, bmi_in,
             tc_in if has_lab else None,
             hdl_in if has_lab else None,
             smoke_bool, diab_bool)
 
-        # Display results
         st.markdown("### Results")
         cols = st.columns(len(results))
         for i, (name, val) in enumerate(results.items()):
@@ -203,7 +166,6 @@ def _render_individual_calculator():
                     st.markdown(_card(name, "N/A", "#6c757d", "Out of range"),
                                 unsafe_allow_html=True)
 
-        # Radar comparison chart
         model_names = list(results.keys())
         model_vals = [v if v is not None else 0 for v in results.values()]
         fig = go.Figure()
@@ -226,7 +188,6 @@ def _render_individual_calculator():
         )
         st.plotly_chart(fig, use_container_width=True)
 
-        # Interpretation note
         st.info("""
         **Interpretation Notes:**
         - **FRS** was developed on US populations (Framingham cohort) and tends to **overestimate** risk
@@ -237,10 +198,6 @@ def _render_individual_calculator():
         """)
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# TAB 2 — Batch Computation
-# ═══════════════════════════════════════════════════════════════════════════
-
 @st.cache_data(show_spinner="Computing risk scores on full dataset…")
 def _compute_batch(df: pd.DataFrame) -> pd.DataFrame:
     """Cache the expensive row-wise computation."""
@@ -248,10 +205,10 @@ def _compute_batch(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _render_batch_computation(datasets: dict):
+    """Render batch computation."""
     _section_header("📊", "Batch Risk Computation on PHC Data",
                     "Apply FRS, SCORE2-AP, and Globorisk to the entire dataset and compare with existing WHO scores.")
 
-    # Dataset selector
     ds_opts = {k: v for k, v in datasets.items() if v is not None}
     if not ds_opts:
         st.warning("No datasets available. Load data from the sidebar first.")
@@ -264,11 +221,9 @@ def _render_batch_computation(datasets: dict):
         st.warning("Selected dataset is empty.")
         return
 
-    # Run the batch computation
     with st.spinner("Computing FRS, SCORE2-AP, Globorisk on dataset…"):
         df = _compute_batch(df_raw)
 
-    # ── Summary KPIs ──
     _section_header("📈", "Summary Statistics")
 
     risk_cols = {
@@ -278,7 +233,6 @@ def _render_batch_computation(datasets: dict):
         "Globorisk": "risk_globorisk",
     }
 
-    # Add WHO Lab and FRS Lab if available
     if "risk_lab" in df.columns and df["risk_lab"].notna().sum() > 0:
         risk_cols["WHO Lab"] = "risk_lab"
     if "risk_frs_lab" in df.columns and df["risk_frs_lab"].notna().sum() > 0:
@@ -302,10 +256,8 @@ def _render_batch_computation(datasets: dict):
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ── Distribution Comparison ──
     _section_header("📊", "Risk Distribution Comparison")
 
-    # Build long-form df for violin/box
     plot_data = []
     for label, col in risk_cols.items():
         if col in df.columns:
@@ -337,7 +289,6 @@ def _render_batch_computation(datasets: dict):
                           legend=dict(orientation="h", y=1.08, x=0.5, xanchor="center"))
         st.plotly_chart(fig, use_container_width=True)
 
-    # ── Descriptive table ──
     with st.expander("📋 Descriptive Statistics Table", expanded=False):
         desc_rows = []
         for label, col in risk_cols.items():
@@ -358,7 +309,6 @@ def _render_batch_computation(datasets: dict):
         if desc_rows:
             st.dataframe(pd.DataFrame(desc_rows).set_index("Model"), use_container_width=True)
 
-    # ── Category Distribution ──
     _section_header("🏷️", "Risk Category Distribution")
     cat_cols = {
         "WHO Non-Lab": "risk_nonlab_cat",
@@ -395,11 +345,8 @@ def _render_batch_computation(datasets: dict):
         st.plotly_chart(fig, use_container_width=True)
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# TAB 3 — Model Comparison & Discordance
-# ═══════════════════════════════════════════════════════════════════════════
-
 def _render_model_comparison(datasets: dict):
+    """Render model comparison."""
     _section_header("⚖️", "Model Comparison & Discordance Analysis",
                     "Head-to-head comparison of multi-model risk estimates against WHO/ISH reference.")
 
@@ -416,7 +363,6 @@ def _render_model_comparison(datasets: dict):
 
     df = _compute_batch(df_raw)
 
-    # ── Pairwise Scatter Plots ──
     _section_header("🔬", "Pairwise Risk Scatter (vs. WHO Non-Lab)")
 
     compare_models = {
@@ -436,11 +382,9 @@ def _render_model_comparison(datasets: dict):
                 fig = px.scatter(valid, x="risk_nonlab", y=col,
                                  opacity=0.25,
                                  color_discrete_sequence=[MODEL_COLORS.get(label, "#333")])
-                # Add identity line
                 max_val = max(valid["risk_nonlab"].max(), valid[col].max())
                 fig.add_shape(type="line", x0=0, y0=0, x1=max_val, y1=max_val,
                               line=dict(color="red", dash="dash", width=1.5))
-                # Correlation
                 corr = valid["risk_nonlab"].corr(valid[col])
                 fig.update_layout(
                     title=f"{label} (ρ={corr:.3f})",
@@ -453,7 +397,6 @@ def _render_model_comparison(datasets: dict):
                 )
                 st.plotly_chart(fig, use_container_width=True)
 
-    # ── Bland-Altman Plots ──
     _section_header("📐", "Bland-Altman Analysis (Difference vs. Mean)")
 
     ba_cols = st.columns(3)
@@ -475,10 +418,8 @@ def _render_model_comparison(datasets: dict):
                     x=mean_val, y=diff_val, mode='markers',
                     marker=dict(size=3, color=MODEL_COLORS.get(label, "#333"), opacity=0.3),
                     name="Difference"))
-                # Mean line
                 fig.add_hline(y=mean_diff, line_dash="solid", line_color="black",
                               annotation_text=f"Mean: {mean_diff:.2f}")
-                # ±1.96 SD
                 fig.add_hline(y=mean_diff + 1.96 * sd_diff, line_dash="dash",
                               line_color="red",
                               annotation_text=f"+1.96SD: {mean_diff + 1.96*sd_diff:.1f}")
@@ -498,7 +439,6 @@ def _render_model_comparison(datasets: dict):
                 )
                 st.plotly_chart(fig, use_container_width=True)
 
-    # ── Discordance Matrix at threshold ──
     _section_header("🔀", "Discordance at Clinical Thresholds")
 
     threshold = st.select_slider("High-risk threshold (%)",
@@ -519,7 +459,6 @@ def _render_model_comparison(datasets: dict):
                 if result["n_valid"] > 0:
                     st.markdown(f"**{pair_label}**")
 
-                    # Mini confusion matrix
                     model_name = pair_label.split(" vs ")[0]
                     cm = pd.DataFrame(
                         [[result["agree_high"], result["a_low_b_high"]],
@@ -537,7 +476,6 @@ def _render_model_comparison(datasets: dict):
                 else:
                     st.info(f"No valid pairs for {pair_label}")
 
-    # ── Summary interpretation ──
     with st.expander("📝 Interpretation Guide", expanded=False):
         st.markdown("""
         **Key takeaways from multi-model comparison:**
@@ -552,11 +490,8 @@ def _render_model_comparison(datasets: dict):
         """)
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# TAB 4 — Subgroup Analysis
-# ═══════════════════════════════════════════════════════════════════════════
-
 def _render_subgroup_analysis(datasets: dict):
+    """Render subgroup analysis."""
     _section_header("👥", "Subgroup-Stratified Risk Comparison",
                     "Examine how different models perform across sex, age, smoking, and diabetes strata.")
 
@@ -579,7 +514,6 @@ def _render_subgroup_analysis(datasets: dict):
         "Globorisk": "risk_globorisk",
     }
 
-    # ── By Sex ──
     _section_header("⚤", "Mean Risk by Sex")
     sex_col = "gender_key" if "gender_key" in df.columns else "gender"
     if sex_col in df.columns:
@@ -607,7 +541,6 @@ def _render_subgroup_analysis(datasets: dict):
                               legend=dict(orientation="h", y=1.06, x=0.5, xanchor="center"))
             st.plotly_chart(fig, use_container_width=True)
 
-    # ── By Age Band ──
     _section_header("📅", "Mean Risk by Age Band")
     if "age_band" in df.columns:
         age_data = []
@@ -633,7 +566,6 @@ def _render_subgroup_analysis(datasets: dict):
                               legend=dict(orientation="h", y=1.06, x=0.5, xanchor="center"))
             st.plotly_chart(fig, use_container_width=True)
 
-    # ── By Smoking ──
     _section_header("🚬", "Mean Risk by Smoking Status")
     smoke_col = "smoker_key" if "smoker_key" in df.columns else "smoker"
     if smoke_col in df.columns:
@@ -661,7 +593,6 @@ def _render_subgroup_analysis(datasets: dict):
                               legend=dict(orientation="h", y=1.06, x=0.5, xanchor="center"))
             st.plotly_chart(fig, use_container_width=True)
 
-    # ── By Diabetes ──
     _section_header("🩸", "Mean Risk by Diabetes Status")
     diab_col = "has_diabetes"
     if diab_col in df.columns:
@@ -690,7 +621,6 @@ def _render_subgroup_analysis(datasets: dict):
                               legend=dict(orientation="h", y=1.06, x=0.5, xanchor="center"))
             st.plotly_chart(fig, use_container_width=True)
 
-    # ── High-Risk Reclassification Table ──
     _section_header("📊", "High-Risk Reclassification Across Models (≥20% threshold)")
 
     if all(c in df.columns for c in ["risk_nonlab", "risk_frs_nonlab", "risk_score2_ap", "risk_globorisk"]):
@@ -719,11 +649,8 @@ def _render_subgroup_analysis(datasets: dict):
         st.dataframe(pd.DataFrame(reclass_data).set_index("Model"), use_container_width=True)
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# TAB 5 — Globorisk Focus
-# ═══════════════════════════════════════════════════════════════════════════
-
 def _render_globorisk_focus(datasets: dict):
+    """Render globorisk focus."""
     _section_header("🌍", "Globorisk — Country-Specific Analysis",
                     "Bangladesh-calibrated model with postmenopausal adjustment. "
                     "Prior PHC-linked studies show Globorisk flags more high-risk among postmenopausal women.")
@@ -742,7 +669,6 @@ def _render_globorisk_focus(datasets: dict):
 
     sex_col = "gender_key" if "gender_key" in df.columns else "gender"
 
-    # ── Postmenopausal vs. Premenopausal Women ──
     _section_header("👩‍🦳", "Postmenopausal Women (age ≥ 50) vs. Younger Women")
 
     women = df[df[sex_col] == "women"].copy()
@@ -811,7 +737,6 @@ def _render_globorisk_focus(datasets: dict):
         with st.expander("📋 Detailed Table", expanded=False):
             st.dataframe(df_meno.set_index(["Group", "Model"]), use_container_width=True)
 
-    # ── Globorisk vs. WHO — Women only scatter ──
     _section_header("🔍", "Globorisk vs. WHO (Women Only)")
 
     if "risk_globorisk" in women.columns and "risk_nonlab" in women.columns:
@@ -829,7 +754,6 @@ def _render_globorisk_focus(datasets: dict):
         max_val = max(valid_w["risk_nonlab"].max(), valid_w["risk_globorisk"].max())
         fig.add_shape(type="line", x0=0, y0=0, x1=max_val, y1=max_val,
                       line=dict(color="gray", dash="dash", width=1.5))
-        # Add threshold lines
         fig.add_hline(y=20, line_dash="dot", line_color="#d62828", opacity=0.5,
                       annotation_text="Globorisk 20%")
         fig.add_vline(x=20, line_dash="dot", line_color="#d62828", opacity=0.5,
@@ -846,7 +770,6 @@ def _render_globorisk_focus(datasets: dict):
         )
         st.plotly_chart(fig, use_container_width=True)
 
-    # ── Discordance specifically for postmenopausal ──
     _section_header("📊", "Discordance: Globorisk vs. WHO — Postmenopausal Women")
 
     postmeno = women[women["age"] >= 50]
@@ -865,7 +788,6 @@ def _render_globorisk_focus(datasets: dict):
                 with c4:
                     st.metric("Only WHO Flags", result['a_low_b_high'])
 
-    # ── Key findings box ──
     st.markdown("""
     <div style='background:linear-gradient(135deg,#0f3460,#1a1a2e);
                 padding:24px;border-radius:14px;margin-top:20px;
@@ -882,22 +804,8 @@ def _render_globorisk_focus(datasets: dict):
     </div>""", unsafe_allow_html=True)
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# TAB 6 — Publication Tables
-# ═══════════════════════════════════════════════════════════════════════════
-
 def _render_publication_tables(datasets: dict):
-    """
-    Comprehensive publication-ready tables:
-      Table 1  — Participant characteristics (overall + by sex)
-      Table 2A — Lab vs Non-lab risk agreement by sex (Males)
-      Table 2B — Lab vs Non-lab risk agreement by sex (Females)
-      Table 3  — All-category agreement matrices (all model pairs)
-      Table 4  — Pairwise Cohen's κ summary
-      Table 5  — Reclassification table (each model vs WHO, all 5 categories)
-      Table 6  — Sex × age-band mean risk (all four models)
-      Table 7  — Net Reclassification Index (NRI) summary
-    """
+    """Comprehensive publication-ready tables:"""
     _section_header("📋", "Publication-Ready Tables",
                     "Comprehensive structured tables suitable for a manuscript or report.")
 
@@ -915,14 +823,20 @@ def _render_publication_tables(datasets: dict):
     with st.spinner("Computing all risk scores…"):
         df = _compute_batch(df_raw)
 
-    # Normalise sex column
     sex_col = "gender_key" if "gender_key" in df.columns else "gender"
 
-    # ── helper ──────────────────────────────────────────────────────────────
-    def _pct(n, total):          return f"{n:,} ({n/total*100:.1f}%)"
-    def _mean_sd(s):             return f"{s.mean():.1f} ± {s.std():.1f}"
-    def _median_iqr(s):          return f"{s.median():.1f} ({s.quantile(.25):.1f}–{s.quantile(.75):.1f})"
-    def _n_miss(s, total):       return f"{s.isna().sum():,} ({s.isna().mean()*100:.1f}%)"
+    def _pct(n, total):
+        """Pct."""
+        return f"{n:,} ({n/total*100:.1f}%)"
+    def _mean_sd(s):
+        """Mean sd."""
+        return f"{s.mean():.1f} ± {s.std():.1f}"
+    def _median_iqr(s):
+        """Median iqr."""
+        return f"{s.median():.1f} ({s.quantile(.25):.1f}–{s.quantile(.75):.1f})"
+    def _n_miss(s, total):
+        """N miss."""
+        return f"{s.isna().sum():,} ({s.isna().mean()*100:.1f}%)"
 
     def _kappa_pair(df_k, col_a, col_b):
         """Cohen's κ on categorised 5-band labels."""
@@ -946,7 +860,6 @@ def _render_publication_tables(datasets: dict):
     if "risk_lab" in df.columns and df["risk_lab"].notna().any():
         ALL_RISK["WHO Lab"] = ("risk_lab", "risk_lab_cat")
 
-    # Make categorised columns where missing
     for label, (rcol, catcol) in ALL_RISK.items():
         if rcol in df.columns and catcol not in df.columns:
             df[catcol] = pd.cut(
@@ -955,9 +868,6 @@ def _render_publication_tables(datasets: dict):
 
     st.markdown("---")
 
-    # ════════════════════════════════════════════════════════════════════════
-    # TABLE 1 — PARTICIPANT CHARACTERISTICS
-    # ════════════════════════════════════════════════════════════════════════
     st.markdown("""
     <div style='background:linear-gradient(135deg,#1a1a2e,#16213e);padding:20px 24px 14px;
                 border-radius:12px;margin-bottom:16px;'>
@@ -976,6 +886,7 @@ def _render_publication_tables(datasets: dict):
     N_f      = len(women_df)
 
     def _row(label, overall_val, men_val, women_val, p_val=""):
+        """Row."""
         return {"Characteristic": label,
                 f"Overall (N={N:,})": overall_val,
                 f"Men (n={N_m:,})": men_val,
@@ -985,6 +896,7 @@ def _render_publication_tables(datasets: dict):
     from scipy import stats as _stats
 
     def _chi2_p(col, val_a, val_b):
+        """Chi2 p."""
         try:
             ct = pd.crosstab(df[col].map({val_a: val_a, val_b: val_b}),
                              df[sex_col].map({"men": "men", "women": "women"})).values
@@ -994,6 +906,7 @@ def _render_publication_tables(datasets: dict):
             return ""
 
     def _mw_p(col):
+        """Mw p."""
         try:
             s_m = men_df[col].dropna()
             s_f = women_df[col].dropna()
@@ -1004,14 +917,12 @@ def _render_publication_tables(datasets: dict):
 
     t1_rows = []
 
-    # Demographics
     t1_rows.append(_row("Age (years), mean ± SD",
                         _mean_sd(df["age"]), _mean_sd(men_df["age"]), _mean_sd(women_df["age"]),
                         _mw_p("age")))
     t1_rows.append(_row("Age (years), median (IQR)",
                         _median_iqr(df["age"]), _median_iqr(men_df["age"]), _median_iqr(women_df["age"])))
 
-    # Age band breakdown
     if "age_band" in df.columns:
         for ab in ["40-44","45-49","50-54","55-59","60-64","65-69","70-74"]:
             ab_n = (df["age_band"] == ab).sum()
@@ -1020,14 +931,12 @@ def _render_publication_tables(datasets: dict):
             t1_rows.append(_row(f"  Age band {ab}",
                                 _pct(ab_n, N), _pct(ab_m, N_m), _pct(ab_f, N_f)))
 
-    # Anthropometrics
     for col, label in [("height","Height (cm)"),("weight","Weight (kg)"),("bmi","BMI (kg/m²)")]:
         if col in df.columns:
             t1_rows.append(_row(f"{label}, mean ± SD",
                                 _mean_sd(df[col]), _mean_sd(men_df[col]), _mean_sd(women_df[col]),
                                 _mw_p(col)))
 
-    # BMI categories
     if "bmi" in df.columns:
         bmi_bins   = [0, 18.5, 23, 25, 30, 200]
         bmi_labels = ["Underweight (<18.5)", "Normal (18.5–22.9)",
@@ -1041,7 +950,6 @@ def _render_publication_tables(datasets: dict):
             bf = (women_df["_bmi_t1"] == bl).sum()
             t1_rows.append(_row(f"  {bl}", _pct(bn, N), _pct(bm, N_m), _pct(bf, N_f)))
 
-    # WHR
     if "whr" in df.columns:
         t1_rows.append(_row("Waist-Hip Ratio, mean ± SD",
                             _mean_sd(df["whr"].dropna()),
@@ -1049,7 +957,6 @@ def _render_publication_tables(datasets: dict):
                             _mean_sd(women_df["whr"].dropna()),
                             _mw_p("whr")))
 
-    # BP
     for col, label in [("sbp","Systolic BP (mmHg)"),("dbp","Diastolic BP (mmHg)")]:
         if col in df.columns:
             t1_rows.append(_row(f"{label}, mean ± SD",
@@ -1058,7 +965,6 @@ def _render_publication_tables(datasets: dict):
                                 _mean_sd(women_df[col].dropna()),
                                 _mw_p(col)))
 
-    # BP category
     if "bp_category" in df.columns:
         for bpc in df["bp_category"].dropna().unique():
             bn = (df["bp_category"] == bpc).sum()
@@ -1066,7 +972,6 @@ def _render_publication_tables(datasets: dict):
             bf = (women_df["bp_category"] == bpc).sum()
             t1_rows.append(_row(f"  BP: {bpc}", _pct(bn, N), _pct(bm, N_m), _pct(bf, N_f)))
 
-    # Blood glucose
     if "bg_mgdl" in df.columns:
         t1_rows.append(_row("Fasting blood glucose (mg/dL), mean ± SD",
                             _mean_sd(df["bg_mgdl"]),
@@ -1074,7 +979,6 @@ def _render_publication_tables(datasets: dict):
                             _mean_sd(women_df["bg_mgdl"]),
                             _mw_p("bg_mgdl")))
 
-    # Cholesterol (if available)
     if "cholesterol_mmolL" in df.columns:
         chol_n = df["cholesterol_mmolL"].notna().sum()
         t1_rows.append(_row(
@@ -1084,7 +988,6 @@ def _render_publication_tables(datasets: dict):
             _mean_sd(women_df["cholesterol_mmolL"].dropna()),
             _mw_p("cholesterol_mmolL")))
 
-    # Categorical risk factors
     if "has_diabetes" in df.columns:
         dm_n = df["has_diabetes"].sum(); dm_m = men_df["has_diabetes"].sum(); dm_f = women_df["has_diabetes"].sum()
         t1_rows.append(_row("Diabetes mellitus", _pct(int(dm_n), N), _pct(int(dm_m), N_m), _pct(int(dm_f), N_f), _mw_p("has_diabetes")))
@@ -1102,7 +1005,6 @@ def _render_publication_tables(datasets: dict):
         ar_f = (women_df["arrhythmia"] == "Abnormal").sum()
         t1_rows.append(_row("Arrhythmia (Abnormal)", _pct(int(ar_n), N), _pct(int(ar_m), N_m), _pct(int(ar_f), N_f)))
 
-    # CVD Risk Scores — summary
     t1_rows.append(_row("─── CVD Risk Scores ───", "", "", ""))
     for label, (rcol, _) in ALL_RISK.items():
         if rcol in df.columns:
@@ -1121,7 +1023,6 @@ def _render_publication_tables(datasets: dict):
                 _pct((vf >= 20).sum(), len(vf)) if len(vf) > 0 else "—"
             ))
 
-    # Missing data notes
     t1_rows.append(_row("─── Missing Data ───", "", "", ""))
     for col, label in [("sbp","SBP"),("bmi","BMI"),("whr","WHR"),("bg_mgdl","Blood Glucose"),("cholesterol_mmolL","Cholesterol")]:
         if col in df.columns:
@@ -1130,14 +1031,15 @@ def _render_publication_tables(datasets: dict):
                                 _n_miss(men_df[col] if col in men_df.columns else pd.Series(), N_m),
                                 _n_miss(women_df[col] if col in women_df.columns else pd.Series(), N_f)))
 
-    # ── HTML renderer for Table 1 ───────────────────────────────────────────────
     def _render_t1_html(rows, N, N_m, N_f):
+        """Render t1 html."""
         SECTION_STYLE = ("background:#0f3460;color:white;font-weight:700;"
                          "font-size:.82em;letter-spacing:.5px;text-transform:uppercase;"
                          "padding:7px 12px;")
         INDENT_STYLE  = "color:#555;font-size:.82em;padding-left:28px;"
 
         def _p_badge(p):
+            """P badge."""
             if not p: return ""
             if p == "<0.001":
                 return "<span style='background:#c0392b;color:white;padding:1px 6px;border-radius:8px;font-size:.75em;font-weight:700;'>&lt;0.001</span>"
@@ -1179,7 +1081,6 @@ def _render_publication_tables(datasets: dict):
             wm   = row.get(f"Women (n={N_f:,})", row.get(list(row.keys())[3], ""))
             pv   = row.get("p-value", "")
 
-            # Section dividers
             if "───" in char:
                 lbl = char.replace("─", "").strip()
                 html.append(f"<tr><td colspan='5' style='{SECTION_STYLE}'>{lbl}</td></tr>")
@@ -1212,9 +1113,6 @@ def _render_publication_tables(datasets: dict):
 
     st.markdown("---")
 
-    # ════════════════════════════════════════════════════════════════════════
-    # TABLES 2A & 2B — LAB vs NON-LAB AGREEMENT BY SEX
-    # ════════════════════════════════════════════════════════════════════════
     st.markdown("""
     <div style='background:linear-gradient(135deg,#1a1a2e,#16213e);padding:20px 24px 14px;
                 border-radius:12px;margin-bottom:16px;'>
@@ -1238,7 +1136,6 @@ def _render_publication_tables(datasets: dict):
             valid["risk_nonlab_cat"].astype(str),
             margins=True, margins_name="Total"
         )
-        # Reindex
         cats_p = [c for c in RISK_LABELS if c in ct.index]
         ct = ct.reindex(index=cats_p + ["Total"], columns=cats_p + ["Total"], fill_value=0)
         return ct
@@ -1257,6 +1154,7 @@ def _render_publication_tables(datasets: dict):
         cats = [c for c in ct.index if c != "Total"]
 
         def _cell_bg(r, c, n, rt):
+            """Cell bg."""
             if r == "Total" or c == "Total":
                 return "background:#f0f0f0;font-weight:700;"
             pct = n / rt * 100 if rt > 0 else 0
@@ -1269,6 +1167,7 @@ def _render_publication_tables(datasets: dict):
             return f"background:rgba(231,76,60,{alpha:.2f});color:{'white' if alpha>0.5 else '#333'};"
 
         def _kappa_badge(k):
+            """Kappa badge."""
             if pd.isna(k): return "—"
             if k > 0.80: bg, lbl = "#1a5276", "Almost perfect"
             elif k > 0.60: bg, lbl = "#1e8449", "Substantial"
@@ -1299,7 +1198,6 @@ def _render_publication_tables(datasets: dict):
             "<table class='t2'>",
         ]
 
-        # Header
         html.append("<thead><tr>")
         html.append(f"<th class='r-hdr' style='background:#1a1a2e;color:white;'>"
                     f"WHO Lab ↓ / WHO Non-Lab →</th>")
@@ -1326,7 +1224,6 @@ def _render_publication_tables(datasets: dict):
 
         html.append("</tbody></table>")
 
-        # Stat bar
         disc_str = f"{disc_val}%" if disc_val not in ("—", None, "") else "—"
         html.append(
             "<div class='t2-stat'>"
@@ -1378,17 +1275,9 @@ def _render_publication_tables(datasets: dict):
 
     st.markdown("---")
 
-    # ════════════════════════════════════════════════════════════════════════
-    # TABLE 3 — ALL-CATEGORY AGREEMENT MATRICES (all model pairs × all 5 bands)
-    # ════════════════════════════════════════════════════════════════════════
 
-    # ── HTML table renderer for Table 3 ───────────────────────────────────
     def _render_agreement_html(ct_dict, mod_a, mod_b, n_tots, agree_pcts, kappas):
-        """
-        Renders a side-by-side (Overall / Men / Women) styled agreement matrix.
-        ct_dict: {group_label: DataFrame (cats+Total as index/cols)}
-        """
-        # Risk-band colour map for header
+        """Renders a side-by-side (Overall / Men / Women) styled agreement matrix."""
         band_colors = {
             "<5%":         ("#d4edda", "#155724"),
             "5% to <10%":  ("#fff3cd", "#856404"),
@@ -1403,10 +1292,10 @@ def _render_publication_tables(datasets: dict):
             if row_label == "Total" or col_label == "Total":
                 return "background:#f0f0f0;font-weight:600;"
             pct = n / row_total * 100 if row_total > 0 else 0
-            if row_label == col_label:   # diagonal — agreement
+            if row_label == col_label:
                 intensity = min(255, int(180 + pct * 0.75))
                 return f"background:rgba(39,174,96,{pct/100:.2f});color:{'#0d4a26' if pct>30 else '#333'};"
-            else:                         # off-diagonal — reclassification
+            else:
                 if pct == 0:
                     return "background:#fafafa;color:#bbb;"
                 alpha = min(0.85, 0.08 + pct / 60)
@@ -1415,7 +1304,6 @@ def _render_publication_tables(datasets: dict):
         groups = list(ct_dict.keys())
         n_groups = len(groups)
 
-        # Build header
         html = [
             "<style>",
             ".t3-wrap{overflow-x:auto;margin:12px 0 24px;}",
@@ -1431,12 +1319,10 @@ def _render_publication_tables(datasets: dict):
             "<div class='t3-wrap'><table class='t3'>",
         ]
 
-        # Get categories (without Total)
         sample_ct = list(ct_dict.values())[0]
         cats = [c for c in sample_ct.index if c != "Total"]
         n_cats = len(cats)
 
-        # === TOP HEADER: group spans ===
         html.append("<thead>")
         html.append(f"<tr><th rowspan='3' class='row-hdr' style='background:#1a1a2e;color:white;'>{mod_a}<br/><span style='opacity:.6;font-size:.78em;font-weight:400;'>\u2193 rows</span></th>")
         for g_label in groups:
@@ -1444,13 +1330,11 @@ def _render_publication_tables(datasets: dict):
             html.append(f"<th colspan='{n_cats+1}' class='grp-hdr' style='background:{bg};'>{g_label}</th>")
         html.append("</tr>")
 
-        # === SECOND HEADER: model B label per group ===
         html.append("<tr>")
         for _ in groups:
             html.append(f"<th colspan='{n_cats+1}' style='background:#f1f3f5;font-size:.78em;color:#555;font-style:italic;'>{mod_b} →</th>")
         html.append("</tr>")
 
-        # === THIRD HEADER: band labels per group ===
         html.append("<tr>")
         for _ in groups:
             for band in cats + ["Total"]:
@@ -1458,7 +1342,6 @@ def _render_publication_tables(datasets: dict):
                 html.append(f"<th class='col-hdr' style='background:{bg};color:{fg};font-size:.75em;'>{band}</th>")
         html.append("</tr></thead><tbody>")
 
-        # === DATA ROWS ===
         for i, row_label in enumerate(cats + ["Total"]):
             is_total = row_label == "Total"
             row_class = "total-row" if is_total else ""
@@ -1475,8 +1358,8 @@ def _render_publication_tables(datasets: dict):
                     html.append(f"<td style='{style}'>{cell_txt}</td>")
             html.append("</tr>")
 
-        # === STAT ROWS ===
         def _kappa_badge(k):
+            """Kappa badge."""
             if pd.isna(k):
                 return "<span>—</span>"
             if k > 0.80:   col, lbl = "#155724", "Almost perfect"
@@ -1501,7 +1384,6 @@ def _render_publication_tables(datasets: dict):
         html.append("</tbody></table></div>")
         return "".join(html)
 
-    # ── Table 3 UI ─────────────────────────────────────────────────────────
     st.markdown("""
     <div style='background:linear-gradient(135deg,#1a1a2e,#16213e);padding:20px 24px 14px;
                 border-radius:12px;margin-bottom:16px;'>
@@ -1565,7 +1447,6 @@ def _render_publication_tables(datasets: dict):
             html3 = _render_agreement_html(ct_dict, mod_a, mod_b, n_tots, agree_pcts, kappas)
             st.markdown(html3, unsafe_allow_html=True)
 
-            # CSV download (flattened)
             t3_rows = []
             for g, ct in ct_dict.items():
                 for ri in ct.index:
@@ -1577,18 +1458,11 @@ def _render_publication_tables(datasets: dict):
 
     st.markdown("---")
 
-    # ════════════════════════════════════════════════════════════════════════
-    # TABLE 4 — PAIRWISE COHEN'S κ SUMMARY TABLE
-    # ════════════════════════════════════════════════════════════════════════
 
     def _render_kappa_html(kappa_data, groups):
-        """
-        kappa_data: list of dicts with keys:
-          pair_label, Group, kappa, n_valid, strength,
-          concordance_20, discordance_20
-        Renders a professional pivot table with coloured κ cells.
-        """
+        """kappa_data: list of dicts with keys:"""
         def _kappa_color(k):
+            """Kappa color."""
             if pd.isna(k):   return ("#f0f0f0", "#999",  "—")
             if k > 0.80:     return ("#1a5276", "white", "Almost perfect")
             if k > 0.60:     return ("#1e8449", "white", "Substantial")
@@ -1597,6 +1471,7 @@ def _render_publication_tables(datasets: dict):
             return             ("#922b21", "white", "Slight")
 
         def _disc_color(d):
+            """Disc color."""
             if d == "—" or d is None: return "#f0f0f0"
             try:
                 v = float(d)
@@ -1606,12 +1481,10 @@ def _render_publication_tables(datasets: dict):
                 return              "#fadbd8"
             except: return "#f0f0f0"
 
-        # pivot: rows = model pairs, cols = groups × metrics
         pairs_uniq = list(dict.fromkeys(d["pair"] for d in kappa_data))
         grp_cols = groups
         metrics = ["N", "κ", "Strength", "Conc. ≥20%", "Disc. ≥20%"]
 
-        # lookup: (pair, group) -> row dict
         lookup = {(d["pair"], d["group"]): d for d in kappa_data}
 
         MODEL_COL = {
@@ -1638,7 +1511,6 @@ def _render_publication_tables(datasets: dict):
             "<div class='t4-wrap'><table class='t4'>",
         ]
 
-        # Header row 1: model pair col + group spans
         html.append("<thead><tr>")
         html.append(f"<th rowspan='2' class='pair-hdr' style='background:#1a1a2e;color:white;'"
                     f">Model Pair</th>")
@@ -1648,7 +1520,6 @@ def _render_publication_tables(datasets: dict):
                         f"style='background:{grp_colors.get(g,'#555')};'>{g}</th>")
         html.append("</tr>")
 
-        # Header row 2: metric labels
         html.append("<tr>")
         for _ in grp_cols:
             for m in metrics:
@@ -1669,7 +1540,7 @@ def _render_publication_tables(datasets: dict):
                 if row is None:
                     html.append(f"<td colspan='{len(metrics)}' class='n-cell' style='color:#bbb;'>—</td>")
                     continue
-                k    = row.get("kappa")  # may be float or nan
+                k    = row.get("kappa")
                 bg, fg, strength = _kappa_color(k)
                 conc = row.get("concordance_20", "—")
                 disc = row.get("discordance_20", "—")
@@ -1685,7 +1556,6 @@ def _render_publication_tables(datasets: dict):
                 html.append(f"<td class='p-cell' style='background:{d_bg};'>{disc}%</td>")
             html.append("</tr>")
 
-        # Legend row
         html.append("<tr><td colspan='100%' style='background:#f8f9fa;font-size:.75em;color:#555;"
                     "padding:8px 12px;text-align:left;border-top:2px solid #dee2e6;'>")
         for bg, lbl in [("#1a5276","Almost perfect κ>0.80"),("#1e8449","Substantial 0.61–0.80"),
@@ -1698,7 +1568,6 @@ def _render_publication_tables(datasets: dict):
         html.append("</tbody></table></div>")
         return "".join(html)
 
-    # ── Table 4 UI ─────────────────────────────────────────────────────────
     st.markdown("""
     <div style='background:linear-gradient(135deg,#1a1a2e,#16213e);padding:20px 24px 14px;
                 border-radius:12px;margin-bottom:16px;'>
@@ -1749,7 +1618,6 @@ def _render_publication_tables(datasets: dict):
         html4 = _render_kappa_html(kappa_data, groups_seen)
         st.markdown(html4, unsafe_allow_html=True)
 
-        # Flat CSV download
         t4_csv = pd.DataFrame([{
             "Group": d["group"], "Model A": d["pair"].split(" vs ")[0],
             "Model B": d["pair"].split(" vs ")[1], "N": d["n_valid"],
@@ -1762,9 +1630,6 @@ def _render_publication_tables(datasets: dict):
 
     st.markdown("---")
 
-    # ════════════════════════════════════════════════════════════════════════
-    # TABLE 5 — RECLASSIFICATION TABLE (each model vs WHO, all 5 categories)
-    # ════════════════════════════════════════════════════════════════════════
     st.markdown("""
     <div style='background:linear-gradient(135deg,#1a1a2e,#16213e);padding:20px 24px 14px;
                 border-radius:12px;margin-bottom:16px;'>
@@ -1778,6 +1643,7 @@ def _render_publication_tables(datasets: dict):
     </div>""", unsafe_allow_html=True)
 
     def _render_t5_html(ct, cats_p, n_tot, agree, up_cls, dn_cls, group_label, cmp_model):
+        """Render t5 html."""
         band_colors = {
             "<5%":         ("#d4edda", "#155724"),
             "5% to <10%":  ("#fff3cd", "#856404"),
@@ -1790,19 +1656,20 @@ def _render_publication_tables(datasets: dict):
         cat_idx = {c: i for i, c in enumerate(cats_p)}
 
         def _cls_style(ri, ci, n, rt):
+            """Cls style."""
             if ri == "Total" or ci == "Total":
                 return "background:#eaecee;font-weight:700;"
             pct = n / rt * 100 if rt > 0 else 0
             r_i, c_i = cat_idx.get(ri, -1), cat_idx.get(ci, -1)
-            if r_i == c_i:  # diagonal
+            if r_i == c_i:
                 alpha = min(0.9, max(0.08, pct / 100))
                 return f"background:rgba(39,174,96,{alpha:.2f});color:{'#0d4a26' if pct>30 else '#333'};"
             if pct == 0:
                 return "background:#fafafa;color:#ccc;"
             alpha = min(0.8, 0.06 + pct / 70)
-            if c_i > r_i:   # up-classified — blue
+            if c_i > r_i:
                 return f"background:rgba(37,99,235,{alpha:.2f});color:{'white' if alpha>0.45 else '#1e3a8a'};"
-            else:            # down-classified — orange/red
+            else:
                 return f"background:rgba(220,38,38,{alpha:.2f});color:{'white' if alpha>0.45 else '#7f1d1d'};"
 
         html = [
@@ -1896,9 +1763,6 @@ def _render_publication_tables(datasets: dict):
 
     st.markdown("---")
 
-    # ════════════════════════════════════════════════════════════════════════
-    # TABLE 6 — SEX × AGE-BAND MEAN RISK (all four models)
-    # ════════════════════════════════════════════════════════════════════════
     st.markdown("""
     <div style='background:linear-gradient(135deg,#1a1a2e,#16213e);padding:20px 24px 14px;
                 border-radius:12px;margin-bottom:16px;'>
@@ -1932,13 +1796,11 @@ def _render_publication_tables(datasets: dict):
             if v < 30:   return "background:#fadbd8;color:#922b21;"
             return              "background:#f9ebea;color:#641e16;"
 
-        # Build HTML
         html6 = [
             "<div style='overflow-x:auto;margin:12px 0 24px;'>",
             "<table style='border-collapse:collapse;font-family:Inter,sans-serif;"
             "font-size:.80em;width:100%;'>",
             "<thead>",
-            # Row 1: sex spans
             "<tr>",
             "<th rowspan='3' style='background:#1a1a2e;color:white;padding:8px 12px;"
             "border:1px solid #dee2e6;'>Age Band</th>",
@@ -1951,9 +1813,8 @@ def _render_publication_tables(datasets: dict):
                          f"padding:7px;border:1px solid #dee2e6;text-align:center;'>{sx_lbl}</th>")
         html6.append("</tr>")
 
-        # Row 2: model spans
         html6.append("<tr>")
-        for _ in range(2):  # males, females
+        for _ in range(2):
             for lbl, _ in risk_models:
                 c = MODEL_COLORS_6.get(lbl, "#555")
                 html6.append(f"<th colspan='3' style='background:{c};color:white;"
@@ -1961,7 +1822,6 @@ def _render_publication_tables(datasets: dict):
                              f"border:1px solid #dee2e6;text-align:center;'>{lbl}</th>")
         html6.append("</tr>")
 
-        # Row 3: metric labels
         html6.append("<tr>")
         for _ in range(2 * len(risk_models)):
             for metric in ["Mean±SD", "≥10%", "≥20%"]:
@@ -1985,16 +1845,9 @@ def _render_publication_tables(datasets: dict):
                 html6.append(f"<td style='text-align:center;padding:7px 10px;"
                              f"border:1px solid #dee2e6;color:#555;'>{n_cell:,}</td>")
 
-                # fill cells for both sexes per row (males first, then females)
-                # Actually we build one row per ab per sex, so we need padding columns
-                # for the other sex. No: standard approach = one row = one age band,
-                # with all models for males then all models for females.
-                # But that becomes unwieldy. Instead: separate Male / Female rows with
-                # a rowspan sex label column.
 
                 for s_val2, _ in [("men","Males"),("women","Females")]:
                     if s_val2 != sex_val:
-                        # blank columns for this sex
                         for lbl, _ in risk_models:
                             html6.append(f"<td colspan='3' style='background:#f0f0f0;"
                                         f"border:1px solid #dee2e6;'></td>")
@@ -2019,7 +1872,6 @@ def _render_publication_tables(datasets: dict):
 
                 html6.append("</tr>")
 
-                # row for flat CSV
                 for lbl, rcol in risk_models:
                     if rcol in cell_df.columns:
                         s = cell_df[rcol].dropna()
@@ -2038,9 +1890,6 @@ def _render_publication_tables(datasets: dict):
 
     st.markdown("---")
 
-    # ════════════════════════════════════════════════════════════════════════
-    # TABLE 7 — NET RECLASSIFICATION INDEX (NRI) SUMMARY
-    # ════════════════════════════════════════════════════════════════════════
     st.markdown("""
     <div style='background:linear-gradient(135deg,#1a1a2e,#16213e);padding:20px 24px 14px;
                 border-radius:12px;margin-bottom:16px;'>
@@ -2086,7 +1935,6 @@ def _render_publication_tables(datasets: dict):
             })
 
     if nri_rows:
-        # Pivot: rows = models, cols = groups × metrics
         models_uniq = list(dict.fromkeys(r["model"] for r in nri_rows))
         groups_nri  = ["Overall", "Men", "Women"]
         lookup_nri  = {(r["model"], r["group"]): r for r in nri_rows}
@@ -2094,12 +1942,14 @@ def _render_publication_tables(datasets: dict):
         grp_colors  = {"Overall": "#2a9d8f", "Men": "#457b9d", "Women": "#e63946"}
 
         def _nri_cell(v):
+            """Nri cell."""
             if v is None: return "background:#f0f0f0;color:#bbb;", "—"
             if v > 2:   return "background:rgba(37,99,235,.18);color:#1d4ed8;font-weight:700;", f"+{v:.1f}%"
             if v < -2:  return "background:rgba(220,38,38,.18);color:#dc2626;font-weight:700;", f"{v:.1f}%"
             return "background:#f8f9fa;color:#555;", f"{v:.1f}%"
 
         def _dir_badge(v):
+            """Dir badge."""
             if v is None: return "—"
             if v > 1:   return "<span style='background:#1d4ed8;color:white;padding:2px 8px;border-radius:10px;font-size:.75em;font-weight:700;'>↑ Higher risk</span>"
             if v < -1:  return "<span style='background:#dc2626;color:white;padding:2px 8px;border-radius:10px;font-size:.75em;font-weight:700;'>↓ Lower risk</span>"
@@ -2156,7 +2006,6 @@ def _render_publication_tables(datasets: dict):
                              f"text-align:center;'>{_dir_badge(r['nri'])}</td>")
             html7.append("</tr>")
 
-        # Legend
         html7.append("<tr><td colspan='100%' style='background:#f8f9fa;font-size:.73em;"
                      "color:#666;padding:8px 14px;border-top:2px solid #dee2e6;text-align:left;'>")
         html7.append("<b>Cat. NRI</b> = category-based NRI (all 5 bands). "
@@ -2174,7 +2023,6 @@ def _render_publication_tables(datasets: dict):
         st.download_button("📥 Download Table 7 (CSV)", t7_csv.to_csv(index=False),
                            file_name="table7_nri.csv", mime="text/csv")
 
-    # ── Interpretation guide ────────────────────────────────────────────────
     st.markdown("---")
     with st.expander("📝 Table Interpretation Guide", expanded=False):
         st.markdown("""
@@ -2195,4 +2043,3 @@ def _render_publication_tables(datasets: dict):
 Positive values indicate the model assigns patients to higher risk bands than WHO; 
 negative values indicate a more conservative model.
         """)
-

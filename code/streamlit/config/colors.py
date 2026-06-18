@@ -20,28 +20,24 @@ class ColorConfig:
     - Chart elements
     """
     
-    # ==================== Risk Category Colors ====================
     
-    # 5-Band Risk Colors (Standard)
     RISK_COLORS: Dict[str, str] = field(default_factory=lambda: {
         '<5%': 'green',
-        '5% to <10%': 'gold',  # Better visibility than yellow
+        '5% to <10%': 'gold',
         '10% to <20%': 'orange',
         '20% to <30%': 'red',
         '≥30%': 'darkred'
     })
     
-    # Risk Colors - Hex Codes (for more precise control)
     RISK_COLORS_HEX: Dict[str, str] = field(default_factory=lambda: {
-        '<5%': '#2a9d8f',       # Teal Green
-        '5% to <10%': '#e9c46a', # Gold
-        '10% to <20%': '#f4a261', # Orange
-        '20% to <30%': '#e76f51', # Coral Red
-        '≥30%': '#d62828',       # Dark Red
-        '≥20%': '#e76f51'        # General High Risk
+        '<5%': '#2a9d8f',
+        '5% to <10%': '#e9c46a',
+        '10% to <20%': '#f4a261',
+        '20% to <30%': '#e76f51',
+        '≥30%': '#d62828',
+        '≥20%': '#e76f51'
     })
     
-    # 4-Band Risk Colors (Alternative)
     RISK_COLORS_4BAND: Dict[str, str] = field(default_factory=lambda: {
         '<5%': '#2a9d8f',
         '5% to <10%': '#e9c46a',
@@ -49,54 +45,43 @@ class ColorConfig:
         '≥20%': '#e76f51'
     })
     
-    # ==================== Demographic Colors ====================
     
-    # Gender Colors
     GENDER_COLORS: Dict[str, str] = field(default_factory=lambda: {
-        'Male': '#457b9d',    # Blue
-        'Female': '#e63946',  # Red/Pink
-        'Men': '#457b9d',     # Alias
-        'Women': '#e63946',   # Alias
-        'Other': '#6c757d'    # Gray
+        'Male': '#457b9d',
+        'Female': '#e63946',
+        'Men': '#457b9d',
+        'Women': '#e63946',
+        'Other': '#6c757d'
     })
     
-    # Location Type Colors
     LOCATION_COLORS: Dict[str, str] = field(default_factory=lambda: {
-        'Urban': '#1d3557',      # Dark Blue
-        'Rural': '#52b788',      # Green
-        'Semi-urban': '#f77f00', # Orange
-        'Semi-Urban': '#f77f00', # Alias
-        'Unknown': '#adb5bd'     # Gray
+        'Urban': '#1d3557',
+        'Rural': '#52b788',
+        'Semi-urban': '#f77f00',
+        'Semi-Urban': '#f77f00',
+        'Unknown': '#adb5bd'
     })
     
-    # ==================== Chart Element Colors ====================
     
-    # Primary Brand Color (Bangladesh theme)
-    PRIMARY_COLOR: str = '#006a4e'  # Bangladesh Green
-    SECONDARY_COLOR: str = '#f42a41'  # Bangladesh Red
+    PRIMARY_COLOR: str = '#006a4e'
+    SECONDARY_COLOR: str = '#f42a41'
     
-    # Chart Backgrounds
     BACKGROUND_COLOR: str = '#fcfcfc'
     GRID_COLOR: str = '#e0e0e0'
     
-    # Text Colors
     TEXT_PRIMARY: str = '#212529'
     TEXT_SECONDARY: str = '#6c757d'
     TEXT_LIGHT: str = '#adb5bd'
     
-    # Border Colors
     BORDER_COLOR: str = '#dee2e6'
     BORDER_HOVER: str = '#ced4da'
     
-    # Status Colors
     SUCCESS_COLOR: str = '#28a745'
     WARNING_COLOR: str = '#ffc107'
     DANGER_COLOR: str = '#dc3545'
     INFO_COLOR: str = '#17a2b8'
     
-    # ==================== Gradient Palettes ====================
     
-    # Sequential palette for heatmaps (light to dark)
     SEQUENTIAL_BLUE: List[str] = field(default_factory=lambda: [
         '#deebf7', '#c6dbef', '#9ecae1', '#6baed6', '#4292c6', '#2171b5', '#08519c', '#08306b'
     ])
@@ -109,37 +94,22 @@ class ColorConfig:
         '#e5f5e0', '#c7e9c0', '#a1d99b', '#74c476', '#41ab5d', '#238b45', '#005a32'
     ])
     
-    # Diverging palette (for comparison charts)
     DIVERGING_PALETTE: List[str] = field(default_factory=lambda: [
         '#d73027', '#f46d43', '#fdae61', '#fee090', '#e0f3f8', '#abd9e9', '#74add1', '#4575b4'
     ])
     
-    # ==================== Plotly Specific Settings ====================
     
-    # Default Plotly template
     PLOTLY_TEMPLATE: str = 'plotly_white'
     
-    # Default marker settings
     DEFAULT_MARKER_SIZE: int = 8
     DEFAULT_LINE_WIDTH: int = 2
     
-    # Opacity settings
     MARKER_OPACITY: float = 0.8
     FILL_OPACITY: float = 0.3
     
-    # ==================== Helper Methods ====================
     
     def get_risk_color(self, risk_category: str, use_hex: bool = False) -> str:
-        """
-        Get color for a risk category.
-        
-        Args:
-            risk_category: Risk category label
-            use_hex: If True, return hex code; else return color name
-            
-        Returns:
-            Color code or name
-        """
+        """Get color for a risk category."""
         palette = self.RISK_COLORS_HEX if use_hex else self.RISK_COLORS
         return palette.get(risk_category, '#cccccc' if use_hex else 'gray')
     
@@ -152,15 +122,7 @@ class ColorConfig:
         return self.LOCATION_COLORS.get(location, self.LOCATION_COLORS.get('Unknown'))
     
     def get_color_scale(self, palette_type: str = 'blue') -> List[str]:
-        """
-        Get a color scale for continuous data.
-        
-        Args:
-            palette_type: 'blue', 'red', 'green', or 'diverging'
-            
-        Returns:
-            List of hex color codes
-        """
+        """Get a color scale for continuous data."""
         palettes = {
             'blue': self.SEQUENTIAL_BLUE,
             'red': self.SEQUENTIAL_RED,
@@ -170,16 +132,7 @@ class ColorConfig:
         return palettes.get(palette_type, self.SEQUENTIAL_BLUE)
     
     def create_custom_palette(self, categories: List[str], palette_name: str = 'risk') -> Dict[str, str]:
-        """
-        Create a custom color palette for specific categories.
-        
-        Args:
-            categories: List of category names
-            palette_name: Base palette to use ('risk', 'gender', 'location')
-            
-        Returns:
-            Dictionary mapping categories to colors
-        """
+        """Create a custom color palette for specific categories."""
         base_palettes = {
             'risk': self.RISK_COLORS_HEX,
             'gender': self.GENDER_COLORS,
@@ -188,22 +141,15 @@ class ColorConfig:
         
         base = base_palettes.get(palette_name, self.RISK_COLORS_HEX)
         
-        # Try to match categories to base palette
         result = {}
         for cat in categories:
             result[cat] = base.get(cat, '#cccccc')
         
         return result
     
-    # ==================== Plotly Figure Defaults ====================
     
     def get_plotly_layout_defaults(self) -> dict:
-        """
-        Get default layout settings for Plotly figures.
-        
-        Returns:
-            Dictionary of layout parameters
-        """
+        """Get default layout settings for Plotly figures."""
         return {
             'template': self.PLOTLY_TEMPLATE,
             'font': {
@@ -236,7 +182,6 @@ class ColorConfig:
             }
         }
     
-    # ==================== Legacy Compatibility ====================
     
     @property
     def RISK_PALETTE(self) -> Dict[str, str]:

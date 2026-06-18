@@ -1,0 +1,9 @@
+Metric,Value
+Mean non-lab risk,7.51%
+Mean lab risk,9.70%
+Mean bias (lab - non-lab),2.19 percentage points
+Median bias (lab - non-lab),1.0 percentage points
+95% limits of agreement,-4.71 to 9.09 percentage points
+Pearson r,0.872 (p <0.001)
+Spearman rho,0.883 (p <0.001)
+Wilcoxon signed-rank p,<0.001

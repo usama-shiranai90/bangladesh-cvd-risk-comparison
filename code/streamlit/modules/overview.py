@@ -2,9 +2,9 @@ import streamlit as st
 import plotly.express as px
 
 def render_overview(df_merged, totals):
+    """Render overview."""
     st.title("🇧🇩 National Overview (Bangladesh)")
     
-    # KPIs
     kpi1, kpi2, kpi3, kpi4 = st.columns(4)
     
     total_n = totals.get('total_n', 0)
@@ -27,15 +27,12 @@ def render_overview(df_merged, totals):
         st.metric("Lab High Risk (≥20%)", f"{high_risk:,}", f"{pct:.1f}% Prevalence", delta_color="inverse")
         
     with kpi4:
-        # Lab coverage
         paired_n = totals.get('paired_n', 0)
         cov = (paired_n / total_n * 100) if total_n else 0
         st.metric("Lab Data Coverage", f"{paired_n:,}", f"{cov:.1f}% of Cohort")
 
-    # Map
     st.subheader("📍 Site Coverage Map")
     if df_merged is not None and "site_latitude" in df_merged.columns:
-        # Aggregation by site
         title = "project_title"
        
         site_stats = df_merged.groupby("site_id").agg({
@@ -48,9 +45,6 @@ def render_overview(df_merged, totals):
         site_stats.rename(columns={"risk_nonlab": "High Risk %", "pid": "Sample Size"}, inplace=True)
         
    
-
-        # Helper to fill missing titles
-
         site_stats[title] = site_stats[title].fillna("Site " + site_stats['site_id'].astype(str))
         site_stats.loc[site_stats[title].astype(str).str.strip() == "", title] = "Site " + site_stats['site_id'].astype(str)
         
@@ -62,11 +56,11 @@ def render_overview(df_merged, totals):
             lon="site_longitude",
             size="Sample Size",
             color="High Risk %",
-            color_continuous_scale="RdYlGn_r", # Red is high risk
+            color_continuous_scale="RdYlGn_r",
             hover_name=title,
             hover_data=["High Risk %", "Sample Size"],
             zoom=6,
-            center={"lat": 23.6850, "lon": 90.3563}, # Bangladesh Center
+            center={"lat": 23.6850, "lon": 90.3563},
             mapbox_style="carto-positron",
             height=600,
             size_max=30

@@ -22,7 +22,6 @@ from .analysis import AnalysisConfig
 from .colors import ColorConfig
 from .ui import UIConfig
 
-# Initialize configuration instances
 paths = PathConfig()
 analysis = AnalysisConfig()
 colors = ColorConfig()

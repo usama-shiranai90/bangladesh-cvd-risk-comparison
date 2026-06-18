@@ -10,6 +10,7 @@ import io
 from utils.helpers import get_risk_cat, RISK_PALETTE
 
 def render_backup_rq1(df_paired, datasets=None):
+    """Render backup RQ1."""
     st.title("RQ1: WHO Non-Lab vs Lab Agreement & Safety")
     
     st.markdown("""
@@ -26,34 +27,27 @@ def render_backup_rq1(df_paired, datasets=None):
         st.error("No paired data loaded. Please ensure 'cvd_paired.csv' is selected in the sidebar.")
         return
 
-    # --- Prep Data ---
     df = df_paired.copy()
     
-    # Ensure numeric
     cols = ['risk_lab', 'risk_nonlab', 'age']
     for c in cols:
         df[c] = pd.to_numeric(df[c], errors='coerce')
         
-    # Drop rows without both risks
     df = df.dropna(subset=['risk_lab', 'risk_nonlab'])
     
-    # Categorize (5-band)
     risk_order = ["<5%", "5% to <10%", "10% to <20%", "20% to <30%", "≥30%"]
     df['risk_lab_cat'] = df['risk_lab'].apply(get_risk_cat).astype(pd.CategoricalDtype(risk_order, ordered=True))
     df['risk_nonlab_cat'] = df['risk_nonlab'].apply(get_risk_cat).astype(pd.CategoricalDtype(risk_order, ordered=True))
     
-    # Binary outcomes (Thresholds)
     for t in [10, 20]:
         df[f'lab_ge_{t}'] = (df['risk_lab'] >= t).astype(int)
         df[f'nonlab_ge_{t}'] = (df['risk_nonlab'] >= t).astype(int)
         df[f'missed_highrisk_{t}'] = ((df['risk_lab'] >= t) & (df['risk_nonlab'] < t)).astype(int)
     
-    # Bias (Non-Lab - Lab)
     df['risk_diff'] = df['risk_nonlab'] - df['risk_lab']
     
     st.markdown(f"**Paired Observations:** {len(df):,}")
 
-    # Create tabs for each sub-question
     tab1a, tab1b, tab1c, tab_stats, tab_summary = st.tabs([
         "📊 RQ1a: Agreement & Classification",
         "⚖️ RQ1b: Bias Magnitude & Direction",
@@ -62,24 +56,17 @@ def render_backup_rq1(df_paired, datasets=None):
         "📝 Publication Summary"
     ])
 
-    # =========================================================================
-    # TAB 1a: AGREEMENT & CLASSIFICATION
-    # =========================================================================
     with tab1a:
         st.subheader("RQ1a: Agreement & Classification Performance")
         
-        # --- Weighted Kappa ---
         st.markdown("### 1️⃣ Categorical Agreement (5-Band Risk)")
         
-        # Confusion Matrix
         cm = pd.crosstab(df['risk_lab_cat'], df['risk_nonlab_cat'], margins=True, margins_name='Total')
         
-        # Kappa
         cat_map = {c: i for i, c in enumerate(risk_order)}
         y_true = df['risk_lab_cat'].map(cat_map).dropna()
         y_pred = df['risk_nonlab_cat'].map(cat_map).dropna()
         
-        # Align indices
         common_idx = y_true.index.intersection(y_pred.index)
         y_true = y_true.loc[common_idx]
         y_pred = y_pred.loc[common_idx]
@@ -93,7 +80,6 @@ def render_backup_rq1(df_paired, datasets=None):
         col_k2.metric("Unweighted Kappa", f"{kappa_unweighted:.3f}",
                      help="Exact agreement only")
         
-        # Interpretation
         if kappa_weighted >= 0.81:
             st.success("✅ **Excellent Agreement** (κ ≥ 0.81)")
         elif kappa_weighted >= 0.61:
@@ -103,7 +89,6 @@ def render_backup_rq1(df_paired, datasets=None):
         else:
             st.error("🚨 **Poor Agreement** (κ < 0.41)")
         
-        # Heatmap
         fig_hm = px.imshow(cm.iloc[:-1, :-1], text_auto=True, color_continuous_scale='Blues',
                            labels=dict(x="Non-Lab Risk", y="Lab Risk (Reference)", color="Count"),
                            title="Confusion Matrix: Non-Lab vs Lab Risk")
@@ -111,29 +96,24 @@ def render_backup_rq1(df_paired, datasets=None):
         
         st.caption("**Rows:** Lab Risk (Gold Standard) | **Columns:** Non-Lab Risk (Test) | **Diagonal:** Perfect Agreement")
         
-        # --- Binary Classification at ≥20% and ≥10% ---
         st.markdown("---")
         st.markdown("### 2️⃣ Binary Classification Performance")
         st.caption("Diagnostic accuracy at clinical thresholds for pharmacotherapy eligibility")
         
-        # Calculate metrics for both thresholds
         classification_results = []
         for thresh in [20, 10]:
             lab_col = f'lab_ge_{thresh}'
             test_col = f'nonlab_ge_{thresh}'
             
-            # Confusion Matrix
             cm_binary = confusion_matrix(df[lab_col], df[test_col])
             if cm_binary.shape == (2, 2):
                 tn, fp, fn, tp = cm_binary.ravel()
             else:
-                # Handle edge case
                 tp = ((df[lab_col]==1) & (df[test_col]==1)).sum()
                 fp = ((df[lab_col]==0) & (df[test_col]==1)).sum()
                 fn = ((df[lab_col]==1) & (df[test_col]==0)).sum()
                 tn = ((df[lab_col]==0) & (df[test_col]==0)).sum()
             
-            # Metrics
             sensitivity = tp / (tp + fn) if (tp + fn) > 0 else 0
             specificity = tn / (tn + fp) if (tn + fp) > 0 else 0
             ppv = tp / (tp + fp) if (tp + fp) > 0 else 0
@@ -153,7 +133,6 @@ def render_backup_rq1(df_paired, datasets=None):
                 'Missed Rate': missed_rate
             })
         
-        # Display side-by-side comparison
         col_20, col_10 = st.columns(2)
         
         for col, result in zip([col_20, col_10], classification_results):
@@ -180,8 +159,7 @@ def render_backup_rq1(df_paired, datasets=None):
                 - FP (False Alarms): {result['FP']}
                 """)
         
-        # Safety alert
-        primary_result = classification_results[0]  # ≥20%
+        primary_result = classification_results[0]
         if primary_result['Missed Rate'] > 0.20:
             st.error(f"🚨 **Safety Alert:** {primary_result['Missed Rate']:.1%} of lab-defined high-risk patients (≥20%) are missed by non-lab charts!")
         elif primary_result['Missed Rate'] > 0.10:
@@ -189,31 +167,24 @@ def render_backup_rq1(df_paired, datasets=None):
         else:
             st.success(f"✅ **Acceptable Safety:** {primary_result['Missed Rate']:.1%} missed high-risk rate")
 
-        # =========================================================================
-        # AGREEMENT TABLES BY GENDER AND AGE
-        # =========================================================================
         st.markdown("---")
         st.markdown("### 3️⃣ Agreement Tables by Gender and Age")
         st.caption("Cross-tabulation of Non-Laboratory vs Laboratory risk categories stratified by demographics")
         
-        # Risk category labels
         RISK_LABELS = ['<5%', '5% to <10%', '10% to <20%', '20% to <30%', '≥30%']
         RISK_DISPLAY = ['Very low', 'Low', 'Moderate', 'High', 'Very high']
         
-        # Helper function to create agreement table
         def create_agreement_table(subset_df, group_label):
             """Create agreement cross-tabulation with Kappa"""
             if len(subset_df) == 0:
                 return None, None
             
-            # Create crosstab
             ct = pd.crosstab(
                 subset_df['risk_nonlab_cat'], 
                 subset_df['risk_lab_cat'],
                 dropna=False
             ).reindex(index=RISK_LABELS, columns=RISK_LABELS, fill_value=0)
             
-            # Calculate Kappa
             cat_map = {c: i for i, c in enumerate(RISK_LABELS)}
             y_true = subset_df['risk_lab_cat'].map(cat_map).dropna()
             y_pred = subset_df['risk_nonlab_cat'].map(cat_map).dropna()
@@ -224,43 +195,36 @@ def render_backup_rq1(df_paired, datasets=None):
             else:
                 kappa = np.nan
             
-            # Add totals
             ct['Total'] = ct.sum(axis=1)
             ct.loc['Total'] = ct.sum(axis=0)
             
             return ct, kappa
         
-        # --- Agreement by Gender ---
         st.markdown("#### Agreement by Gender")
         
         gender_tabs = st.tabs(["👨 Males", "👩 Females"])
         
-        # Males
         with gender_tabs[0]:
             male_df = df[df['gender'].isin(['M', 'Male', 'men'])]
             
             if len(male_df) > 0:
-                # Create age bands if not present
                 if 'age_band' not in male_df.columns:
                     male_df = male_df.copy()
                     bins = [40, 45, 50, 55, 60, 65, 70, 75]
                     labels = ["40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74"]
                     male_df['age_band'] = pd.cut(male_df['age'], bins=bins, labels=labels, right=False)
                 
-                # Overall males table
                 ct_male, kappa_male = create_agreement_table(male_df, "Males")
                 
                 if ct_male is not None:
                     st.markdown(f"##### Overall Males (n={len(male_df):,}, κ={kappa_male:.3f})")
                     
-                    # Display table with renamed columns
                     ct_male_display = ct_male.copy()
                     ct_male_display.columns = RISK_DISPLAY + ['Total']
                     ct_male_display.index = RISK_DISPLAY + ['Total'] if 'Total' in ct_male.index else RISK_DISPLAY
                     
                     st.dataframe(ct_male_display, use_container_width=True)
                     
-                    # By age group
                     st.markdown("##### Males by Age Group")
                     
                     age_results_male = []
@@ -280,32 +244,27 @@ def render_backup_rq1(df_paired, datasets=None):
             else:
                 st.info("No male data available.")
         
-        # Females
         with gender_tabs[1]:
             female_df = df[df['gender'].isin(['F', 'Female', 'women'])]
             
             if len(female_df) > 0:
-                # Create age bands if not present
                 if 'age_band' not in female_df.columns:
                     female_df = female_df.copy()
                     bins = [40, 45, 50, 55, 60, 65, 70, 75]
                     labels = ["40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74"]
                     female_df['age_band'] = pd.cut(female_df['age'], bins=bins, labels=labels, right=False)
                 
-                # Overall females table
                 ct_female, kappa_female = create_agreement_table(female_df, "Females")
                 
                 if ct_female is not None:
                     st.markdown(f"##### Overall Females (n={len(female_df):,}, κ={kappa_female:.3f})")
                     
-                    # Display table with renamed columns
                     ct_female_display = ct_female.copy()
                     ct_female_display.columns = RISK_DISPLAY + ['Total']
                     ct_female_display.index = RISK_DISPLAY + ['Total'] if 'Total' in ct_female.index else RISK_DISPLAY
                     
                     st.dataframe(ct_female_display, use_container_width=True)
                     
-                    # By age group
                     st.markdown("##### Females by Age Group")
                     
                     age_results_female = []
@@ -325,14 +284,10 @@ def render_backup_rq1(df_paired, datasets=None):
             else:
                 st.info("No female data available.")
 
-        # =========================================================================
-        # CLINICAL PERFORMANCE TABLE WITH MCC
-        # =========================================================================
         st.markdown("---")
         st.markdown("### 4️⃣ Clinical Performance of the WHO Non-Laboratory Model")
         st.caption("Diagnostic performance metrics with 95% confidence intervals")
         
-        # Wilson score interval for proportions
         def wilson_ci(successes, total, z=1.96):
             """Calculate Wilson score confidence interval"""
             if total == 0:
@@ -343,7 +298,6 @@ def render_backup_rq1(df_paired, datasets=None):
             margin = (z * np.sqrt((p * (1 - p) + z**2 / (4 * total)) / total)) / denom
             return max(0, center - margin), min(1, center + margin)
         
-        # Calculate MCC (Matthews Correlation Coefficient)
         def calculate_mcc(tp, tn, fp, fn):
             """Calculate Matthews Correlation Coefficient"""
             numerator = (tp * tn) - (fp * fn)
@@ -352,7 +306,6 @@ def render_backup_rq1(df_paired, datasets=None):
                 return 0
             return numerator / denominator
         
-        # Define cut-off scenarios
         cutoff_scenarios = [
             ("20% for Lab / 20% for Non-Lab", 20, 20),
             ("20% for Lab / 10% for Non-Lab", 20, 10)
@@ -361,24 +314,20 @@ def render_backup_rq1(df_paired, datasets=None):
         performance_data = []
         
         for scenario_name, lab_thresh, nonlab_thresh in cutoff_scenarios:
-            # Define binary outcomes
             lab_positive = (df['risk_lab'] >= lab_thresh).astype(int)
             nonlab_positive = (df['risk_nonlab'] >= nonlab_thresh).astype(int)
             
-            # Confusion matrix
             tp = ((lab_positive == 1) & (nonlab_positive == 1)).sum()
             fn = ((lab_positive == 1) & (nonlab_positive == 0)).sum()
             fp = ((lab_positive == 0) & (nonlab_positive == 1)).sum()
             tn = ((lab_positive == 0) & (nonlab_positive == 0)).sum()
             
-            # Metrics
             sensitivity = tp / (tp + fn) if (tp + fn) > 0 else 0
             specificity = tn / (tn + fp) if (tn + fp) > 0 else 0
             ppv = tp / (tp + fp) if (tp + fp) > 0 else 0
             npv = tn / (tn + fn) if (tn + fn) > 0 else 0
             mcc = calculate_mcc(tp, tn, fp, fn)
             
-            # Confidence intervals
             sens_low, sens_high = wilson_ci(tp, tp + fn)
             spec_low, spec_high = wilson_ci(tn, tn + fp)
             ppv_low, ppv_high = wilson_ci(tp, tp + fp)
@@ -408,7 +357,6 @@ def render_backup_rq1(df_paired, datasets=None):
         *Using different cut-points for Non-Lab (10%) increases sensitivity at the cost of specificity.*
         """)
         
-        # Summary comparison
         st.markdown("**Key Insight:**")
         if len(performance_data) >= 2:
             sens_20_20 = float(performance_data[0]['Sensitivity % (95% CI)'].split()[0])
@@ -424,9 +372,6 @@ def render_backup_rq1(df_paired, datasets=None):
             st.write(f"- **Specificity trade-off:** -{spec_loss:.1f} percentage points")
 
 
-    # =========================================================================
-    # TAB STATS: STATISTICAL DEEP DIVE
-    # =========================================================================
     with tab_stats:
         st.subheader("Statistical Deep Dive & Visualization")
 
@@ -437,12 +382,8 @@ def render_backup_rq1(df_paired, datasets=None):
         score_non_lab = df['risk_nonlab']
         score_lab = df['risk_lab']
 
-        # Check for normality (Difference between scores)
-        # Usually, risk scores are not normally distributed
         stat_n, p_n = stats.shapiro(score_non_lab - score_lab)
 
-        # Perform Paired Test
-        # If p_n > 0.05 we use Paired T-test, otherwise Wilcoxon Signed-Rank
         if p_n > 0.05:
             test_res = stats.ttest_rel(score_non_lab, score_lab)
             test_name = "Paired t-test"
@@ -450,35 +391,26 @@ def render_backup_rq1(df_paired, datasets=None):
             test_res = stats.wilcoxon(score_non_lab, score_lab)
             test_name = "Wilcoxon signed-rank test"
 
-        # Calculate Correlation (Spearman for non-linear/non-normal data)
         corr_val, corr_p = stats.spearmanr(score_non_lab, score_lab)
 
-        # 3. Categorical Analysis for Risk Ranges
-        # NOTE: Using existing categorization from df to ensure consistency
         
-        # Create Agreement Matrix (Crosstab)
-        # ct = pd.crosstab(df['risk_nonlab_cat'], df['risk_lab_cat'])
-        # st.info(ct)
         RISK_ORDER = ['<5%', '5% to <10%', '10% to <20%', '20% to <30%', '≥30%']
 
         df['risk_nonlab_cat'] = pd.Categorical(df['risk_nonlab_cat'], categories=RISK_ORDER, ordered=True)
         df['risk_lab_cat']    = pd.Categorical(df['risk_lab_cat'],    categories=RISK_ORDER, ordered=True)
 
-        # 2) Build a crosstab that includes missing rows/cols
         ct = pd.crosstab(
             df['risk_nonlab_cat'],
             df['risk_lab_cat'],
             dropna=False
         ).reindex(index=RISK_ORDER, columns=RISK_ORDER, fill_value=0)
 
-        st.dataframe(ct)  # nicer than st.info(ct)
+        st.dataframe(ct)
 
         exact_match_pct = (np.diag(ct).sum() / ct.values.sum()) * 100
 
-        # 4. Visualization Generation
         fig = plt.figure(figsize=(15, 10))
 
-        # Subplot 1: Scatter plot with Identity Line
         plt.subplot(2, 2, 1)
         sns.scatterplot(x=score_non_lab, y=score_lab, alpha=0.5)
         plt.plot([0, 30], [0, 30], 'r--', label='Identity (x=y)')
@@ -487,7 +419,6 @@ def render_backup_rq1(df_paired, datasets=None):
         plt.ylabel('Risk Score (Lab)')
         plt.legend()
 
-        # Subplot 2: Bland-Altman Plot (Difference vs Mean)
         plt.subplot(2, 2, 2)
         mean_score = (score_non_lab + score_lab) / 2
         diff_score = score_lab - score_non_lab
@@ -502,7 +433,6 @@ def render_backup_rq1(df_paired, datasets=None):
         plt.ylabel('Difference (Lab - Non-Lab)')
         plt.legend()
 
-        # Subplot 3: Distribution Density
         plt.subplot(2, 2, 3)
         sns.kdeplot(score_non_lab, label='Non-Lab', fill=True)
         sns.kdeplot(score_lab, label='Lab', fill=True)
@@ -510,7 +440,6 @@ def render_backup_rq1(df_paired, datasets=None):
         plt.xlabel('Risk Score')
         plt.legend()
 
-        # Subplot 4: Range Agreement Heatmap
         plt.subplot(2, 2, 4)
         sns.heatmap(ct, annot=True, fmt='d', cmap='Blues')
         plt.title(f'Agreement Heatmap (Match: {exact_match_pct:.1f}%)')
@@ -520,7 +449,6 @@ def render_backup_rq1(df_paired, datasets=None):
         plt.tight_layout()
         st.pyplot(fig)
         
-               # Save SVG to buffer
         img = io.BytesIO()
         fig.savefig(img, format='svg', bbox_inches='tight')
         img.seek(0)
@@ -531,7 +459,6 @@ def render_backup_rq1(df_paired, datasets=None):
             mime="image/svg+xml"
         )
 
-        # 5. Print Summary Results
         st.markdown(f"### Statistical Summary")
         col_res1, col_res2 = st.columns(2)
         
@@ -545,16 +472,12 @@ def render_backup_rq1(df_paired, datasets=None):
             st.write(f"**Mean Score (Lab):** {score_lab.mean():.2f}")
             st.write(f"**Exact Range Agreement:** {exact_match_pct:.2f}%")
 
-        # 1. Categorical Error (Risk Range Disagreement)
         range_mismatch = (df['risk_nonlab_cat'] != df['risk_lab_cat']).sum()
         total_records = len(df)
         cat_error_pct = (range_mismatch / total_records) * 100
 
-        # 2. Numerical Score Error (MAPE - Mean Absolute Percentage Error)
-        # We treat the Lab Score as the 'Actual' and Non-Lab as 'Predicted'
         mape = np.mean(np.abs((df['risk_lab'] - df['risk_nonlab']) / df['risk_lab'])) * 100
 
-        # 3. Directional Error (Bias)
         under_estimate = (df['risk_nonlab'] < df['risk_lab']).sum() / total_records * 100
         over_estimate = (df['risk_nonlab'] > df['risk_lab']).sum() / total_records * 100
 
@@ -564,14 +487,10 @@ def render_backup_rq1(df_paired, datasets=None):
                 f"- Non-Lab Under-estimation Bias: {under_estimate:.2f}%\n"
                 f"- Non-Lab Over-estimation Bias: {over_estimate:.2f}%")
 
-        # =========================================================================
-        # STRATIFIED BLAND-ALTMAN PLOTS
-        # =========================================================================
         st.markdown("---")
         st.markdown("### 📊 Stratified Bland-Altman Plots")
         st.caption("Bland-Altman analysis showing agreement between laboratory-based and non-laboratory-based CVD risk predictions, stratified by clinical subgroups")
         
-        # Helper function to create Bland-Altman plot for a subset
         def create_bland_altman_subplot(ax, data, title, color='#3498db'):
             """Create a single Bland-Altman plot on the given axes"""
             if len(data) < 5:
@@ -588,23 +507,18 @@ def render_backup_rq1(df_paired, datasets=None):
             loa_upper = mean_diff + 1.96 * std_diff
             loa_lower = mean_diff - 1.96 * std_diff
             
-            # Scatter plot
             ax.scatter(mean_scores, diff_scores, alpha=0.4, s=15, c=color, edgecolors='none')
             
-            # Mean line
             ax.axhline(mean_diff, color='#e74c3c', linestyle='-', linewidth=1.5, 
                        label=f'Mean: {mean_diff:.2f}')
             
-            # Limits of Agreement (±1.96 SD)
             ax.axhline(loa_upper, color='#e74c3c', linestyle='--', linewidth=1, 
                        label=f'+1.96 SD: {loa_upper:.2f}')
             ax.axhline(loa_lower, color='#e74c3c', linestyle='--', linewidth=1, 
                        label=f'-1.96 SD: {loa_lower:.2f}')
             
-            # Zero line
             ax.axhline(0, color='gray', linestyle=':', linewidth=0.8, alpha=0.7)
             
-            # Fill between limits of agreement
             ax.fill_between(ax.get_xlim(), loa_lower, loa_upper, alpha=0.1, color='#e74c3c')
             
             ax.set_xlabel('Mean of Lab & Non-Lab (%)', fontsize=9)
@@ -615,7 +529,6 @@ def render_backup_rq1(df_paired, datasets=None):
             ax.spines['top'].set_visible(False)
             ax.spines['right'].set_visible(False)
         
-        # --- 1. STRATIFIED BY GENDER ---
         st.markdown("#### 1️⃣ By Gender")
         
         if 'gender' in df.columns:
@@ -631,7 +544,6 @@ def render_backup_rq1(df_paired, datasets=None):
             plt.tight_layout()
             st.pyplot(fig_gender_ba)
             
-            # Download button
             img_gender = io.BytesIO()
             fig_gender_ba.savefig(img_gender, format='svg', bbox_inches='tight')
             img_gender.seek(0)
@@ -644,7 +556,6 @@ def render_backup_rq1(df_paired, datasets=None):
             )
             plt.close(fig_gender_ba)
             
-            # Summary statistics table
             gender_stats = []
             for name, subset in [('Male', male_df), ('Female', female_df)]:
                 if len(subset) > 0:
@@ -663,10 +574,8 @@ def render_backup_rq1(df_paired, datasets=None):
         else:
             st.info("Gender data not available for stratification.")
         
-        # --- 2. STRATIFIED BY DIABETES STATUS ---
         st.markdown("#### 2️⃣ By Diabetes Status")
         
-        # Check for diabetes column
         diabetes_col = None
         for col in ['has_diabetes', 'diabetes', 'diab_group']:
             if col in df.columns:
@@ -674,7 +583,6 @@ def render_backup_rq1(df_paired, datasets=None):
                 break
         
         if diabetes_col:
-            # Create diabetes groups
             df_diab = df.copy()
             
             if diabetes_col == 'diab_group':
@@ -693,7 +601,6 @@ def render_backup_rq1(df_paired, datasets=None):
             plt.tight_layout()
             st.pyplot(fig_diab_ba)
             
-            # Download button
             img_diab = io.BytesIO()
             fig_diab_ba.savefig(img_diab, format='svg', bbox_inches='tight')
             img_diab.seek(0)
@@ -706,7 +613,6 @@ def render_backup_rq1(df_paired, datasets=None):
             )
             plt.close(fig_diab_ba)
             
-            # Summary statistics table
             diab_stats = []
             for name, subset in [('Without Diabetes', non_diab_df), ('With Diabetes', diab_df)]:
                 if len(subset) > 0:
@@ -725,14 +631,13 @@ def render_backup_rq1(df_paired, datasets=None):
         else:
             st.info("Diabetes status data not available for stratification.")
         
-        # --- 3. STRATIFIED BY SBP (BLOOD PRESSURE BANDS) ---
         st.markdown("#### 3️⃣ By Systolic Blood Pressure Category")
         
         if 'sbp' in df.columns:
             df_sbp = df.dropna(subset=['sbp']).copy()
             
-            # Define SBP categories based on clinical guidelines
             def categorize_sbp(sbp):
+                """Categorize sbp."""
                 if sbp < 120:
                     return 'Normal (<120)'
                 elif sbp < 130:
@@ -747,7 +652,6 @@ def render_backup_rq1(df_paired, datasets=None):
             sbp_categories = ['Normal (<120)', 'Elevated (120-129)', 'HTN Stage 1 (130-139)', 'HTN Stage 2 (≥140)']
             sbp_colors = ['#27ae60', '#f39c12', '#e67e22', '#c0392b']
             
-            # Create 2x2 grid for SBP categories
             fig_sbp_ba, axes_sbp = plt.subplots(2, 2, figsize=(12, 10))
             axes_sbp = axes_sbp.flatten()
             
@@ -759,7 +663,6 @@ def render_backup_rq1(df_paired, datasets=None):
             plt.tight_layout()
             st.pyplot(fig_sbp_ba)
             
-            # Download button
             img_sbp = io.BytesIO()
             fig_sbp_ba.savefig(img_sbp, format='svg', bbox_inches='tight')
             img_sbp.seek(0)
@@ -772,7 +675,6 @@ def render_backup_rq1(df_paired, datasets=None):
             )
             plt.close(fig_sbp_ba)
             
-            # Summary statistics table
             sbp_stats = []
             for cat in sbp_categories:
                 subset = df_sbp[df_sbp['sbp_category'] == cat]
@@ -790,9 +692,7 @@ def render_backup_rq1(df_paired, datasets=None):
             if sbp_stats:
                 st.dataframe(pd.DataFrame(sbp_stats), use_container_width=True, hide_index=True)
             
-            # Clinical insight
             if len(sbp_stats) >= 2:
-                # Compare mean differences across categories
                 diffs = [float(s['Mean Diff']) for s in sbp_stats]
                 if max(diffs) - min(diffs) > 2:
                     st.warning(f"""
@@ -808,7 +708,6 @@ def render_backup_rq1(df_paired, datasets=None):
         else:
             st.info("Systolic blood pressure (sbp) data not available for stratification.")
         
-        # Summary interpretation
         st.markdown("---")
         st.markdown("### 📝 Interpretation Guide")
         st.info("""
@@ -823,14 +722,10 @@ def render_backup_rq1(df_paired, datasets=None):
         """)
 
 
-    # =========================================================================
-    # TAB 1b: BIAS MAGNITUDE
-    # =========================================================================
     with tab1b:
         st.subheader("RQ1b: Bias Magnitude & Direction")
         st.caption("**Bias Definition:** risk_nonlab − risk_lab (negative = underestimation)")
         
-        # --- Summary Statistics ---
         st.markdown("### 1️⃣ Overall Bias Distribution")
         
         mean_bias = df['risk_diff'].mean()
@@ -847,7 +742,6 @@ def render_backup_rq1(df_paired, datasets=None):
         col_b4.metric("Underestimation Rate", f"{underestimation_rate:.1%}",
                      help="% of cases where non-lab < lab")
         
-        # Histogram
         fig_hist = px.histogram(df, x='risk_diff', nbins=50, 
                                 title="Distribution of Risk Difference (Non-Lab − Lab)",
                                 color_discrete_sequence=['#457b9d'])
@@ -859,12 +753,10 @@ def render_backup_rq1(df_paired, datasets=None):
         fig_hist.update_yaxes(title="Count")
         st.plotly_chart(fig_hist, use_container_width=True, config={'toImageButtonOptions': {'format': 'svg', 'filename': 'bias_histogram'}})
         
-        # --- Bias by True Risk Level ---
         st.markdown("---")
         st.markdown("### 2️⃣ Bias Stratified by True Risk Level")
         st.caption("Does bias magnitude/direction vary by lab-based risk band?")
         
-        # Summary table
         bias_by_band = df.groupby('risk_lab_cat')['risk_diff'].agg([
             ('N', 'count'),
             ('Mean Bias', 'mean'),
@@ -883,7 +775,6 @@ def render_backup_rq1(df_paired, datasets=None):
             use_container_width=True
         )
         
-        # Box plot
         fig_box = px.box(df, x='risk_lab_cat', y='risk_diff', color='risk_lab_cat',
                          color_discrete_map=RISK_PALETTE,
                          title="Bias Distribution by WHO Lab Risk Band",
@@ -892,7 +783,6 @@ def render_backup_rq1(df_paired, datasets=None):
                          annotation_text="Zero Bias", annotation_position="left")
         st.plotly_chart(fig_box, use_container_width=True, config={'toImageButtonOptions': {'format': 'svg', 'filename': 'bias_boxplot'}})
         
-        # Interpretation
         high_risk_bias = bias_by_band[bias_by_band['risk_lab_cat'].isin(['20% to <30%', '≥30%'])]
         if not high_risk_bias.empty:
             mean_high_bias = high_risk_bias['Mean Bias'].mean()
@@ -905,9 +795,6 @@ def render_backup_rq1(df_paired, datasets=None):
             else:
                 st.info(f"ℹ️ **Overestimation in High-Risk Bands:** Mean bias = {mean_high_bias:.2f} pp (conservative)")
 
-    # =========================================================================
-    # TAB 1c: WHO GETS MISSED (SAFETY)
-    # =========================================================================
     with tab1c:
         st.subheader("RQ1c: Predictors of Missed High-Risk Cases")
         
@@ -918,7 +805,6 @@ def render_backup_rq1(df_paired, datasets=None):
         **Model:** Site-Clustered Logistic Regression with Location Interaction
         """)
         
-        # Threshold selection
         safe_thresh = st.radio("Analysis Threshold", [20, 10], 
                               format_func=lambda x: f"≥{x}% (Primary)" if x==20 else f"≥{x}% (Sensitivity)",
                               horizontal=True,
@@ -937,25 +823,20 @@ def render_backup_rq1(df_paired, datasets=None):
         if n_missed < 10:
             st.warning(f"⚠️ **Low Event Count:** Only {n_missed} missed cases. Consider using ≥10% threshold for stable regression.")
         
-        # --- Build Regression Model ---
         st.markdown("---")
         st.markdown("### Regression Analysis")
         
-        # Base predictors
         base_predictors = ["age", "gender"]
         
-        # Check for location variable
         location_var = None
         for var in ['urban_rural', 'location_type', 'site_type']:
             if var in df.columns and df[var].notna().sum() > 0:
                 location_var = var
                 break
         
-        # Check for clinical factors
         clinical_candidates = ['bmi', 'sbp', 'dbp', 'diabetes', 'smoker', 'waist']
         available_clinical = [f for f in clinical_candidates if f in df.columns and df[f].notna().sum() > 0]
         
-        # User selection
         st.markdown("**Configure Predictors:**")
         
         col_c1, col_c2 = st.columns(2)
@@ -977,12 +858,10 @@ def render_backup_rq1(df_paired, datasets=None):
                     help="Tests if location modifies the effect of age on being missed"
                 )
         
-        # Build formula
         predictors = base_predictors + include_clinical
         if location_var and location_var not in predictors:
             predictors.append(location_var)
         
-        # Formula with interaction
         if include_interaction and location_var:
             formula = f"{missed_col} ~ {' + '.join(predictors)} + age:{location_var}"
         else:
@@ -990,17 +869,14 @@ def render_backup_rq1(df_paired, datasets=None):
         
         st.code(f"Model: {formula}", language="r")
         
-        # --- Run Regression ---
         if st.button("🚀 Run Site-Adjusted Regression", type="primary"):
             try:
-                # Prepare data
                 req_cols = [missed_col] + predictors
                 if 'site_id' in df.columns:
                     req_cols.append('site_id')
                 
                 m_df = df[req_cols].dropna().copy()
                 
-                # Ensure categorical encoding
                 if location_var and location_var in m_df.columns:
                     m_df[location_var] = m_df[location_var].astype(str)
                 if 'gender' in m_df.columns:
@@ -1010,10 +886,8 @@ def render_backup_rq1(df_paired, datasets=None):
                     st.error(f"Insufficient data after dropping missing values (n={len(m_df)})")
                     st.stop()
                 
-                # Fit model
                 model = smf.glm(formula=formula, data=m_df, family=sm.families.Binomial())
                 
-                # Cluster-robust SEs if site_id available
                 if 'site_id' in m_df.columns and m_df['site_id'].nunique() > 1:
                     res = model.fit(cov_type='cluster', cov_kwds={'groups': m_df['site_id']})
                     se_type = "Cluster-Robust (by site_id)"
@@ -1023,7 +897,6 @@ def render_backup_rq1(df_paired, datasets=None):
                 
                 st.success(f"✅ Model Converged (N={len(m_df)}, SE: {se_type})")
                 
-                # --- Results Table ---
                 st.markdown("### Regression Results")
                 
                 params = res.params
@@ -1039,7 +912,6 @@ def render_backup_rq1(df_paired, datasets=None):
                     'Significant': res.pvalues < 0.05
                 })
                 
-                # Format and display
                 st.dataframe(
                     results_df.style.format({
                         'Coefficient': '{:.3f}',
@@ -1059,11 +931,9 @@ def render_backup_rq1(df_paired, datasets=None):
                 - P < 0.05: Statistically significant (highlighted in pink)
                 """)
                 
-                # --- Key Findings ---
                 st.markdown("---")
                 st.markdown("### Key Findings")
                 
-                # Identify significant predictors
                 sig_predictors = results_df[results_df['Significant']].sort_values('P-value')
                 
                 if len(sig_predictors) > 0:
@@ -1081,7 +951,6 @@ def render_backup_rq1(df_paired, datasets=None):
                 else:
                     st.info("ℹ️ No predictors reached statistical significance at p < 0.05")
                 
-                # Model summary
                 with st.expander("📊 Full Model Summary"):
                     st.text(res.summary())
                 
@@ -1089,14 +958,10 @@ def render_backup_rq1(df_paired, datasets=None):
                 st.error(f"❌ Model fitting failed: {e}")
                 st.caption("Try removing some predictors or checking for multicollinearity")
 
-    # =========================================================================
-    # PUBLICATION SUMMARY TAB
-    # =========================================================================
     with tab_summary:
         st.subheader("📝 Publication-Ready Summary")
         st.caption("Copy-paste text for your Results section")
         
-        # Generate comprehensive summary
         summary_text = f"""
 ## RQ1: WHO Non-Lab vs Lab Agreement & Safety (N={len(df):,} paired observations)
 
@@ -1179,7 +1044,6 @@ was set at α=0.05 (two-sided).
         
         st.code(summary_text, language='markdown')
         
-        # Download button
         st.download_button(
             label="📥 Download Summary as Markdown",
             data=summary_text,

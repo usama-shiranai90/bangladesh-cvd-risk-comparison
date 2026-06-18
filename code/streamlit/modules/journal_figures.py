@@ -54,40 +54,29 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-# ─────────────────────────────────────────────────────────────────────
-# NATURE ARTWORK GLOBALS
-# ─────────────────────────────────────────────────────────────────────
-SINGLE_COL_W = 3.50  # inches (89 mm)
-DOUBLE_COL_W = 7.20  # inches (183 mm)
-MAX_HEIGHT = 9.72  # inches (247 mm)
+SINGLE_COL_W = 3.50
+DOUBLE_COL_W = 7.20
+MAX_HEIGHT = 9.72
 
-# ── Official -branded hierarchical color palette (RGB) ──────────
-# Main Backgrounds (Contextual)
 nature_stone = ['#F3F2E9', '#E6E2D1', '#CFCBA9', '#B2AD81', '#8C8861', '#666345']
 nature_grey = ['#EBECEF', '#D1D4DB', '#A8AEBD', '#7E869B', '#5A6175', '#393E4D']
 
-# Main Accents (Primary Data / Main Action)
 nature_red = ['#F6CDCD', '#EFA0A0', '#E26D6D', '#CE3737', '#A12626', '#711A1A']
 nature_blue = ['#CDE3F6', '#A0CBEF', '#6DABDE', '#3783CE', '#2661A1', '#1A4271']
 nature_yellow = ['#F6EECD', '#EFDCA0', '#E2C66D', '#CEAD37', '#A18626', '#715D1A']
 
-# Extended Palette (Complex Categories)
 nature_olive = ['#EEF4B8', '#DCE87C', '#C2D148', '#99A82B', '#6D7A1A', '#454F0D']
 nature_green = ['#D1E8CC', '#A5D49B', '#72BB62', '#3D9B2B', '#27701A', '#154A0F']
 nature_teal = ['#CAEAEB', '#92D7D9', '#54BDC1', '#219DA1', '#127073', '#0A494B']
 nature_purple = ['#E4CAEA', '#CD92D9', '#B154C1', '#8F21A1', '#651273', '#400A4B']
 nature_orange = ['#F6DECC', '#EFBE9B', '#E29762', '#CE6B2B', '#A14E1A', '#71320F']
 
-# ── Semantic aliases derived from  palette ──────────────────────
-# Primary model comparison: teal (lab) vs orange (non-lab) — colorblind-safe
-CLR_LAB = nature_teal[3]  # '#219DA1'
-CLR_NONLAB = nature_orange[3]  # '#CE6B2B'
+CLR_LAB = nature_teal[3]
+CLR_NONLAB = nature_orange[3]
 
-# Gender: blue (male) vs purple (female) — avoids red-green
-CLR_MALE = nature_blue[3]  # '#3783CE'
-CLR_FEMALE = nature_purple[3]  # '#8F21A1'
+CLR_MALE = nature_blue[3]
+CLR_FEMALE = nature_purple[3]
 
-# Legacy convenience aliases (used in helper functions)
 OI_BLUE = nature_blue[3]
 OI_ORANGE = nature_orange[3]
 OI_GREEN = nature_green[3]
@@ -97,44 +86,28 @@ OI_PURPLE = nature_purple[2]
 OI_YELLOW = nature_yellow[2]
 OI_BLACK = '#000000'
 
-# Risk-band solid colours — distinct, no red-green pair, colorblind-accessible
 RISK_COLORS = {
-    "<5%": nature_teal[1],  # '#92D7D9' light teal
-    "5% to <10%": nature_olive[2],  # '#C2D148' olive
-    "10% to <20%": nature_orange[2],  # '#E29762' orange
-    "20% to <30%": nature_red[3],  # '#CE3737' red
-    "≥30%": nature_purple[3],  # '#8F21A1' purple
+    "<5%": nature_teal[1],
+    "5% to <10%": nature_olive[2],
+    "10% to <20%": nature_orange[2],
+    "20% to <30%": nature_red[3],
+    "≥30%": nature_purple[3],
 }
 
 
-# ─────────────────────────────────────────────────────────────────────
-# MATPLOTLIB RC ( Artwork — strict compliance)
-# ─────────────────────────────────────────────────────────────────────
 def _apply_nature_rc():
-    """Configure matplotlib rcParams for full  artwork compliance.
-
-    Key rules enforced:
-      - Font: Arial/Helvetica sans-serif; 7 pt base, 5 pt min, 8 pt panel labels
-      - Line weight: 0.5–1 pt for axes, ticks, lines
-      - NO gridlines, NO shadows, NO patterns
-      - Axis lines + ticks required (bottom + left spines visible)
-      - pdf.fonttype=42  →  TrueType embedded, text remains editable
-      - DPI ≥ 450
-      - White figure background (RGB)
-    """
+    """Configure matplotlib rcParams for full  artwork compliance."""
     plt.rcParams.update({
-        # ── Typography ──────────────────────────────────────────────
         "font.family": "sans-serif",
         "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans"],
-        "font.size": 7,  # general text max 7 pt
-        "axes.labelsize": 7,  # axis labels 7 pt
-        "axes.titlesize": 8,  # panel titles 8 pt
-        "xtick.labelsize": 6,  # tick labels 6 pt (min 5)
+        "font.size": 7,
+        "axes.labelsize": 7,
+        "axes.titlesize": 8,
+        "xtick.labelsize": 6,
         "ytick.labelsize": 6,
         "legend.fontsize": 6,
         "legend.title_fontsize": 7,
 
-        # ── Lines & ticks (0.5–1 pt) ────────────────────────────────
         "axes.linewidth": 0.5,
         "xtick.major.width": 0.5,
         "ytick.major.width": 0.5,
@@ -146,76 +119,53 @@ def _apply_nature_rc():
         "patch.linewidth": 0.5,
         "errorbar.capsize": 2.5,
 
-        # ── Ticks outward; require bottom + left spines ──────────────
         "xtick.direction": "out",
         "ytick.direction": "out",
         "xtick.bottom": True,
         "ytick.left": True,
 
-        # ── Spines: remove top/right; keep bottom/left ───────────────
         "axes.spines.top": False,
         "axes.spines.right": False,
         "axes.spines.bottom": True,
         "axes.spines.left": True,
 
-        # ── NO gridlines (absolute prohibition) ─────────────────────
         "axes.grid": False,
 
-        # ── Text & Math formatting fixes ────────────────────────────
         "axes.formatter.use_mathtext": False,
-        "axes.unicode_minus": False,  # Prevent $\mathdefault{}$ ParseException
+        "axes.unicode_minus": False,
 
-        # ── Backgrounds (white, RGB) ─────────────────────────────────
         "axes.facecolor": "white",
         "figure.facecolor": "white",
         "savefig.facecolor": "white",
 
-        # ── Output quality ──────────────────────────────────────────
-        "savefig.dpi": 450,  # ≥ 300 required; 450 preferred
+        "savefig.dpi": 450,
         "savefig.bbox": "tight",
         "savefig.pad_inches": 0.05,
-        "figure.dpi": 150,  # screen preview
+        "figure.dpi": 150,
 
-        # ── Font embedding (CRITICAL) ────────────────────────────────
-        # pdf.fonttype=42 → TrueType; text stays as editable text layer
         "pdf.fonttype": 42,
         "ps.fonttype": 42,
-        "svg.fonttype": "none",  # text as text in SVG
+        "svg.fonttype": "none",
     })
 
 
 def _add_panel_label(ax, label, x=-0.08, y=1.08):
-    """Add a bold, upright, lowercase panel label per  guidelines.
-
-     spec: 8 pt, bold, lowercase letter (a, b, c…), NO parentheses,
-    black text only.
-    """
-    ax.text(x, y, label,  # plain letter — no parentheses
+    """Add a bold, upright, lowercase panel label per  guidelines."""
+    ax.text(x, y, label,
             transform=ax.transAxes,
             fontsize=8, fontweight="bold", fontstyle="normal",
             color="black", va="top", ha="left")
 
 
 def _save_figure(fig, name, out_dir):
-    """Save figure as PDF + SVG at ≥ 450 DPI with embedded TrueType fonts.
-
-    PDF is the preferred submission format per  guidelines.
-    SVG is saved as a secondary editable vector.
-    Both use pdf.fonttype=42 (set globally in _apply_nature_rc) so that
-    text remains an editable text layer and is NOT outlined.
-    """
+    """Save figure as PDF + SVG at ≥ 450 DPI with embedded TrueType fonts."""
     os.makedirs(out_dir, exist_ok=True)
-    # PDF: primary — TrueType fonts embedded, editable text
     fig.savefig(os.path.join(out_dir, f"{name}.pdf"), format="pdf",
                 dpi=450, bbox_inches="tight")
-    # SVG: secondary — svg.fonttype='none' keeps text as <text> elements
     fig.savefig(os.path.join(out_dir, f"{name}.svg"), format="svg",
                 dpi=450, bbox_inches="tight")
 
 
-# ─────────────────────────────────────────────────────────────────────
-# DATA PREPARATION HELPERS
-# ─────────────────────────────────────────────────────────────────────
 RISK_ORDER = ["<5%", "5% to <10%", "10% to <20%", "20% to <30%", "≥30%"]
 AGE_LABELS = ["40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74"]
 AGE_BINS = [40, 45, 50, 55, 60, 65, 70, 75]
@@ -238,18 +188,21 @@ def _ensure_cats(df):
 
 
 def _pct(value, digits=1):
+    """Pct."""
     if value is None or pd.isna(value):
         return "NA"
     return f"{value:.{digits}f}%"
 
 
 def _num(value, digits=1):
+    """Num."""
     if value is None or pd.isna(value):
         return "NA"
     return f"{value:.{digits}f}"
 
 
 def _wilson_ci(successes, total, z=1.96):
+    """Wilson ci."""
     if total <= 0:
         return np.nan, np.nan
     p = successes / total
@@ -260,6 +213,7 @@ def _wilson_ci(successes, total, z=1.96):
 
 
 def _diabetes_prevalence(df):
+    """Diabetes prevalence."""
     for col in ["diabetes", "is_diabetic", "diabetic", "has_diabetes"]:
         if col in df.columns:
             s = df[col]
@@ -278,6 +232,7 @@ def _diabetes_prevalence(df):
 
 
 def _weighted_kappa(y_true, y_pred):
+    """Weighted kappa."""
     try:
         from sklearn.metrics import cohen_kappa_score
         return cohen_kappa_score(y_true, y_pred, weights="quadratic")
@@ -406,16 +361,10 @@ def _method_comparison_metrics(df_who_lab):
 
 
 def _fig1_study_flow(df_nonlab, df_lab, df_who_nonlab, df_who_lab, out_dir):
-    """
-    Figure 1 (a–c): Study design, participant flow, and cohort structure.
-    (a) STROBE participant flow diagram starting at 43,000
-    (b) Sample retention bar chart (funnel)
-    (c) WHO risk chart input comparison schematic
-    """
-    fig = plt.figure(figsize=(DOUBLE_COL_W, 6.0))  # slightly taller for breathing room
+    """Figure 1 (a–c): Study design, participant flow, and cohort structure."""
+    fig = plt.figure(figsize=(DOUBLE_COL_W, 6.0))
     gs = gridspec.GridSpec(1, 3, figure=fig, width_ratios=[1.3, 0.9, 1.0], wspace=0.4)
 
-    # --- (a) STROBE flow diagram ---
     ax_flow = fig.add_subplot(gs[0])
     ax_flow.set_xlim(0, 11.0)
     ax_flow.set_ylim(0, 10.5)
@@ -428,12 +377,10 @@ def _fig1_study_flow(df_nonlab, df_lab, df_who_nonlab, df_who_lab, out_dir):
     n_lab = len(df_lab) if df_lab is not None else 3241
     n_who_l = len(df_who_lab) if df_who_lab is not None else 1762
 
-    # Y-coordinates for the 5 main boxes
     y_pos = [9.4, 7.4, 5.4, 3.5, 1.5]
     x_main = 2.5
     x_excl = 9.0
 
-    # Main boxes text (Data Science Terminology)
     boxes_text = [
         f"Initial PHC records\n(N = {n_initial:,})",
         f"Preprocessed Dataset\n(N = {n_total:,})",
@@ -442,7 +389,6 @@ def _fig1_study_flow(df_nonlab, df_lab, df_who_nonlab, df_who_lab, out_dir):
         f"Final Analytic Sample\n(Paired Observation)\n(N = {n_who_l:,})"
     ]
 
-    # Exclusions text (Rigorous Criteria)
     excl_text = [
         f"Excluded:\nInconsistent formatting or\nout-of-range clinical inputs\n(n = {n_initial - n_total:,})",
         f"Prior CVD history or\nmissing baseline WHO features\n(n = {n_total - n_who_nl:,})",
@@ -450,7 +396,6 @@ def _fig1_study_flow(df_nonlab, df_lab, df_who_nonlab, df_who_lab, out_dir):
         f"Lack of feature sync\n(Non-lab vs. Lab pairing)\n(n = {n_lab - n_who_l:,})"
     ]
 
-    # Styles
     box_kw = dict(boxstyle="round,pad=0.4", facecolor=nature_stone[0],
                   edgecolor=nature_grey[4], lw=0.8)
     final_box_kw = dict(boxstyle="round,pad=0.5", facecolor=nature_blue[0],
@@ -460,34 +405,26 @@ def _fig1_study_flow(df_nonlab, df_lab, df_who_nonlab, df_who_lab, out_dir):
     arrow_kw = dict(arrowstyle="-|>", color=nature_grey[4], lw=1.0)
     excl_arrow_kw = dict(arrowstyle="-|>", color=nature_grey[2], lw=0.7, ls=":")
 
-    # Draw main boxes
     for i, (y, txt) in enumerate(zip(y_pos, boxes_text)):
         kw = final_box_kw if i == len(y_pos) - 1 else box_kw
         font_weight = "bold" if i == len(y_pos) - 1 else "normal"
         ax_flow.text(x_main, y, txt, ha="center", va="center", fontsize=7,
                      fontweight=font_weight, bbox=kw, zorder=3)
 
-    # Draw arrows and exclusions
     for i in range(len(y_pos) - 1):
         y_top = y_pos[i]
         y_bot = y_pos[i + 1]
 
-        # Vertical arrow between main boxes
-        # Subtract slightly more from y_top to avoid crossing the border
         ax_flow.annotate("", xy=(x_main, y_bot + 0.65), xytext=(x_main, y_top - 0.65),
                          arrowprops=arrow_kw, zorder=1)
 
-        # Exclusion box (y_mid = midpoint between consecutive flow nodes)
         y_mid = (y_top + y_bot) / 2
-        # Text must be black (: no coloured text; colour via box keyline only)
         ax_flow.text(x_excl, y_mid, excl_text[i], ha="center", va="center",
                      fontsize=6, color="black", bbox=excl_kw, zorder=3)
 
-        # Horizontal path to exclusion
         ax_flow.annotate("", xy=(x_excl - 1.8, y_mid), xytext=(x_main, y_mid),
                          arrowprops=excl_arrow_kw, zorder=1)
 
-    # --- (b) Cohort flow chart / funnel ---
     ax_bar = fig.add_subplot(gs[1])
     _add_panel_label(ax_bar, "b) Sample Retention", x=-0.15, y=1.02)
 
@@ -495,21 +432,17 @@ def _fig1_study_flow(df_nonlab, df_lab, df_who_nonlab, df_who_lab, out_dir):
     sizes = np.array([n_initial, n_total, n_who_nl, n_lab, n_who_l])
     pcts = sizes / n_initial * 100
 
-    # Elegant symmetric funnel visualization
     colors = [nature_grey[2], nature_grey[3], CLR_NONLAB, CLR_LAB, nature_blue[4]]
 
-    y_bar = np.arange(len(stages))[::-1]  # from top to bottom
+    y_bar = np.arange(len(stages))[::-1]
 
-    # Draw funnel bars symmetrically
     for i, (size, clr, pct, stg) in enumerate(zip(sizes, colors, pcts, stages)):
         half = size / 2.0
         ax_bar.barh(y_bar[i], size, left=-half, color=clr, edgecolor="none", height=0.7, alpha=0.9)
 
-        # Overlay absolute number in center
         font_col = "white" if i >= 3 else "#F8FAFC"
         if i == 0: font_col = "white"
 
-        # If the bar is too small internally, put text on the side
         if pct < 15:
             ax_bar.text(0, y_bar[i], f"{size:,} ({pct:.1f}%)", va="center", ha="center",
                         fontsize=6.5, fontweight="bold", color="#1E293B",
@@ -517,11 +450,9 @@ def _fig1_study_flow(df_nonlab, df_lab, df_who_nonlab, df_who_lab, out_dir):
         else:
             ax_bar.text(0, y_bar[i], f"{size:,}", va="center", ha="center",
                         fontsize=6.5, fontweight="bold", color=font_col)
-            # Retention percentage on right outside
             ax_bar.text(half + max(sizes) * 0.05, y_bar[i], f"{pct:.1f}%",
                         va="center", ha="left", fontsize=6, fontweight="bold", color="#64748B")
 
-    # Connect the edges of the bars via a smooth line
     halves = sizes / 2.0
     ax_bar.plot(-halves, y_bar, color="#CBD5E1", lw=1.5, zorder=0, linestyle="--")
     ax_bar.plot(halves, y_bar, color="#CBD5E1", lw=1.5, zorder=0, linestyle="--")
@@ -529,38 +460,28 @@ def _fig1_study_flow(df_nonlab, df_lab, df_who_nonlab, df_who_lab, out_dir):
     ax_bar.set_yticks(y_bar)
     ax_bar.set_yticklabels(stages, fontsize=7, rotation=90, va="center")
 
-    # Remove x-axis entirely for a cleaner funnel look
     ax_bar.set_xticks([])
-    # ax_bar.spines["bottom"].set_visible(False)
-    # ax_bar.spines["left"].set_visible(False)
     ax_bar.tick_params(axis='y', which='major', pad=10)
 
-    # ax_bar.set_title("Sample Retention", fontsize=8, fontweight="bold", pad=8)
 
-    # Center the plot properly
     max_half = max(sizes) / 2.0
     ax_bar.set_xlim(-max_half * 1.5, max_half * 1.5)
 
     import matplotlib.colors as mcolors
 
-    # --- (c) Schematic (Unified Checklist & WHO Charts) ---
     ax_sch = fig.add_subplot(gs[2])
     ax_sch.set_xlim(-0.5, 12.5)
     ax_sch.set_ylim(-0.5, 11.5)
     ax_sch.axis("off")
 
-    # Consolidated Label and Title placement
     _add_panel_label(ax_sch, "c) WHO CVD Risk Assessment", x=-0.05, y=1.02)
 
-    # --- SECTION 1: Input Factor Requirements (Table) ---
-    # Lifted everything up slightly to make more room at the bottom
     ax_sch.text(6.0, 11.2, "Input Factor Requirements", ha="center", fontsize=7, fontweight="bold", color="#1E293B")
 
     x_var = 0.0
     x_nl = 7.0
     x_lab = 10.5
 
-    # Headers
     y_hdr = 10.5
     ax_sch.text(x_var, y_hdr, "Clinical Input", ha="left", fontsize=6, color="#334155", fontweight="bold")
     ax_sch.text(x_nl, y_hdr, "Non-Lab", ha="center", fontsize=6, color="#334155", fontweight="bold")
@@ -576,13 +497,11 @@ def _fig1_study_flow(df_nonlab, df_lab, df_who_nonlab, df_who_lab, out_dir):
         ("Diabetes Status", False, True)
     ]
 
-    # Top rule
     ax_sch.axhline(10.1, xmin=0, xmax=1, color="#334155", lw=0.8)
 
-    y = 9.6  # Higher starting point
+    y = 9.6
     for i, (var, nl_has, lab_has) in enumerate(rows):
         if i % 2 == 0:
-            # Fixed Rectangle overlap: height is now exactly 0.7, matching the y-step
             rect = plt.Rectangle((x_var - 0.2, y - 0.35), 12.4, 0.7, facecolor="#F8FAFC", edgecolor="none", zorder=0)
             ax_sch.add_patch(rect)
 
@@ -591,18 +510,15 @@ def _fig1_study_flow(df_nonlab, df_lab, df_who_nonlab, df_who_lab, out_dir):
         ax_sch.text(x_nl, y, nl_text, ha="center", va="center", fontsize=8, color=nl_col)
         lab_text, lab_col = ("●", "#ea580c") if lab_has else ("○", "#94A3B8")
         ax_sch.text(x_lab, y, lab_text, ha="center", va="center", fontsize=8, color=lab_col)
-        y -= 0.7  # Increased step from 0.65 to 0.7 for better readability
+        y -= 0.7
 
-    # Bottom rule (y is now 4.7 after the loop)
     ax_sch.axhline(y + 0.4, xmin=0, xmax=1, color="#334155", lw=0.8)
 
-    # --- SECTION 2: Three WHO Risk Factor Charts (Schematic) ---
     grad_cmap = mcolors.LinearSegmentedColormap.from_list("risk_grad",
                                                           [nature_teal[1], nature_olive[2], nature_orange[2],
                                                            nature_red[3],
                                                            nature_purple[3]])
 
-    # Title for Section 2 - Safely below the table line (4.6 vs 5.1)
     ax_sch.text(6.0, 4.6, "Schematic of WHO Risk Grids (SEAR)", ha="center", fontsize=7, fontweight="bold",
                 color="#1E293B")
 
@@ -615,27 +531,22 @@ def _fig1_study_flow(df_nonlab, df_lab, df_who_nonlab, df_who_lab, out_dir):
         {"title": "Women, Diabetic\n(Age 60-64)", "data": base_grid * 0.9 + np.random.rand(5, 5) * 0.1, "x": 8.2}
     ]
 
-    # Shifted grids up to prevent crashing into legend
     y_grid_bottom = 2.0
     grid_height = 1.9
     grid_width = 3.0
 
     for idx, chart in enumerate(charts):
-        # Chart Title (Top of grids is 3.9, titles at 4.15)
         ax_sch.text(chart["x"] + grid_width / 2, y_grid_bottom + grid_height + 0.25,
                     chart["title"], ha="center", fontsize=3.5, fontweight="bold", color="#475569")
 
-        # Draw Matrix
         ax_sch.imshow(chart["data"], aspect='auto', cmap=grad_cmap, origin='lower',
                       extent=[chart["x"], chart["x"] + grid_width, y_grid_bottom, y_grid_bottom + grid_height],
                       vmin=0, vmax=1.0, alpha=0.9, zorder=2)
 
-        # Grid border
         rect = plt.Rectangle((chart["x"], y_grid_bottom), grid_width, grid_height,
                              edgecolor="#94A3B8", facecolor="none", lw=0.8, zorder=4)
         ax_sch.add_patch(rect)
 
-        # Internal gridlines
         for i in range(1, 5):
             y_line = y_grid_bottom + i * (grid_height / 5)
             ax_sch.plot([chart["x"], chart["x"] + grid_width], [y_line, y_line], color="white", lw=0.6, zorder=3)
@@ -643,26 +554,21 @@ def _fig1_study_flow(df_nonlab, df_lab, df_who_nonlab, df_who_lab, out_dir):
             ax_sch.plot([x_line, x_line], [y_grid_bottom, y_grid_bottom + grid_height], color="white", lw=0.6, zorder=3)
 
         if idx == 0:
-            # SBP ticks
             sbps = ["<120", "130", "150", "170", "≥180"]
             for i, sbp in enumerate(sbps):
                 ax_sch.text(chart["x"] - 0.1, y_grid_bottom + (i + 0.5) * (grid_height / 5),
                             sbp, ha="right", va="center", fontsize=4.5, color="#64748B")
 
-            # Cholesterol ticks
             chols = ["<4", "5", "6", "7", "≥7"]
             for i, chol in enumerate(chols):
                 ax_sch.text(chart["x"] + (i + 0.5) * (grid_width / 5), y_grid_bottom - 0.15,
                             chol, ha="center", va="top", fontsize=4.5, color="#64748B")
 
-    # Global Y-Axis label
     ax_sch.text(-0.2, y_grid_bottom + grid_height / 2, "Systolic BP (mmHg)",
                 ha="center", va="center", rotation=90, fontsize=5.5, fontweight="bold", color="#475569")
-    # Global X-Axis label - Safely tucked beneath the grids
     ax_sch.text(6.0, y_grid_bottom - 0.6, "Total Cholesterol (mmol/L)",
                 ha="center", fontsize=5.5, fontweight="bold", color="#475569")
 
-    # --- SECTION 3: Gradient Master Legend ---
     x_grad_str, x_grad_end = 0.0, 12.0
     y_grad_str, y_grad_end = 0.25, 0.75
 
@@ -677,7 +583,6 @@ def _fig1_study_flow(df_nonlab, df_lab, df_who_nonlab, df_who_lab, out_dir):
                          edgecolor="#CBD5E1", facecolor="none", lw=0.8, zorder=10)
     ax_sch.add_patch(rect)
 
-    # Fixed Text: Changed V.High color to "white" for readability
     grad_labels = [
         (0.1, "V.Low\n<5%", "black"),
         (0.3, "Low\n5-10%", "black"),
@@ -699,24 +604,14 @@ def _fig1_study_flow(df_nonlab, df_lab, df_who_nonlab, df_who_lab, out_dir):
     return fig
 
 
-# ─────────────────────────────────────────────────────────────────────
-# FIGURE 2 – RISK DISTRIBUTION: NON-LAB vs LAB
-# ─────────────────────────────────────────────────────────────────────
 def _fig2_risk_distribution(df_who_nonlab, df_who_lab, out_dir):
-    """
-    Figure 2 (a–d): Baseline risk distribution.
-    (a) Risk category distribution (Non-Lab vs Lab)
-    (b) Age-stratified mean risk by sex (non-lab cohort)
-    (c) Risk distribution histograms (paired cohort overlay)
-    (d) Urban/rural risk prevalence comparison
-    """
+    """Figure 2 (a–d): Baseline risk distribution."""
     df_nl = _ensure_cats(df_who_nonlab) if df_who_nonlab is not None else None
     df_l = _ensure_cats(df_who_lab) if df_who_lab is not None else None
 
     fig = plt.figure(figsize=(DOUBLE_COL_W, 6.0))
     gs = gridspec.GridSpec(2, 2, figure=fig, hspace=0.45, wspace=0.30)
 
-    # --- (a) Risk category grouped bars ---
     ax_a = fig.add_subplot(gs[0, 0])
     _add_panel_label(ax_a, "a")
 
@@ -739,13 +634,11 @@ def _fig2_risk_distribution(df_who_nonlab, df_who_lab, out_dir):
                        pad=4)
         ax_a.legend(frameon=False, loc="upper right", fontsize=6)
 
-    # --- (b) Age × sex mean risk (non-lab) ---
     ax_b = fig.add_subplot(gs[0, 1])
     _add_panel_label(ax_b, "b")
 
     _plotted_b = False
     if df_nl is not None and "age_band" in df_nl.columns and "gender" in df_nl.columns and "risk_nonlab" in df_nl.columns:
-        # Normalise gender strings: accept M/F, Male/Female, male/female, 1/2, 0/1
         df_nl_b = df_nl.copy()
         g_raw = df_nl_b["gender"].astype(str).str.strip().str.upper()
         df_nl_b["_gender_norm"] = np.where(
@@ -753,7 +646,6 @@ def _fig2_risk_distribution(df_who_nonlab, df_who_lab, out_dir):
             "Male",
             np.where(g_raw.str.startswith("F") | g_raw.isin(["2"]), "Female", None)
         )
-        # Also handle numeric-coded gender (1=Male, 2=Female)
         if df_nl_b["_gender_norm"].isna().all():
             try:
                 g_num = pd.to_numeric(df_nl_b["gender"], errors="coerce")
@@ -779,8 +671,6 @@ def _fig2_risk_distribution(df_who_nonlab, df_who_lab, out_dir):
             _plotted_b = True
 
     if not _plotted_b:
-        # Robust fallback: use ALL non-lab data ignoring gender grouping,
-        # but show both sexes using canonical literature-derived trajectories
         male_means = np.array([4.8, 6.2, 8.5, 11.4, 14.8, 18.3, 22.1])
         female_means = np.array([2.9, 3.8, 5.1, 7.2, 10.1, 13.4, 17.0])
         male_sem = np.array([0.3, 0.4, 0.5, 0.6, 0.7, 0.9, 1.1])
@@ -805,7 +695,6 @@ def _fig2_risk_distribution(df_who_nonlab, df_who_lab, out_dir):
                    fontweight="bold", pad=4)
     ax_b.legend(frameon=False, fontsize=6)
 
-    # --- (c) Paired risk histograms ---
     ax_c = fig.add_subplot(gs[1, 0])
     _add_panel_label(ax_c, "c")
 
@@ -823,7 +712,6 @@ def _fig2_risk_distribution(df_who_nonlab, df_who_lab, out_dir):
                        fontweight="bold", pad=4)
         ax_c.legend(frameon=False, fontsize=6)
 
-    # --- (d) Urban / rural / semi-urban prevalence ---
     ax_d = fig.add_subplot(gs[1, 1])
     _add_panel_label(ax_d, "d")
 
@@ -861,19 +749,15 @@ def _fig2_risk_distribution(df_who_nonlab, df_who_lab, out_dir):
     return fig
 
 
-# ─────────────────────────────────────────────────────────────────────
-# FIGURE 3 – AGREEMENT & PROPORTIONAL BIAS
-# ─────────────────────────────────────────────────────────────────────
 def _fig3_agreement(df_who_lab, out_dir):
+    """Fig3 agreement."""
     df = _ensure_cats(df_who_lab) if df_who_lab is not None else None
 
     fig = plt.figure(figsize=(DOUBLE_COL_W, 3.8))
     gs = gridspec.GridSpec(1, 3, figure=fig, wspace=0.38)
 
-    # --- (a) Reclassification heatmap ---
     ax_a = fig.add_subplot(gs[0])
     _add_panel_label(ax_a, "a", x=-0.12)
-    # restore spines for heatmap
     ax_a.spines["top"].set_visible(True)
     ax_a.spines["right"].set_visible(True)
 
@@ -893,11 +777,9 @@ def _fig3_agreement(df_who_lab, out_dir):
         ax_a.set_title("Agreement Heatmap", fontsize=8,
                        fontweight="bold", pad=4)
         ax_a.tick_params(axis="both", labelsize=5.5, rotation=0)
-        # rotate x labels
         ax_a.set_xticklabels(ax_a.get_xticklabels(), rotation=35, ha="right")
         ax_a.set_yticklabels(ax_a.get_yticklabels(), rotation=90, ha="center")
 
-    # --- (b) Bland-Altman plot ---  FIX THIS
     ax_b = fig.add_subplot(gs[1])
     _add_panel_label(ax_b, "b", x=-0.12)
 
@@ -917,7 +799,6 @@ def _fig3_agreement(df_who_lab, out_dir):
         ax_b.axhline(loa_lower, color=OI_VERMILION, lw=0.5, ls="--")
         ax_b.axhline(0, color="#999", lw=0.3)
 
-        # Proportional bias regression line
         slope, intercept, r, p, se = stats.linregress(mean_risk, diff)
         x_fit = np.linspace(mean_risk.min(), mean_risk.max(), 100)
         ax_b.plot(x_fit, slope * x_fit + intercept, color=OI_GREEN, lw=0.8,
@@ -929,7 +810,6 @@ def _fig3_agreement(df_who_lab, out_dir):
                        pad=4)
         ax_b.legend(frameon=False, fontsize=5.5, loc="lower left")
 
-        # LoA annotation
         ax_b.text(mean_risk.max() * 0.98, loa_upper + 0.3,
                   f"+1.96 SD: {loa_upper:.1f}", fontsize=5, ha="right",
                   color=OI_VERMILION)
@@ -937,7 +817,6 @@ def _fig3_agreement(df_who_lab, out_dir):
                   f"−1.96 SD: {loa_lower:.1f}", fontsize=5, ha="right",
                   color=OI_VERMILION)
 
-    # --- (c) Bias gradient by lab risk band ---
     ax_c = fig.add_subplot(gs[2])
     _add_panel_label(ax_c, "c", x=-0.12)
 
@@ -968,7 +847,6 @@ def _fig3_agreement(df_who_lab, out_dir):
             ax_c.set_title("Bias by lab risk band", fontsize=8,
                            fontweight="bold", pad=4)
 
-            # Add underestimation % labels
             for i, row in bdf.iterrows():
                 ax_c.text(i, row["Mean bias"] - row["SD"] - 0.8,
                           f'{row["% Underest."]:.0f}%', ha="center",
@@ -978,18 +856,8 @@ def _fig3_agreement(df_who_lab, out_dir):
     return fig
 
 
-# ─────────────────────────────────────────────────────────────────────
-# FIGURE 3.1 – COMPREHENSIVE BLAND-ALTMAN & PROPORTIONAL BIAS
-# ─────────────────────────────────────────────────────────────────────
 def _fig3_1_bland_altman(df_who_lab, out_dir):
-    """
-    Supplementary Figure 3.1: Detailed Bland-Altman analysis.
-    Uses DUAL ENCODING (shape + colour) for all stratified panels.
-    (a) Overall cohort — density hexbin with contour overlay
-    (b) Stratified by Sex — circle vs triangle + two-toned colour
-    (c) Stratified by Age (<60 vs ≥60) — square vs diamond + colour
-    (d) Stratified by BMI — three shapes + colour
-    """
+    """Supplementary Figure 3.1: Detailed Bland-Altman analysis."""
     df = df_who_lab.copy() if df_who_lab is not None else None
     fig = plt.figure(figsize=(DOUBLE_COL_W, 6.0))
     gs = gridspec.GridSpec(2, 2, figure=fig, hspace=0.40, wspace=0.30)
@@ -1000,8 +868,8 @@ def _fig3_1_bland_altman(df_who_lab, out_dir):
     df["mean_risk"] = (df["risk_nonlab"] + df["risk_lab"]) / 2
     df["diff_risk"] = df["risk_nonlab"] - df["risk_lab"]
 
-    # -- shared helper: draw bias lines + regression trend --
     def _ba_lines(ax, d_arr, m_arr, show_labels=True):
+        """Ba lines."""
         mb = d_arr.mean()
         sdb = d_arr.std()
         loa_hi = mb + 1.96 * sdb
@@ -1013,9 +881,7 @@ def _fig3_1_bland_altman(df_who_lab, out_dir):
                    label=f"+1.96 SD ({loa_hi:+.1f})" if show_labels else None)
         ax.axhline(loa_lo, color="#B91C1C", lw=0.6, ls="--", zorder=3,
                    label=f"-1.96 SD ({loa_lo:+.1f})" if show_labels else None)
-        # shaded LoA band
         ax.axhspan(loa_lo, loa_hi, color="#FEE2E2", alpha=0.18, zorder=0)
-        # proportional bias regression
         if len(m_arr) > 10:
             slope, intercept, _, pv, _ = stats.linregress(m_arr, d_arr)
             xs = np.linspace(m_arr.min(), m_arr.max(), 200)
@@ -1024,7 +890,6 @@ def _fig3_1_bland_altman(df_who_lab, out_dir):
                     label=f"Trend b={slope:.3f} (p{'<0.001' if pv < 0.001 else f'={pv:.3f}'})" if show_labels else None)
         return mb, sdb
 
-    # ── (a) Overall: hexbin density + contour outline ──────────────
     ax_a = fig.add_subplot(gs[0, 0])
     _add_panel_label(ax_a, "a")
     m_all = df["mean_risk"].values
@@ -1045,7 +910,6 @@ def _fig3_1_bland_altman(df_who_lab, out_dir):
     ax_a.legend(frameon=True, framealpha=0.92, edgecolor="#E2E8F0",
                 fontsize=5, loc="upper right", ncol=1)
 
-    # ── (b) By Sex: circle (male) vs triangle-up (female) × colour ─
     ax_b = fig.add_subplot(gs[0, 1])
     _add_panel_label(ax_b, "b")
     _ba_lines(ax_b, df["diff_risk"].values, df["mean_risk"].values, show_labels=False)
@@ -1070,7 +934,6 @@ def _fig3_1_bland_altman(df_who_lab, out_dir):
     ax_b.legend(frameon=True, framealpha=0.92, edgecolor="#E2E8F0",
                 fontsize=5.5, loc="upper right")
 
-    # ── (c) By Age: square (< 60) vs diamond (≥ 60) × colour ───────
     ax_c = fig.add_subplot(gs[1, 0])
     _add_panel_label(ax_c, "c")
     _ba_lines(ax_c, df["diff_risk"].values, df["mean_risk"].values, show_labels=False)
@@ -1094,7 +957,6 @@ def _fig3_1_bland_altman(df_who_lab, out_dir):
     ax_c.legend(frameon=True, framealpha=0.92, edgecolor="#E2E8F0",
                 fontsize=5.5, loc="upper right")
 
-    # ── (d) By BMI: circle / triangle / pentagon × colour ──────────
     ax_d = fig.add_subplot(gs[1, 1])
     _add_panel_label(ax_d, "d")
     _ba_lines(ax_d, df["diff_risk"].values, df["mean_risk"].values, show_labels=False)
@@ -1130,15 +992,8 @@ def _fig3_1_bland_altman(df_who_lab, out_dir):
     return fig
 
 
-# ─────────────────────────────────────────────────────────────────────
-# FIGURE 3.2 – CONCORDANCE (HEATMAP + SANKEY)
-# ─────────────────────────────────────────────────────────────────────
 def _fig3_2_concordance(df_who_lab, out_dir):
-    """
-    Figure 3.2: Concordance: Heatmap + Sankey Reclassification
-    (a) Cross-classification heatmap with specific color zones and dashed concordant line.
-    (b) Sankey alluvial flow diagram illustrating migrations.
-    """
+    """Figure 3.2: Concordance: Heatmap + Sankey Reclassification"""
     import matplotlib.path as mpath
     import matplotlib.patches as mpatches
 
@@ -1156,12 +1011,11 @@ def _fig3_2_concordance(df_who_lab, out_dir):
     row_totals = ct.sum(axis=1)
     lab_totals = ct.sum(axis=0)
 
-    # --- (a) Custom Heatmap ---
     ax_a = fig.add_subplot(gs[0])
     _add_panel_label(ax_a, "a", x=-0.15)
 
     ax_a.set_xlim(0, 5)
-    ax_a.set_ylim(5, 0)  # Invert Y to put <5% at the top
+    ax_a.set_ylim(5, 0)
 
     for i, nl_cat in enumerate(RISK_ORDER):
         for j, lab_cat in enumerate(RISK_ORDER):
@@ -1169,13 +1023,12 @@ def _fig3_2_concordance(df_who_lab, out_dir):
             row_tot = row_totals[nl_cat]
             pct = (val / row_tot * 100) if row_tot > 0 else 0
 
-            # Colors matching the requested zones
             if i == j:
-                fc = "#E0F2FE"  # Blue diagonal (Concordant)
+                fc = "#E0F2FE"
             elif i < j:
-                fc = "#FFEDD5"  # Orange off-diagonal (Upward reclassification)
+                fc = "#FFEDD5"
             else:
-                fc = "#F8FAFC"  # Grey below diagonal (Downward reclassification)
+                fc = "#F8FAFC"
 
             rect = plt.Rectangle((j, i), 1, 1, facecolor=fc, edgecolor="white", lw=1.5, zorder=1)
             ax_a.add_patch(rect)
@@ -1187,10 +1040,8 @@ def _fig3_2_concordance(df_who_lab, out_dir):
                 ax_a.text(j + 0.5, i + 0.5, text, ha="center", va="center",
                           fontsize=5.5, color=color, fontweight=weight, zorder=3)
 
-    # Dashed orange diagonal reference line
     ax_a.plot([0, 5], [0, 5], color="#ea580c", ls="--", lw=1.5, zorder=4)
 
-    # Formatting
     ax_a.set_xticks(np.arange(5) + 0.5)
     ax_a.set_xticklabels(RISK_ORDER, rotation=35, ha="right", fontsize=6.5)
     ax_a.set_yticks(np.arange(5) + 0.5)
@@ -1200,11 +1051,9 @@ def _fig3_2_concordance(df_who_lab, out_dir):
     ax_a.set_ylabel("Non-laboratory model\n(WHO risk)", fontsize=7.5, fontweight="bold", labelpad=6)
     ax_a.set_title("Cross-classification Heatmap", fontsize=8.5, fontweight="bold", pad=8)
 
-    # Hide outer frame
     for spine in ax_a.spines.values():
         spine.set_visible(False)
 
-    # --- (b) Sankey Reclassification Flow ---
     ax_b = fig.add_subplot(gs[1])
     _add_panel_label(ax_b, "b", x=-0.05)
 
@@ -1225,6 +1074,7 @@ def _fig3_2_concordance(df_who_lab, out_dir):
     current_y_lab = {k: v[0] for k, v in lab_coords.items()}
 
     def _add_sankey_flow(ax, x0, y0_bottom, y0_top, x1, y1_bottom, y1_top, color, alpha=0.5):
+        """Add sankey flow."""
         cp_x0 = x0 + (x1 - x0) * 0.45
         cp_x1 = x1 - (x1 - x0) * 0.45
         verts = [
@@ -1244,11 +1094,11 @@ def _fig3_2_concordance(df_who_lab, out_dir):
             if val == 0: continue
 
             if i == j:
-                color, alpha = "#38BDF8", 0.45  # Blue concordant
+                color, alpha = "#38BDF8", 0.45
             elif i < j:
-                color, alpha = "#FB923C", 0.6  # Orange upward
+                color, alpha = "#FB923C", 0.6
             else:
-                color, alpha = "#CBD5E1", 0.4  # Grey downward
+                color, alpha = "#CBD5E1", 0.4
 
             y0_b = current_y_nl[nl_cat]
             y0_t = y0_b + val
@@ -1265,23 +1115,19 @@ def _fig3_2_concordance(df_who_lab, out_dir):
     ax_b.set_ylim(max(y_nl, y_lab) - gap, -gap * 1.5)
     ax_b.axis("off")
 
-    # Headers for Sankey
     ax_b.text(-w / 2, -gap * 0.7, "Non-laboratory\nModel", ha="right", va="bottom", fontsize=8, fontweight="bold",
               color=OI_ORANGE)
     ax_b.text(1 + w / 2, -gap * 0.7, "Laboratory\nModel", ha="left", va="bottom", fontsize=8, fontweight="bold",
               color=OI_BLUE)
     ax_b.set_title("Individual-level Reclassification Migration", fontsize=8.5, fontweight="bold", pad=8)
 
-    # Draw the risk category nodes
     for cat in RISK_ORDER:
-        # Left (Non-lab)
         y0, y1 = nl_coords[cat]
         ax_b.add_patch(
             plt.Rectangle((0 - w, y0), w, max(y1 - y0, 10), facecolor=OI_ORANGE, edgecolor="white", lw=0.5, zorder=4))
         ax_b.text(-w - 0.03, (y0 + y1) / 2, cat, ha="right", va="center", fontsize=6, fontweight="bold",
                   color="#334155")
 
-        # Right (Lab)
         y0_l, y1_l = lab_coords[cat]
         ax_b.add_patch(
             plt.Rectangle((1, y0_l), w, max(y1_l - y0_l, 10), facecolor=OI_BLUE, edgecolor="white", lw=0.5, zorder=4))
@@ -1293,16 +1139,8 @@ def _fig3_2_concordance(df_who_lab, out_dir):
     return fig
 
 
-# ─────────────────────────────────────────────────────────────────────
-# FIGURE 4 – AGE-STRATIFIED DIVERGENCE
-# ─────────────────────────────────────────────────────────────────────
 def _fig4_age_divergence(df_who_nonlab, df_who_lab, out_dir):
-    """
-    Figure 4 (a–c): Age-stratified prevalence divergence.
-    (a) ≥10% threshold prevalence by age
-    (b) ≥20% threshold prevalence by age
-    (c) Absolute prevalence gap by age band
-    """
+    """Figure 4 (a–c): Age-stratified prevalence divergence."""
     fig, axes = plt.subplots(1, 3, figsize=(DOUBLE_COL_W, 3.2))
 
     df_nl = _ensure_cats(df_who_nonlab) if df_who_nonlab is not None else None
@@ -1320,7 +1158,6 @@ def _fig4_age_divergence(df_who_nonlab, df_who_lab, out_dir):
                 continue
             k = (sub[risk_col] >= threshold).sum()
             p = k / n
-            # Wilson CI
             z = 1.96
             denom = 1 + z ** 2 / n
             centre = (p + z ** 2 / (2 * n)) / denom
@@ -1363,7 +1200,6 @@ def _fig4_age_divergence(df_who_nonlab, df_who_lab, out_dir):
         ax.set_title(title_str, fontsize=8, fontweight="bold", pad=4)
         ax.legend(frameon=False, fontsize=5.5)
 
-    # --- (c) Absolute gap ---
     ax_c = axes[2]
     _add_panel_label(ax_c, "c")
 
@@ -1402,22 +1238,13 @@ def _fig4_age_divergence(df_who_nonlab, df_who_lab, out_dir):
     return fig
 
 
-# ─────────────────────────────────────────────────────────────────────
-# FIGURE 5 – MISSED HIGH-RISK & CLINICAL UTILITY
-# ─────────────────────────────────────────────────────────────────────
 def _fig5_clinical_utility(df_who_lab, out_dir):
-    """
-    Figure 5 (a–c): Missed high-risk analysis and decision utility.
-    (a) Confusion matrix at ≥20% threshold (waterfall)
-    (b) Sensitivity–specificity across thresholds
-    (c) Two-stage screening efficiency
-    """
+    """Figure 5 (a–c): Missed high-risk analysis and decision utility."""
     df = _ensure_cats(df_who_lab) if df_who_lab is not None else None
 
     fig = plt.figure(figsize=(DOUBLE_COL_W, 3.5))
     gs = gridspec.GridSpec(1, 3, figure=fig, wspace=0.40)
 
-    # --- (a) Confusion matrix visualisation ---
     ax_a = fig.add_subplot(gs[0])
     _add_panel_label(ax_a, "a", x=-0.10)
     ax_a.spines["top"].set_visible(True)
@@ -1448,14 +1275,12 @@ def _fig5_clinical_utility(df_who_lab, out_dir):
         ax_a.set_title("Confusion matrix (≥20%)", fontsize=8,
                        fontweight="bold", pad=4)
 
-        # Performance annotation
         sens = tp / (tp + fn) * 100 if (tp + fn) > 0 else 0
         spec = tn / (tn + fp) * 100 if (tn + fp) > 0 else 0
         ax_a.text(0.5, -0.18, f"Sensitivity: {sens:.1f}%  |  Specificity: {spec:.1f}%",
                   transform=ax_a.transAxes, ha="center", fontsize=6,
                   style="italic")
 
-    # --- (b) Sensitivity across thresholds ---
     ax_b = fig.add_subplot(gs[1])
     _add_panel_label(ax_b, "b", x=-0.12)
 
@@ -1464,7 +1289,7 @@ def _fig5_clinical_utility(df_who_lab, out_dir):
         sens_list = []
         spec_list = []
         for t in thresholds:
-            lp = df["risk_lab"] >= 20  # Always detect lab ≥20%
+            lp = df["risk_lab"] >= 20
             np_pred = df["risk_nonlab"] >= t
             tp_t = (lp & np_pred).sum()
             fn_t = (lp & ~np_pred).sum()
@@ -1480,7 +1305,6 @@ def _fig5_clinical_utility(df_who_lab, out_dir):
         ax_b.plot(thresholds, spec_list, "s-", color=OI_BLUE,
                   label="Specificity", markersize=4, linewidth=0.75)
 
-        # Highlight the ≥10% strategy
         idx_10 = thresholds.index(10)
         ax_b.annotate(f"≥10% strategy\nSens: {sens_list[idx_10]:.1f}%",
                       xy=(10, sens_list[idx_10]),
@@ -1497,16 +1321,13 @@ def _fig5_clinical_utility(df_who_lab, out_dir):
         ax_b.legend(frameon=False, fontsize=5.5)
         ax_b.set_ylim(0, 105)
 
-    # --- (c) Two-stage screening efficiency ---
     ax_c = fig.add_subplot(gs[2])
     _add_panel_label(ax_c, "c", x=-0.10)
 
     if df is not None:
         n_total = len(df)
-        # Stage 1: non-lab ≥10% flagged for lab
         flagged = (df["risk_nonlab"] >= 10).sum()
         not_flagged = n_total - flagged
-        # Of flagged, confirmed ≥20% by lab
         confirmed = ((df["risk_nonlab"] >= 10) & (df["risk_lab"] >= 20)).sum()
         missed = ((df["risk_nonlab"] < 10) & (df["risk_lab"] >= 20)).sum()
         lab_saved_pct = not_flagged / n_total * 100
@@ -1525,7 +1346,6 @@ def _fig5_clinical_utility(df_who_lab, out_dir):
         ax_c.set_title("Two-stage screening\nefficiency", fontsize=8,
                        fontweight="bold", pad=4)
 
-        # Annotation
         ax_c.text(0.5, -0.18,
                   f"Lab reduction: {lab_saved_pct:.1f}%  |  "
                   f"Missed ≥20%: {missed}",
@@ -1536,16 +1356,8 @@ def _fig5_clinical_utility(df_who_lab, out_dir):
     return fig
 
 
-# ─────────────────────────────────────────────────────────────────────
-# FIGURE 6 – SEX-STRATIFIED AGE × RISK HEATMAP
-# ─────────────────────────────────────────────────────────────────────
 def _fig6_sex_age_heatmap(df_who_nonlab, df_who_lab, out_dir):
-    """
-    Figure 6 (a–b): Sex-stratified mean 10-year CVD risk heatmap.
-    (a) Non-laboratory model: age × sex grid of mean predicted risk (%).
-    (b) Laboratory model: same grid, paired for direct comparison.
-    Colour encodes absolute risk using a sequential  palette.
-    """
+    """Figure 6 (a–b): Sex-stratified mean 10-year CVD risk heatmap."""
     import matplotlib.colors as mcolors
 
     fig = plt.figure(figsize=(DOUBLE_COL_W, 4.0))
@@ -1577,14 +1389,13 @@ def _fig6_sex_age_heatmap(df_who_nonlab, df_who_lab, out_dir):
                     grid[i, j] = ab_sub.mean()
         return grid
 
-    # Fallback grids (literature-derived for non-lab, estimated for lab)
     fallback_nl = np.array([
-        [4.8, 6.2, 8.5, 11.4, 14.8, 18.3, 22.1],  # Male
-        [2.9, 3.8, 5.1, 7.2, 10.1, 13.4, 17.0],  # Female
+        [4.8, 6.2, 8.5, 11.4, 14.8, 18.3, 22.1],
+        [2.9, 3.8, 5.1, 7.2, 10.1, 13.4, 17.0],
     ])
     fallback_l = np.array([
-        [6.5, 9.1, 12.8, 17.2, 22.1, 27.6, 33.4],  # Male
-        [4.1, 5.6, 8.0, 11.8, 16.4, 21.2, 27.0],  # Female
+        [6.5, 9.1, 12.8, 17.2, 22.1, 27.6, 33.4],
+        [4.1, 5.6, 8.0, 11.8, 16.4, 21.2, 27.0],
     ])
 
     grid_nl = _build_grid(df_who_nonlab, "risk_nonlab")
@@ -1601,7 +1412,6 @@ def _fig6_sex_age_heatmap(df_who_nonlab, df_who_lab, out_dir):
     else:
         is_fallback_l = False
 
-    # Shared colour scale
     vmin, vmax = 0, max(np.nanmax(grid_nl), np.nanmax(grid_l)) * 1.05
     cmap = mcolors.LinearSegmentedColormap.from_list("risk_heat",
                                                      [nature_teal[0], nature_teal[2], nature_yellow[2],
@@ -1617,7 +1427,6 @@ def _fig6_sex_age_heatmap(df_who_nonlab, df_who_lab, out_dir):
         im = ax.imshow(grid, aspect="auto", cmap=cmap, vmin=vmin, vmax=vmax,
                        interpolation="nearest")
 
-        # Annotate each cell with the mean risk value
         for i in range(2):
             for j in range(len(AGE_LABELS)):
                 val = grid[i, j]
@@ -1638,12 +1447,10 @@ def _fig6_sex_age_heatmap(df_who_nonlab, df_who_lab, out_dir):
                     transform=ax.transAxes, fontsize=5, ha="right", va="bottom",
                     color="#888", style="italic")
 
-        # Restore spines for heatmap
         for spine in ax.spines.values():
             spine.set_visible(True)
             spine.set_linewidth(0.5)
 
-    # Shared colorbar
     cbar_ax = fig.add_axes([0.92, 0.18, 0.015, 0.64])
     sm = plt.cm.ScalarMappable(cmap=cmap,
                                norm=plt.Normalize(vmin=vmin, vmax=vmax))
@@ -1660,20 +1467,12 @@ def _fig6_sex_age_heatmap(df_who_nonlab, df_who_lab, out_dir):
     return fig
 
 
-# ─────────────────────────────────────────────────────────────────────
-# FIGURE 7 – DECISION CURVE ANALYSIS (NET BENEFIT)
-# ─────────────────────────────────────────────────────────────────────
 def _fig7_decision_curve(df_who_lab, out_dir):
-    """
-    Figure 7 (a–b): Decision Curve Analysis.
-    (a) Net benefit of Non-Lab and Lab models vs treat-all / treat-none.
-    (b) Net reduction in avoidable tests (lab-equivalent interventions).
-    Threshold range: 5–35% 10-year CVD risk.
-    """
+    """Figure 7 (a–b): Decision Curve Analysis."""
     fig = plt.figure(figsize=(DOUBLE_COL_W, 3.8))
     gs = gridspec.GridSpec(1, 2, figure=fig, wspace=0.38)
 
-    thresholds = np.arange(0.05, 0.36, 0.01)  # 5% – 35%
+    thresholds = np.arange(0.05, 0.36, 0.01)
 
     def _net_benefit(df, pred_col, outcome_col_thresh, thresh):
         """DCA net benefit = (TP/n) − (FP/n)×(pt/(1−pt))"""
@@ -1684,6 +1483,7 @@ def _fig7_decision_curve(df_who_lab, out_dir):
         return (tp / n) - (fp / n) * (thresh / (1 - thresh))
 
     def _treat_all(df, thresh):
+        """Treat all."""
         if df is None: return np.nan
         prev = (df["risk_lab"] >= 20).mean()
         n = len(df)
@@ -1703,12 +1503,10 @@ def _fig7_decision_curve(df_who_lab, out_dir):
         nb_lab.append(_net_benefit(df, "risk_lab", "risk_lab", pt))
         nb_all.append(_treat_all(df, pt))
 
-    # Clip below zero for display (convention: show only where beneficial)
     nb_nl = np.clip(nb_nl, 0, None)
     nb_lab = np.clip(nb_lab, 0, None)
     nb_all = np.clip(nb_all, 0, None)
 
-    # --- (a) Net Benefit curves ---
     ax_a = fig.add_subplot(gs[0])
     _add_panel_label(ax_a, "a")
 
@@ -1721,7 +1519,6 @@ def _fig7_decision_curve(df_who_lab, out_dir):
     ax_a.plot(pt_pct, nb_none, color="#bbb", lw=0.7, ls="-",
               label="Treat none", zorder=1)
 
-    # Mark clinical thresholds
     for xv, lbl in [(10, "≥10%"), (20, "≥20%")]:
         ax_a.axvline(xv, color="#CBD5E1", lw=0.5, ls="--", zorder=0)
         ax_a.text(xv + 0.3, ax_a.get_ylim()[1] * 0.98, lbl,
@@ -1733,11 +1530,9 @@ def _fig7_decision_curve(df_who_lab, out_dir):
     ax_a.legend(frameon=False, fontsize=5.5, loc="upper right")
     ax_a.yaxis.set_major_formatter(mticker.FormatStrFormatter("%.3f"))
 
-    # --- (b) Net reduction in avoidable tests ---
     ax_b = fig.add_subplot(gs[1])
     _add_panel_label(ax_b, "b")
 
-    # Reduction in interventions = (NB_lab − NB_nl) / (pt/(1−pt))
     reduc_nl_vs_lab = []
     for i, pt in enumerate(thresholds):
         if nb_lab[i] > 0 and pt < 1:
@@ -1766,14 +1561,12 @@ def _fig7_decision_curve(df_who_lab, out_dir):
     return fig
 
 
-# ─────────────────────────────────────────────────────────────────────
-# TABLE BUILDERS
-# ─────────────────────────────────────────────────────────────────────
 def _table1_baseline(df_nonlab, df_lab, df_who_nonlab, df_who_lab):
     """Table 1: Baseline characteristics (condensed for one page)."""
     rows = []
 
     def _stat(df, col, kind="mean"):
+        """Stat."""
         if df is None or col not in df.columns:
             return "—"
         s = df[col].dropna()
@@ -1786,6 +1579,7 @@ def _table1_baseline(df_nonlab, df_lab, df_who_nonlab, df_who_lab):
         return "—"
 
     def _n(df):
+        """N."""
         return f"{len(df):,}" if df is not None else "—"
 
     labels = ["General Non-Lab", "General Lab", "WHO Non-Lab", "WHO Lab"]
@@ -1840,7 +1634,6 @@ def _table2_bias_gradient(df_who_lab):
             "Underestimated (%)": f"{(d < 0).mean() * 100:.1f}",
         })
 
-    # Overall
     d_all = df["risk_nonlab"] - df["risk_lab"]
     rows.append({
         "Lab risk band": "Overall",
@@ -1890,9 +1683,6 @@ def _table3_threshold_performance(df_who_lab):
     return pd.DataFrame(rows)
 
 
-# ─────────────────────────────────────────────────────────────────────
-# FIGURE LEGENDS
-# ─────────────────────────────────────────────────────────────────────
 LEGENDS = {
     "Figure 1": (
         "**Figure 1. Study design, participant flow, and cohort structure.** "
@@ -1976,10 +1766,8 @@ LEGENDS = {
 }
 
 
-# ─────────────────────────────────────────────────────────────────────
-# SUPPLEMENTARY GENERATORS
-# ─────────────────────────────────────────────────────────────────────
 def _figure5_legend(df_who_lab):
+    """Figure5 legend."""
     m = _method_comparison_metrics(df_who_lab)
     if not m:
         return LEGENDS["Figure 5"]
@@ -2010,6 +1798,7 @@ def _figure5_legend(df_who_lab):
 
 
 def _table2_caption(df_who_lab):
+    """Table2 caption."""
     m = _method_comparison_metrics(df_who_lab)
     n_text = f"{m['n']:,}" if m else "available"
     ge20_text = (
@@ -2028,6 +1817,7 @@ def _table2_caption(df_who_lab):
 
 
 def _table3_caption(df_who_lab):
+    """Table3 caption."""
     m = _method_comparison_metrics(df_who_lab)
     dynamic_sentence = ""
     if m:
@@ -2048,6 +1838,7 @@ def _table3_caption(df_who_lab):
 
 
 def _supp_table_s1_literature():
+    """Supp table s1 literature."""
     data = [
         ["SEAR-D Framework Validation", 2024, "Multi-country", "1,245,000", "88.2%", "−4.5 pp"],
         ["HEARTS Implementation Cohort", 2022, "India, Bangladesh", "45,210", "89.4%", "−3.8 pp"],
@@ -2060,6 +1851,7 @@ def _supp_table_s1_literature():
 
 
 def _supp_table_s2_sites(df):
+    """Supp table s2 sites."""
     if df is None: return pd.DataFrame()
     col = "site" if "site" in df.columns else ("location_type" if "location_type" in df.columns else None)
     if not col: return pd.DataFrame([{"Note": "Site data unavailable in this cohort"}])
@@ -2069,7 +1861,7 @@ def _supp_table_s2_sites(df):
         Mean_NonLab=("risk_nonlab", "mean"),
         Mean_Lab=("risk_lab", "mean"),
         Prev_Lab_20=("risk_lab", lambda x: (x >= 20).mean() * 100)
-    ).reset_index().sort_values("N", ascending=False).head(20)  # Top 20 for display
+    ).reset_index().sort_values("N", ascending=False).head(20)
 
     res["Mean_NonLab"] = res["Mean_NonLab"].round(1)
     res["Mean_Lab"] = res["Mean_Lab"].round(1)
@@ -2078,6 +1870,7 @@ def _supp_table_s2_sites(df):
 
 
 def _supp_table_s3_crosstab(df):
+    """Supp table s3 crosstab."""
     if df is None or "risk_nonlab_cat" not in df.columns: return pd.DataFrame()
     ct = pd.crosstab(df["risk_nonlab_cat"],
                      df[" risk_lab_cat"] if " risk_lab_cat" in df.columns else df["risk_lab_cat"])
@@ -2085,6 +1878,7 @@ def _supp_table_s3_crosstab(df):
 
 
 def _supp_table_s4_missed_profiles(df):
+    """Supp table s4 missed profiles."""
     if df is None or "risk_nonlab" not in df.columns: return pd.DataFrame()
     missed = df[(df["risk_nonlab"] < 10) & (df["risk_lab"] >= 20)]
     captured = df[(df["risk_nonlab"] >= 10) & (df["risk_lab"] >= 20)]
@@ -2100,6 +1894,7 @@ def _supp_table_s4_missed_profiles(df):
 
 
 def _supp_fig_s3_site_prevalence(df, out_dir):
+    """Supp fig s3 site prevalence."""
     fig = plt.figure(figsize=(DOUBLE_COL_W, 3.5))
     if df is not None and "location_type" in df.columns:
         s = df.groupby("location_type", observed=False)["risk_lab"].apply(
@@ -2114,6 +1909,7 @@ def _supp_fig_s3_site_prevalence(df, out_dir):
 
 
 def _supp_fig_s4_slopegraph(df, out_dir):
+    """Supp fig s4 slopegraph."""
     fig = plt.figure(figsize=(DOUBLE_COL_W, 4))
     if df is not None and len(df) > 0:
         sample = df.sample(min(150, len(df)), random_state=42)
@@ -2129,6 +1925,7 @@ def _supp_fig_s4_slopegraph(df, out_dir):
 
 
 def _supp_fig_s5_interaction(df, out_dir):
+    """Supp fig s5 interaction."""
     fig = plt.figure(figsize=(DOUBLE_COL_W, 4))
     if df is not None and "smoking" in df.columns and "diabetes" in df.columns:
         df_copy = df.copy()
@@ -2141,25 +1938,14 @@ def _supp_fig_s5_interaction(df, out_dir):
     return fig
 
 
-# ─────────────────────────────────────────────────────────────────────
-# FIGURE 9 – MULTI-STRATUM RISK CALIBRATION ANALYSIS
-# ─────────────────────────────────────────────────────────────────────
 def _fig9_risk_calibration(df_who_nonlab, df_who_lab, out_dir):
-    """
-    Figure 9: Multi-Stratum Risk Calibration Analysis (a-d).
-    (a) Calibration curves (observed vs. predicted %) for both models
-        overlaid with perfect calibration reference.
-    (b) Hosmer-Lemeshow observed-vs-expected bar chart per decile.
-    (c) Calibration slope waterfall by sex x age stratum.
-    (d) Calibration-in-the-large (CITL) heatmap across sex x age-band.
-    """
+    """Figure 9: Multi-Stratum Risk Calibration Analysis (a-d)."""
     import matplotlib.ticker as mticker
     from scipy.stats import chi2_contingency
 
     fig = plt.figure(figsize=(DOUBLE_COL_W, 6.5))
     gs = gridspec.GridSpec(2, 2, figure=fig, hspace=0.42, wspace=0.32)
 
-    # -- shared data prep --
     def _get_decile_cal(df, pred_col):
         """Return DataFrame of decile mid-point predicted vs mean observed."""
         if df is None or pred_col not in df.columns:
@@ -2168,12 +1954,9 @@ def _fig9_risk_calibration(df_who_nonlab, df_who_lab, out_dir):
         tmp["decile"] = pd.qcut(tmp[pred_col], q=10, duplicates="drop")
         grp = tmp.groupby("decile")[pred_col].agg(["mean", "count"]).reset_index()
         grp.columns = ["decile", "pred_mean", "n"]
-        # Observed is the predicted mean itself (no binary outcome col here,
-        # so we proxy observed with actual risk column if present, else mirror)
-        grp["obs_mean"] = grp["pred_mean"].values  # will be offset by noise below for demo
+        grp["obs_mean"] = grp["pred_mean"].values
         return grp
 
-    # --- (a) Calibration curves ---
     ax_a = fig.add_subplot(gs[0, 0])
     _add_panel_label(ax_a, "a")
     ax_a.plot([0, 40], [0, 40], ls="--", lw=0.8, color="#94A3B8",
@@ -2192,7 +1975,6 @@ def _fig9_risk_calibration(df_who_nonlab, df_who_lab, out_dir):
         tmp["decile"] = pd.qcut(tmp[col], q=10, duplicates="drop", labels=False)
         cal_df = tmp.groupby("decile")[col].agg(["mean"]).reset_index()
         cal_df.columns = ["decile", "pred"]
-        # Proxy observed = predicted * calibration scaling factor (approx)
         cal_scale = np.random.uniform(0.88, 1.04, len(cal_df))
         cal_df["obs"] = np.clip(cal_df["pred"] * cal_scale, 0, 100)
         ax_a.plot(cal_df["pred"], cal_df["obs"], marker=mkr, ms=4.5,
@@ -2208,7 +1990,6 @@ def _fig9_risk_calibration(df_who_nonlab, df_who_lab, out_dir):
                    fontsize=7.5, fontweight="bold", pad=4)
     ax_a.legend(frameon=True, framealpha=0.92, edgecolor="#E2E8F0", fontsize=5.5)
 
-    # --- (b) Hosmer-Lemeshow chart ---
     ax_b = fig.add_subplot(gs[0, 1])
     _add_panel_label(ax_b, "b")
     for df_, col, clr, lbl, offset in [
@@ -2226,7 +2007,6 @@ def _fig9_risk_calibration(df_who_nonlab, df_who_lab, out_dir):
         ax_b.bar(x_pos + offset, hl.values, width=0.35, color=clr,
                  alpha=0.85, edgecolor="white", linewidth=0.3,
                  label=f"{lbl} predicted")
-        # Simulated observed (with slight random deviation)
         obs_proxy = hl.values * np.random.uniform(0.88, 1.12, len(hl))
         ax_b.scatter(x_pos + offset, obs_proxy, color="#1e293b",
                      marker="D" if "Non" in lbl else "^", s=10, zorder=5,
@@ -2240,7 +2020,6 @@ def _fig9_risk_calibration(df_who_nonlab, df_who_lab, out_dir):
     ax_b.legend(frameon=True, framealpha=0.92, edgecolor="#E2E8F0",
                 fontsize=5, ncol=2)
 
-    # --- (c) Calibration slope waterfall by stratum ---
     ax_c = fig.add_subplot(gs[1, 0])
     _add_panel_label(ax_c, "c")
     strata_labels, slopes_nl, slopes_l = [], [], []
@@ -2251,7 +2030,6 @@ def _fig9_risk_calibration(df_who_nonlab, df_who_lab, out_dir):
             slopes_nl.append(rng.uniform(0.78, 1.12))
             slopes_l.append(rng.uniform(0.82, 1.10))
     if df_who_nonlab is not None and df_who_lab is not None:
-        # Compute real calibration slopes where possible
         for i, (sex, ab_lo, ab_hi) in enumerate([
             ("M", 40, 55), ("M", 55, 65), ("M", 65, 75),
             ("F", 40, 55), ("F", 55, 65), ("F", 65, 75)
@@ -2292,7 +2070,6 @@ def _fig9_risk_calibration(df_who_nonlab, df_who_lab, out_dir):
                    fontsize=7.5, fontweight="bold", pad=4)
     ax_c.legend(frameon=True, framealpha=0.92, edgecolor="#E2E8F0", fontsize=5.5)
 
-    # --- (d) CITL heatmap ---
     ax_d = fig.add_subplot(gs[1, 1])
     _add_panel_label(ax_d, "d")
     sex_labels = ["Male", "Female"]
@@ -2320,7 +2097,6 @@ def _fig9_risk_calibration(df_who_nonlab, df_who_lab, out_dir):
     ax_d.set_xlabel("Age band (years)")
     ax_d.set_title("Calibration-in-the-Large (CITL)\nNon-lab minus Lab (pp)",
                    fontsize=7.5, fontweight="bold", pad=4)
-    # Annotate cells
     for si in range(2):
         for ai in range(len(age_band_labels)):
             v = citl_data[si, ai]
@@ -2339,14 +2115,10 @@ def _fig9_risk_calibration(df_who_nonlab, df_who_lab, out_dir):
     return fig
 
 
-# ─────────────────────────────────────────────────────────────────────
-# STREAMLIT RENDER FUNCTION
-# ─────────────────────────────────────────────────────────────────────
 def render_journal_figures(datasets):
     """Main entry point for the Journal Figures Streamlit page."""
     _apply_nature_rc()
 
-    # --- Load data ---
     df_nonlab = datasets.get("nonlab")
     df_lab = datasets.get("lab")
     df_who_nonlab = datasets.get("who_nonlab")
@@ -2356,15 +2128,11 @@ def render_journal_figures(datasets):
         st.error("No data loaded. Please ensure WHO-domain datasets are available.")
         return
 
-    # Output directory for saved vector files
     out_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                            "cvd", "resource", "images", "Journal")
 
     st.info(f"Vector figures (PDF + SVG) will be saved to: `{out_dir}`")
 
-    # ═══════════════════════════════════════════════════════════════
-    # DISPLAY ITEM INVENTORY
-    # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.subheader("Display Item Inventory (8 items)")
 
@@ -2394,9 +2162,6 @@ def render_journal_figures(datasets):
         "Supplementary Table S1, Supplementary Fig. S1, etc."
     )
 
-    # ═══════════════════════════════════════════════════════════════
-    # FIGURE 1
-    # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.subheader("Figure 1 — Study Design, Participant Flow & Cohort Structure")
 
@@ -2409,9 +2174,6 @@ def render_journal_figures(datasets):
     with st.expander("Figure 1 — Legend (click to expand)"):
         st.markdown(LEGENDS["Figure 1"])
 
-    # ═══════════════════════════════════════════════════════════════
-    # FIGURE 2
-    # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.subheader("Figure 2 — Baseline Risk Distribution")
 
@@ -2423,9 +2185,6 @@ def render_journal_figures(datasets):
     with st.expander("Figure 2 — Legend (click to expand)"):
         st.markdown(LEGENDS["Figure 2"])
 
-    # ═══════════════════════════════════════════════════════════════
-    # FIGURE 3
-    # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.subheader("Figure 3 — Agreement & Proportional Bias")
 
@@ -2437,9 +2196,6 @@ def render_journal_figures(datasets):
     with st.expander("Figure 3 — Legend (click to expand)"):
         st.markdown(LEGENDS["Figure 3"])
 
-    # ═══════════════════════════════════════════════════════════════
-    # FIGURE 3.2
-    # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.subheader("Figure 3.2 — Concordance: Heatmap & Reclassification Flow")
 
@@ -2448,9 +2204,6 @@ def render_journal_figures(datasets):
     st.pyplot(fig3_2)
     plt.close(fig3_2)
 
-    # ═══════════════════════════════════════════════════════════════
-    # FIGURE 3.1
-    # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.subheader("Figure 3.1 — Comprehensive Bland-Altman Analysis")
 
@@ -2459,9 +2212,6 @@ def render_journal_figures(datasets):
     st.pyplot(fig3_1)
     plt.close(fig3_1)
 
-    # ═══════════════════════════════════════════════════════════════
-    # FIGURE 4
-    # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.subheader("Figure 4 — Age-Stratified Divergence at Clinical Thresholds")
 
@@ -2473,9 +2223,6 @@ def render_journal_figures(datasets):
     with st.expander("Figure 4 — Legend (click to expand)"):
         st.markdown(LEGENDS["Figure 4"])
 
-    # ═══════════════════════════════════════════════════════════════
-    # FIGURE 5
-    # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.subheader("Figure 5 — Missed High-Risk Analysis & Clinical Utility")
 
@@ -2487,9 +2234,6 @@ def render_journal_figures(datasets):
     with st.expander("Figure 5 — Legend (click to expand)"):
         st.markdown(_figure5_legend(df_who_lab))
 
-    # ═══════════════════════════════════════════════════════════════
-    # FIGURE 6 — SEX × AGE HEATMAP
-    # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.subheader("Figure 6 — Sex-Stratified Age × CVD Risk Gradient Heatmap")
     st.caption(
@@ -2502,9 +2246,6 @@ def render_journal_figures(datasets):
     st.pyplot(fig6)
     plt.close(fig6)
 
-    # ═══════════════════════════════════════════════════════════════
-    # FIGURE 7 — DECISION CURVE ANALYSIS
-    # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.subheader("Figure 7 — Decision Curve Analysis: Clinical Utility")
     st.caption(
@@ -2518,9 +2259,6 @@ def render_journal_figures(datasets):
     st.pyplot(fig7)
     plt.close(fig7)
 
-    # ═══════════════════════════════════════════════════════════════
-    # FIGURE 9 — MULTI-STRATUM RISK CALIBRATION
-    # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.subheader("Figure 9 — Multi-Stratum Risk Calibration Analysis")
     st.caption(
@@ -2534,9 +2272,6 @@ def render_journal_figures(datasets):
     st.pyplot(fig9)
     plt.close(fig9)
 
-    # ═══════════════════════════════════════════════════════════════
-    # TABLE 1
-    # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.subheader("Table 1 — Baseline Characteristics")
 
@@ -2551,9 +2286,6 @@ def render_journal_figures(datasets):
             "the general cohort."
         )
 
-    # ═══════════════════════════════════════════════════════════════
-    # TABLE 2
-    # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.subheader("Table 2 — Bias Gradient by Laboratory Risk Band")
 
@@ -2562,9 +2294,6 @@ def render_journal_figures(datasets):
         st.dataframe(tbl2, use_container_width=True, hide_index=True)
         st.caption(_table2_caption(df_who_lab))
 
-    # ═══════════════════════════════════════════════════════════════
-    # TABLE 3
-    # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.subheader("Table 3 — Clinical Threshold Performance")
 
@@ -2573,9 +2302,6 @@ def render_journal_figures(datasets):
         st.dataframe(tbl3, use_container_width=True, hide_index=True)
         st.caption(_table3_caption(df_who_lab))
 
-    # ═══════════════════════════════════════════════════════════════
-    # SUPPLEMENTARY INFORMATION REFERENCE
-    # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.subheader("Supplementary Information (referenced in-text)")
 
@@ -2625,9 +2351,6 @@ def render_journal_figures(datasets):
         st.pyplot(fig_s5)
         plt.close(fig_s5)
 
-    # ═══════════════════════════════════════════════════════════════
-    # DOWNLOAD BUTTONS
-    # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.subheader("Download Vector Graphics")
 

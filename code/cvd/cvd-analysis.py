@@ -27,7 +27,6 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-# Set style
 plt.style.use('seaborn-v0_8-darkgrid')
 sns.set_palette("husl")
 
@@ -44,12 +43,10 @@ class CVDRiskAnalysis:
         self.df_who_lab = df_who_lab
         self.df_sites = df_sites
 
-        # Merge with site information
         self.df_who_nonlab = self._merge_sites(df_who_nonlab)
         self.df_who_lab = self._merge_sites(df_who_lab)
         self.df_paired_analysis = self._merge_sites(df_paired)
 
-        # Results storage
         self.results = {}
         self.figures = {}
         self.tables = {}
@@ -60,37 +57,29 @@ class CVDRiskAnalysis:
                                        'district_name', 'sedentary']],
                         on='site_id', how='left')
 
-    # ==================== RQ1: BASELINE RISK BURDEN ====================
 
     def rq1_baseline_distribution(self):
-        """
-        RQ1: Distribution of WHO 2019 non-laboratory 10-year CVD risk
-        across age, sex, site, and urban/rural strata
-        """
+        """RQ1: Distribution of WHO 2019 non-laboratory 10-year CVD risk"""
         print("\n" + "=" * 80)
         print("RQ1: BASELINE CVD RISK BURDEN & HETEROGENEITY")
         print("=" * 80)
 
         df = self.df_who_nonlab.copy()
 
-        # Overall distribution
         print("\n1. OVERALL RISK DISTRIBUTION (n={:,})".format(len(df)))
         print("-" * 60)
         risk_stats = df['risk_nonlab'].describe()
         print(risk_stats)
 
-        # Risk category distribution
         print("\nRisk Categories:")
         risk_cat_dist = df['risk_nonlab_cat'].value_counts(dropna=False).sort_index()
         risk_cat_pct = (risk_cat_dist / len(df) * 100).round(2)
         for cat, count in risk_cat_dist.items():
             print(f"  {cat}: {count:,} ({risk_cat_pct[cat]}%)")
 
-        # High risk prevalence
         high_risk = (df['risk_nonlab'] >= 20).sum()
         print(f"\nHigh-Risk (≥20%): {high_risk:,} ({high_risk / len(df) * 100:.2f}%)")
 
-        # Stratified analysis
         results = {
             'overall': risk_stats.to_dict(),
             'risk_categories': risk_cat_dist.to_dict(),
@@ -98,7 +87,6 @@ class CVDRiskAnalysis:
             'high_risk_pct': high_risk / len(df) * 100
         }
 
-        # By Sex
         print("\n2. BY SEX")
         print("-" * 60)
         sex_stats = df.groupby('gender')['risk_nonlab'].agg([
@@ -114,7 +102,6 @@ class CVDRiskAnalysis:
         print("\nHigh-Risk Prevalence by Sex:")
         print(sex_highrisk)
 
-        # Statistical test
         male_risk = df[df['gender'] == 'M']['risk_nonlab'].dropna()
         female_risk = df[df['gender'] == 'F']['risk_nonlab'].dropna()
         u_stat, p_val = stats.mannwhitneyu(male_risk, female_risk)
@@ -124,7 +111,6 @@ class CVDRiskAnalysis:
         results['sex_highrisk'] = sex_highrisk.to_dict()
         results['sex_test'] = {'u_statistic': u_stat, 'p_value': p_val}
 
-        # By Age Band
         print("\n3. BY AGE BAND")
         print("-" * 60)
         age_stats = df.groupby('age_band')['risk_nonlab'].agg([
@@ -138,7 +124,6 @@ class CVDRiskAnalysis:
         print("\nHigh-Risk Prevalence by Age:")
         print(age_highrisk)
 
-        # Kruskal-Wallis test
         age_groups = [df[df['age_band'] == age]['risk_nonlab'].dropna()
                       for age in df['age_band'].unique() if pd.notna(age)]
         h_stat, p_val = kruskal(*age_groups)
@@ -148,7 +133,6 @@ class CVDRiskAnalysis:
         results['age_highrisk'] = age_highrisk.to_dict()
         results['age_test'] = {'h_statistic': h_stat, 'p_value': p_val}
 
-        # By Location Type
         print("\n4. BY LOCATION TYPE (URBAN/RURAL)")
         print("-" * 60)
         loc_stats = df.groupby('location_type')['risk_nonlab'].agg([
@@ -172,7 +156,6 @@ class CVDRiskAnalysis:
         results['by_location'] = loc_stats.to_dict()
         results['location_highrisk'] = loc_highrisk.to_dict()
 
-        # By Site
         print("\n5. BY SITE (Top 10)")
         print("-" * 60)
         site_stats = df.groupby('site_id')['risk_nonlab'].agg([
@@ -180,7 +163,6 @@ class CVDRiskAnalysis:
         ]).round(2).sort_values('count', ascending=False).head(10)
         print(site_stats)
 
-        # Site heterogeneity test
         site_groups = [df[df['site_id'] == site]['risk_nonlab'].dropna()
                        for site in df['site_id'].unique() if len(df[df['site_id'] == site]) > 10]
         if len(site_groups) > 2:
@@ -190,7 +172,6 @@ class CVDRiskAnalysis:
 
         results['by_site'] = site_stats.to_dict()
 
-        # Interaction: Age × Sex
         print("\n6. AGE × SEX INTERACTION")
         print("-" * 60)
         age_sex = df.groupby(['age_band', 'gender'])['risk_nonlab'].agg([
@@ -202,7 +183,6 @@ class CVDRiskAnalysis:
 
         self.results['rq1'] = results
 
-        # Generate visualizations
         self._rq1_visualizations(df)
 
         return results
@@ -211,7 +191,6 @@ class CVDRiskAnalysis:
         """Create RQ1 visualizations"""
         fig = plt.figure(figsize=(20, 12))
 
-        # 1. Overall distribution
         ax1 = plt.subplot(3, 3, 1)
         df['risk_nonlab'].hist(bins=50, edgecolor='black', alpha=0.7)
         plt.axvline(20, color='red', linestyle='--', linewidth=2, label='High-Risk Threshold')
@@ -220,7 +199,6 @@ class CVDRiskAnalysis:
         plt.title('Overall Risk Distribution', fontsize=12, fontweight='bold')
         plt.legend()
 
-        # 2. Risk categories
         ax2 = plt.subplot(3, 3, 2)
         risk_cat_order = ['<5%', '5% to <10%', '10% to <20%', '20% to <30%', '≥30%']
         cat_data = df['risk_nonlab_cat'].value_counts().reindex(risk_cat_order, fill_value=0)
@@ -230,7 +208,6 @@ class CVDRiskAnalysis:
         plt.title('Risk Category Distribution', fontsize=12, fontweight='bold')
         plt.xticks(rotation=45, ha='right')
 
-        # 3. By sex
         ax3 = plt.subplot(3, 3, 3)
         df.boxplot(column='risk_nonlab', by='gender', ax=ax3)
         plt.axhline(20, color='red', linestyle='--', linewidth=2)
@@ -239,7 +216,6 @@ class CVDRiskAnalysis:
         plt.title('Risk Distribution by Sex', fontsize=12, fontweight='bold')
         plt.suptitle('')
 
-        # 4. By age band
         ax4 = plt.subplot(3, 3, 4)
         age_order = sorted([age for age in df['age_band'].unique() if pd.notna(age)])
         df.boxplot(column='risk_nonlab', by='age_band', ax=ax4)
@@ -250,7 +226,6 @@ class CVDRiskAnalysis:
         plt.xticks(rotation=45, ha='right')
         plt.suptitle('')
 
-        # 5. By location
         ax5 = plt.subplot(3, 3, 5)
         df.boxplot(column='risk_nonlab', by='location_type', ax=ax5)
         plt.axhline(20, color='red', linestyle='--', linewidth=2)
@@ -259,7 +234,6 @@ class CVDRiskAnalysis:
         plt.title('Risk Distribution by Location', fontsize=12, fontweight='bold')
         plt.suptitle('')
 
-        # 6. Heatmap: Age × Sex
         ax6 = plt.subplot(3, 3, 6)
         pivot_data = df.pivot_table(values='risk_nonlab', index='age_band',
                                     columns='gender', aggfunc='mean')
@@ -267,7 +241,6 @@ class CVDRiskAnalysis:
                     cbar_kws={'label': 'Mean Risk (%)'}, ax=ax6)
         plt.title('Mean Risk: Age × Sex', fontsize=12, fontweight='bold')
 
-        # 7. High-risk prevalence by age
         ax7 = plt.subplot(3, 3, 7)
         highrisk_age = df.groupby('age_band').apply(
             lambda x: (x['risk_nonlab'] >= 20).sum() / len(x) * 100
@@ -278,7 +251,6 @@ class CVDRiskAnalysis:
         plt.title('High-Risk (≥20%) Prevalence by Age', fontsize=12, fontweight='bold')
         plt.xticks(rotation=45, ha='right')
 
-        # 8. Site variation (top 10)
         ax8 = plt.subplot(3, 3, 8)
         site_mean = df.groupby('site_id')['risk_nonlab'].mean().sort_values(ascending=False).head(10)
         site_mean.plot(kind='barh', color='teal', edgecolor='black', ax=ax8)
@@ -286,9 +258,7 @@ class CVDRiskAnalysis:
         plt.ylabel('Site ID', fontsize=10)
         plt.title('Mean Risk by Site (Top 10)', fontsize=12, fontweight='bold')
 
-        # 9. Violin plot by sex and age
         ax9 = plt.subplot(3, 3, 9)
-        # Select a few age bands for clarity
         age_subset = df[df['age_band'].isin(['40-44', '50-54', '60-64', '70-74'])]
         sns.violinplot(data=age_subset, x='age_band', y='risk_nonlab',
                        hue='gender', split=True, ax=ax9)
@@ -305,31 +275,20 @@ class CVDRiskAnalysis:
         self.figures['rq1'] = 'resource/images/rq1_baseline_distribution.png'
         print("\n✓ RQ1 visualizations saved")
 
-    # ==================== RQ2: CONCORDANCE & BIAS ====================
 
     def rq2_concordance_analysis(self):
-        """
-        RQ2: Agreement between laboratory and non-laboratory risk categories
-        and systematic bias analysis
-        """
+        """RQ2: Agreement between laboratory and non-laboratory risk categories"""
         print("\n" + "=" * 80)
         print("RQ2: CONCORDANCE & SYSTEMATIC BIAS ANALYSIS")
         print("=" * 80)
 
-        # ----------------------------
-        # 0) Pull paired WHO-domain-ok data
-        # ----------------------------
         df = self.df_paired_analysis[self.df_paired_analysis["who_domain_ok_lab"]].copy()
         print(f"\n1. PAIRED SAMPLE (raw n={len(df)})")
         print("-" * 60)
 
-        # Ensure numeric risks (defensive)
         df["risk_lab"] = pd.to_numeric(df.get("risk_lab"), errors="coerce")
         df["risk_nonlab"] = pd.to_numeric(df.get("risk_nonlab"), errors="coerce")
 
-        # ----------------------------
-        # 1) Continuous agreement (requires numeric risks)
-        # ----------------------------
         df_cont = df.dropna(subset=["risk_lab", "risk_nonlab"]).copy()
         print(f"Usable for continuous agreement: n={len(df_cont)}")
 
@@ -345,11 +304,9 @@ class CVDRiskAnalysis:
         corr = df_cont[["risk_nonlab", "risk_lab"]].corr().iloc[0, 1]
         print(f"\nPearson correlation: r = {corr:.3f}")
 
-        # Paired tests (require same-length paired non-missing)
         t_stat, p_val = stats.ttest_rel(df_cont["risk_nonlab"], df_cont["risk_lab"])
         print(f"Paired t-test: t = {t_stat:.2f}, p = {p_val:.4f}")
 
-        # Wilcoxon can fail if all diffs are 0 or if there are ties; catch safely
         try:
             w_stat, w_pval = stats.wilcoxon(df_cont["risk_nonlab"], df_cont["risk_lab"])
         except Exception:
@@ -357,19 +314,15 @@ class CVDRiskAnalysis:
         print(
             f"Wilcoxon signed-rank: W = {w_stat if pd.notna(w_stat) else 'NA'}, p = {w_pval if pd.notna(w_pval) else 'NA'}")
 
-        # ----------------------------
-        # 2) Categorical agreement (robust cleaning to avoid str/float mix)
-        # ----------------------------
         print("\n2. CATEGORICAL AGREEMENT")
         print("-" * 60)
 
         cat_order = ["<5%", "5% to <10%", "10% to <20%", "20% to <30%", "≥30%"]
 
-        # Clean/normalize category strings (handles NaN safely)
         def _clean_cat(s: pd.Series) -> pd.Series:
+            """Clean cat."""
             s = s.astype("string").str.strip()
 
-            # Normalize common variants you might have in CSVs
             replacements = {
                 "<5": "<5%",
                 "<5 %": "<5%",
@@ -389,8 +342,6 @@ class CVDRiskAnalysis:
             s = s.replace(replacements)
             return s
 
-        # Use existing category columns if present; otherwise derive from numeric risk
-        # (keeps pipeline resilient)
         if "risk_lab_cat" not in df.columns:
             df["risk_lab_cat"] = pd.cut(
                 df["risk_lab"],
@@ -412,11 +363,9 @@ class CVDRiskAnalysis:
         df["risk_lab_cat"] = _clean_cat(df["risk_lab_cat"])
         df["risk_nonlab_cat"] = _clean_cat(df["risk_nonlab_cat"])
 
-        # Keep only rows with valid categories for categorical metrics (prevents kappa errors)
         df_cat = df[df["risk_lab_cat"].isin(cat_order) & df["risk_nonlab_cat"].isin(cat_order)].copy()
         print(f"Usable for categorical agreement: n={len(df_cat)}")
 
-        # Confusion matrix (force full category grid)
         confusion = pd.crosstab(
             df_cat["risk_lab_cat"],
             df_cat["risk_nonlab_cat"],
@@ -434,7 +383,6 @@ class CVDRiskAnalysis:
         print(
             f"\nExact agreement: {exact_agreement}/{total_cat} ({agreement_pct:.2f}%)" if total_cat else "\nExact agreement: NA (no valid categorical pairs)")
 
-        # Within-one-category agreement using ordered codes
         lab_codes = pd.Categorical(df_cat["risk_lab_cat"], categories=cat_order, ordered=True).codes
         nonlab_codes = pd.Categorical(df_cat["risk_nonlab_cat"], categories=cat_order, ordered=True).codes
         within_one = (np.abs(lab_codes - nonlab_codes) <= 1).sum() if total_cat else 0
@@ -442,7 +390,6 @@ class CVDRiskAnalysis:
         print(
             f"Within 1 category: {within_one}/{total_cat} ({within_one_pct:.2f}%)" if total_cat else "Within 1 category: NA")
 
-        # Cohen's kappa (unweighted + linear weighted)
         from sklearn.metrics import cohen_kappa_score
 
         if total_cat:
@@ -460,13 +407,10 @@ class CVDRiskAnalysis:
             print("\nCohen's kappa: NA (no valid categorical pairs)")
             print("Weighted kappa: NA (no valid categorical pairs)")
 
-        # ----------------------------
-        # 3) High-risk agreement (≥20%) using numeric risks
-        # ----------------------------
         print("\n3. HIGH-RISK (≥20%) AGREEMENT")
         print("-" * 60)
 
-        df_hr = df_cont.copy()  # numeric-only
+        df_hr = df_cont.copy()
         df_hr["highrisk_lab"] = df_hr["risk_lab"] >= 20
         df_hr["highrisk_nonlab"] = df_hr["risk_nonlab"] >= 20
 
@@ -500,9 +444,6 @@ class CVDRiskAnalysis:
         print(f"  NPV: {npv:.3f}" if pd.notna(npv) else "  NPV: NA")
         print(f"  F1-Score: {f1:.3f}" if pd.notna(f1) else "  F1-Score: NA")
 
-        # ----------------------------
-        # 4) Systematic bias analysis (numeric-only)
-        # ----------------------------
         print("\n4. SYSTEMATIC BIAS ANALYSIS")
         print("-" * 60)
 
@@ -530,9 +471,6 @@ class CVDRiskAnalysis:
         print(f"\nCorrelation (Lab risk vs Bias): r = {corr_risk_bias:.3f}" if pd.notna(
             corr_risk_bias) else "\nCorrelation (Lab risk vs Bias): NA")
 
-        # ----------------------------
-        # Store results (use df_cont for continuous/bias, df_cat for categorical, df_hr for high-risk)
-        # ----------------------------
         results = {
             "n_paired": int(total_cont),
             "n_paired_raw": int(len(df)),
@@ -551,7 +489,7 @@ class CVDRiskAnalysis:
                              "p": float(w_pval) if pd.notna(w_pval) else np.nan},
             },
             "categorical_agreement": {
-                'exact_agreement': float(agreement_pct),  # <-- keep this exact key
+                'exact_agreement': float(agreement_pct),
                 'within_one_category': float(within_one_pct),
 
                 "exact_agreement_pct": float(agreement_pct) if pd.notna(agreement_pct) else np.nan,
@@ -579,9 +517,6 @@ class CVDRiskAnalysis:
 
         self.results["rq2"] = results
 
-        # Visualizations: pass a df that has everything needed and is consistent
-        # - keep numeric rows for scatter/Bland-Altman/etc.
-        # - keep cleaned categorical cols for heatmap
         df_viz = df_cont.copy()
         df_viz["risk_lab_cat"] = _clean_cat(df_viz["risk_lab_cat"])
         df_viz["risk_nonlab_cat"] = _clean_cat(df_viz["risk_nonlab_cat"])
@@ -597,7 +532,6 @@ class CVDRiskAnalysis:
         """Create RQ2 visualizations (robust to missing/partial categories)"""
         fig = plt.figure(figsize=(20, 16))
 
-        # 1. Scatter plot: Lab vs Non-Lab
         ax1 = plt.subplot(3, 3, 1)
         plt.scatter(df["risk_lab"], df["risk_nonlab"], alpha=0.5, s=20)
         plt.plot([0, 40], [0, 40], "r--", linewidth=2, label="Identity line")
@@ -610,7 +544,6 @@ class CVDRiskAnalysis:
         plt.xlim(0, 40)
         plt.ylim(0, 40)
 
-        # 2. Bland-Altman plot
         ax2 = plt.subplot(3, 3, 2)
         mean_risk = (df["risk_lab"] + df["risk_nonlab"]) / 2
         diff = df["risk_nonlab"] - df["risk_lab"]
@@ -624,7 +557,6 @@ class CVDRiskAnalysis:
         plt.title("Bland-Altman Plot", fontsize=12, fontweight="bold")
         plt.legend()
 
-        # 3. Distribution of differences
         ax3 = plt.subplot(3, 3, 3)
         diff.hist(bins=50, edgecolor="black", alpha=0.7)
         plt.axvline(0, color="red", linestyle="--", linewidth=2, label="No difference")
@@ -634,7 +566,6 @@ class CVDRiskAnalysis:
         plt.title("Distribution of Differences", fontsize=12, fontweight="bold")
         plt.legend()
 
-        # 4. Confusion matrix heatmap (force full category grid)
         ax4 = plt.subplot(3, 3, 4)
         cat_order = ["<5%", "5% to <10%", "10% to <20%", "20% to <30%", "≥30%"]
         confusion = pd.crosstab(df["risk_lab_cat"], df["risk_nonlab_cat"], dropna=False).reindex(
@@ -645,7 +576,6 @@ class CVDRiskAnalysis:
         plt.ylabel("Lab Category", fontsize=10)
         plt.title("Categorical Agreement Matrix", fontsize=12, fontweight="bold")
 
-        # 5. Bias by lab risk level
         ax5 = plt.subplot(3, 3, 5)
         df_box = df.dropna(subset=["lab_risk_bin"]).copy()
         if len(df_box):
@@ -660,7 +590,6 @@ class CVDRiskAnalysis:
             ax5.text(0.5, 0.5, "No data for lab_risk_bin", ha="center", va="center")
             ax5.set_axis_off()
 
-        # 6. High-risk 2×2 table visualization
         ax6 = plt.subplot(3, 3, 6)
         highrisk_confusion = pd.crosstab(df["highrisk_lab"], df["highrisk_nonlab"], dropna=False)
         sns.heatmap(highrisk_confusion, annot=True, fmt="d", cmap="RdYlGn_r", cbar_kws={"label": "Count"}, ax=ax6)
@@ -668,7 +597,6 @@ class CVDRiskAnalysis:
         plt.ylabel("Lab ≥20%", fontsize=10)
         plt.title("High-Risk Agreement (≥20%)", fontsize=12, fontweight="bold")
 
-        # 7. Agreement patterns
         ax7 = plt.subplot(3, 3, 7)
         df_plot = df.copy()
         df_plot["risk_diff"] = df_plot["risk_nonlab"] - df_plot["risk_lab"]
@@ -694,7 +622,6 @@ class CVDRiskAnalysis:
         plt.xlim(0, 40)
         plt.ylim(0, 40)
 
-        # 8. CDFs
         ax8 = plt.subplot(3, 3, 8)
         lab_sorted = np.sort(df["risk_lab"].dropna().values)
         nonlab_sorted = np.sort(df["risk_nonlab"].dropna().values)
@@ -710,7 +637,6 @@ class CVDRiskAnalysis:
         plt.legend()
         plt.grid(alpha=0.3)
 
-        # 9. Bias by sex and age
         ax9 = plt.subplot(3, 3, 9)
         if "age_band" in df.columns and "gender" in df.columns:
             pivot_bias = df_plot.pivot_table(values="risk_diff", index="age_band", columns="gender", aggfunc="mean")
@@ -732,19 +658,15 @@ class CVDRiskAnalysis:
         self.figures["rq2"] = "resource/images/rq2_concordance_analysis.png"
         print("\n✓ RQ2 visualizations saved")
 
-    # ==================== RQ3: MISSED HIGH-RISK ====================
 
     def rq3_missed_highrisk_analysis(self):
-        """
-        RQ3: Analysis of lab-defined high-risk individuals missed by non-lab chart
-        """
+        """RQ3: Analysis of lab-defined high-risk individuals missed by non-lab chart"""
         print("\n" + "=" * 80)
         print("RQ3: MISSED HIGH-RISK INDIVIDUALS ANALYSIS")
         print("=" * 80)
 
         df = self.df_paired_analysis[self.df_paired_analysis['who_domain_ok_lab']].copy()
 
-        # Define high-risk
         df['highrisk_lab'] = df['risk_lab'] >= 20
         df['highrisk_nonlab'] = df['risk_nonlab'] >= 20
         df['missed'] = df['highrisk_lab'] & ~df['highrisk_nonlab']
@@ -760,14 +682,12 @@ class CVDRiskAnalysis:
         print(f"Missed rate: {missed_rate:.2f}%")
         print(f"Sensitivity of non-lab chart: {100 - missed_rate:.2f}%")
 
-        # Characteristics of missed individuals
         print("\n2. CHARACTERISTICS OF MISSED INDIVIDUALS")
         print("-" * 60)
 
         missed_df = df[df['missed']].copy()
         not_missed_hr = df[df['highrisk_lab'] & ~df['missed']].copy()
 
-        # Demographic comparison
         print("\nAge:")
         print(f"  Missed: {missed_df['age'].mean():.1f} ± {missed_df['age'].std():.1f}")
         print(f"  Not missed: {not_missed_hr['age'].mean():.1f} ± {not_missed_hr['age'].std():.1f}")
@@ -778,7 +698,6 @@ class CVDRiskAnalysis:
         print("  Not missed:")
         print(not_missed_hr['gender'].value_counts())
 
-        # Clinical characteristics
         print("\nSystolic BP:")
         print(f"  Missed: {missed_df['sbp'].mean():.1f} ± {missed_df['sbp'].std():.1f}")
         print(f"  Not missed: {not_missed_hr['sbp'].mean():.1f} ± {not_missed_hr['sbp'].std():.1f}")
@@ -799,33 +718,26 @@ class CVDRiskAnalysis:
         print("  Not missed:")
         print(not_missed_hr['has_diabetes'].value_counts())
 
-        # Predictors of being missed - Logistic regression
         print("\n3. PREDICTORS OF BEING MISSED (Logistic Regression)")
         print("-" * 60)
 
-        # Prepare data for modeling
         highrisk_subset = df[df['highrisk_lab']].copy()
 
-        # Create dummy variables
         highrisk_subset['sex_male'] = (highrisk_subset['gender'] == 'M').astype(int)
         highrisk_subset['smoker'] = (highrisk_subset['smoker_who'] == 'Smoker').astype(int)
         highrisk_subset['diabetes'] = highrisk_subset['has_diabetes'].astype(int)
         highrisk_subset['urban'] = (highrisk_subset['location_type'] == 'Urban').astype(int)
 
-        # Features for logistic regression
         features = ['age', 'sex_male', 'sbp', 'bmi', 'smoker', 'diabetes']
         X = highrisk_subset[features].copy()
         y = highrisk_subset['missed'].astype(int)
 
-        # Handle missing values
         X = X.fillna(X.mean())
 
-        # Fit logistic regression
         from sklearn.linear_model import LogisticRegression
         lr_model = LogisticRegression(max_iter=1000)
         lr_model.fit(X, y)
 
-        # Display coefficients
         coef_df = pd.DataFrame({
             'Feature': features,
             'Coefficient': lr_model.coef_[0],
@@ -835,41 +747,33 @@ class CVDRiskAnalysis:
         print("\nLogistic Regression Coefficients:")
         print(coef_df.to_string(index=False))
 
-        # Statistical tests
         print("\n4. STATISTICAL COMPARISONS (Missed vs Not Missed)")
         print("-" * 60)
 
-        # Age
         t_stat, p_val = stats.ttest_ind(missed_df['age'].dropna(),
                                         not_missed_hr['age'].dropna())
         print(f"\nAge: t = {t_stat:.2f}, p = {p_val:.4f}")
 
-        # SBP
         t_stat, p_val = stats.ttest_ind(missed_df['sbp'].dropna(),
                                         not_missed_hr['sbp'].dropna())
         print(f"SBP: t = {t_stat:.2f}, p = {p_val:.4f}")
 
-        # BMI
         t_stat, p_val = stats.ttest_ind(missed_df['bmi'].dropna(),
                                         not_missed_hr['bmi'].dropna())
         print(f"BMI: t = {t_stat:.2f}, p = {p_val:.4f}")
 
-        # Sex
         cont_table = pd.crosstab(highrisk_subset['missed'], highrisk_subset['sex_male'])
         chi2, p_val, dof, expected = chi2_contingency(cont_table)
         print(f"Sex: χ² = {chi2:.2f}, p = {p_val:.4f}")
 
-        # Smoking
         cont_table = pd.crosstab(highrisk_subset['missed'], highrisk_subset['smoker'])
         chi2, p_val, dof, expected = chi2_contingency(cont_table)
         print(f"Smoking: χ² = {chi2:.2f}, p = {p_val:.4f}")
 
-        # Diabetes
         cont_table = pd.crosstab(highrisk_subset['missed'], highrisk_subset['diabetes'])
         chi2, p_val, dof, expected = chi2_contingency(cont_table)
         print(f"Diabetes: χ² = {chi2:.2f}, p = {p_val:.4f}")
 
-        # Store results
         results = {
             'n_highrisk_lab': int(n_highrisk_lab),
             'n_missed': int(n_missed),
@@ -888,7 +792,6 @@ class CVDRiskAnalysis:
 
         self.results['rq3'] = results
 
-        # Visualizations
         self._rq3_visualizations(df, missed_df, not_missed_hr, coef_df)
 
         return results
@@ -897,7 +800,6 @@ class CVDRiskAnalysis:
         """Create RQ3 visualizations"""
         fig = plt.figure(figsize=(20, 12))
 
-        # 1. Missed rate overview
         ax1 = plt.subplot(3, 3, 1)
         n_highrisk = df['highrisk_lab'].sum()
         n_missed = df['missed'].sum()
@@ -913,7 +815,6 @@ class CVDRiskAnalysis:
         plt.title(f'High-Risk Detection Rate\n(n={n_highrisk} lab-defined ≥20%)',
                   fontsize=12, fontweight='bold')
 
-        # 2. Age distribution
         ax2 = plt.subplot(3, 3, 2)
         plt.hist([missed_df['age'].dropna(), not_missed_hr['age'].dropna()],
                  bins=15, label=['Missed', 'Detected'], alpha=0.7, edgecolor='black')
@@ -922,7 +823,6 @@ class CVDRiskAnalysis:
         plt.title('Age Distribution: Missed vs Detected', fontsize=12, fontweight='bold')
         plt.legend()
 
-        # 3. SBP comparison
         ax3 = plt.subplot(3, 3, 3)
         data_to_plot = [missed_df['sbp'].dropna(), not_missed_hr['sbp'].dropna()]
         bp = plt.boxplot(data_to_plot, labels=['Missed', 'Detected'], patch_artist=True)
@@ -931,7 +831,6 @@ class CVDRiskAnalysis:
         plt.ylabel('Systolic BP (mmHg)', fontsize=10)
         plt.title('SBP: Missed vs Detected', fontsize=12, fontweight='bold')
 
-        # 4. BMI comparison
         ax4 = plt.subplot(3, 3, 4)
         data_to_plot = [missed_df['bmi'].dropna(), not_missed_hr['bmi'].dropna()]
         bp = plt.boxplot(data_to_plot, labels=['Missed', 'Detected'], patch_artist=True)
@@ -940,7 +839,6 @@ class CVDRiskAnalysis:
         plt.ylabel('BMI (kg/m²)', fontsize=10)
         plt.title('BMI: Missed vs Detected', fontsize=12, fontweight='bold')
 
-        # 5. Sex distribution
         ax5 = plt.subplot(3, 3, 5)
         sex_missed = missed_df['gender'].value_counts()
         sex_detected = not_missed_hr['gender'].value_counts()
@@ -956,7 +854,6 @@ class CVDRiskAnalysis:
         plt.xticks(x, sex_missed.index)
         plt.legend()
 
-        # 6. Smoking status
         ax6 = plt.subplot(3, 3, 6)
         smoke_missed = missed_df['smoker_who'].value_counts()
         smoke_detected = not_missed_hr['smoker_who'].value_counts()
@@ -976,7 +873,6 @@ class CVDRiskAnalysis:
         plt.xticks(x, all_categories, rotation=45, ha='right')
         plt.legend()
 
-        # 7. Diabetes status
         ax7 = plt.subplot(3, 3, 7)
         diab_missed = missed_df['has_diabetes'].value_counts()
         diab_detected = not_missed_hr['has_diabetes'].value_counts()
@@ -996,7 +892,6 @@ class CVDRiskAnalysis:
         plt.xticks(x, all_categories)
         plt.legend()
 
-        # 8. Odds ratios
         ax8 = plt.subplot(3, 3, 8)
         coef_df_sorted = coef_df.sort_values('Odds Ratio')
         colors_or = ['red' if x < 1 else 'green' for x in coef_df_sorted['Odds Ratio']]
@@ -1008,7 +903,6 @@ class CVDRiskAnalysis:
                   fontsize=12, fontweight='bold')
         plt.xscale('log')
 
-        # 9. Risk score comparison
         ax9 = plt.subplot(3, 3, 9)
         plt.scatter(missed_df['risk_lab'], missed_df['risk_nonlab'],
                     c='red', alpha=0.6, s=50, label='Missed', edgecolor='black')
@@ -1029,38 +923,29 @@ class CVDRiskAnalysis:
         self.figures['rq3'] = 'resource/images/rq3_missed_highrisk.png'
         print("\n✓ RQ3 visualizations saved")
 
-    # ==================== RQ4: ML AUGMENTATION ====================
 
     def rq4_ml_augmentation(self):
-        """
-        RQ4: Machine learning model for improved high-risk detection
-        """
+        """RQ4: Machine learning model for improved high-risk detection"""
         print("\n" + "=" * 80)
         print("RQ4: MACHINE LEARNING AUGMENTATION FOR HIGH-RISK DETECTION")
         print("=" * 80)
 
         df = self.df_paired_analysis[self.df_paired_analysis['who_domain_ok_lab']].copy()
 
-        # Define target
         df['highrisk_lab'] = (df['risk_lab'] >= 20).astype(int)
 
-        # Prepare features (non-laboratory only)
         print("\n1. FEATURE PREPARATION")
         print("-" * 60)
 
-        # Categorical encoding
         df['sex_male'] = (df['gender'] == 'M').astype(int)
         df['smoker'] = (df['smoker_who'] == 'Smoker').astype(int)
         df['has_diabetes'] = df['has_diabetes'].astype(int)
 
-        # FIX: create highrisk_lab here
         df['highrisk_lab'] = (df['risk_lab'] >= 20).astype(int)
 
 
-        # Features for ML (non-laboratory only)
         feature_cols = ['age', 'sex_male', 'sbp', 'bmi', 'smoker', 'has_diabetes']
 
-        # Handle missing values
         df_ml = df[feature_cols + ['highrisk_lab', 'site_id', 'risk_nonlab']].copy()
         df_ml = df_ml.dropna(subset=feature_cols)
 
@@ -1072,7 +957,6 @@ class CVDRiskAnalysis:
         print(f"Features: {feature_cols}")
         print(f"Positive class (≥20%): {y.sum()} ({y.sum() / len(y) * 100:.1f}%)")
 
-        # Baseline: WHO non-lab chart
         baseline_pred = (df_ml['risk_nonlab'] >= 20).astype(int).values
 
         from sklearn.metrics import roc_auc_score, average_precision_score, recall_score, precision_score
@@ -1088,11 +972,9 @@ class CVDRiskAnalysis:
         print(f"  Specificity: {baseline_spec:.3f}")
         print(f"  PPV: {baseline_ppv:.3f}")
 
-        # Train ML models
         print("\n2. MODEL TRAINING & CROSS-VALIDATION")
         print("-" * 60)
 
-        # Stratified 5-fold CV
         skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
         models = {
@@ -1110,11 +992,9 @@ class CVDRiskAnalysis:
         for name, model in models.items():
             print(f"\n{name}:")
 
-            # Cross-validation predictions
             y_pred_proba = cross_val_predict(model, X, y, cv=skf, method='predict_proba')[:, 1]
             y_pred = (y_pred_proba >= 0.5).astype(int)
 
-            # Metrics
             auc = roc_auc_score(y, y_pred_proba)
             ap = average_precision_score(y, y_pred_proba)
             sens = recall_score(y, y_pred)
@@ -1145,11 +1025,9 @@ class CVDRiskAnalysis:
 
         print(f"\n✓ Best model: {best_model_name} (AUC = {best_auc:.3f})")
 
-        # Train final model on all data
         best_model = models[best_model_name]
         best_model.fit(X, y)
 
-        # Feature importance
         if hasattr(best_model, 'feature_importances_'):
             importance_df = pd.DataFrame({
                 'Feature': feature_cols,
@@ -1168,17 +1046,14 @@ class CVDRiskAnalysis:
             importance_df = coef_df[['Feature', 'Abs Coefficient']].copy()
             importance_df.columns = ['Feature', 'Importance']
 
-        # Calibration
         print("\n3. MODEL CALIBRATION")
         print("-" * 60)
 
-        # Calibrated model
         calibrated_model = CalibratedClassifierCV(best_model, method='isotonic', cv=5)
         calibrated_model.fit(X, y)
 
         y_pred_calib = cross_val_predict(calibrated_model, X, y, cv=skf, method='predict_proba')[:, 1]
 
-        # Calibration metrics
         brier_uncalib = brier_score_loss(y, results[best_model_name]['predictions'])
         brier_calib = brier_score_loss(y, y_pred_calib)
 
@@ -1186,7 +1061,6 @@ class CVDRiskAnalysis:
         print(f"Brier score (calibrated): {brier_calib:.4f}")
         print(f"Improvement: {brier_uncalib - brier_calib:.4f}")
 
-        # Site generalizability
         print("\n4. SITE GENERALIZABILITY (Leave-One-Site-Out)")
         print("-" * 60)
 
@@ -1195,7 +1069,7 @@ class CVDRiskAnalysis:
 
         for site in unique_sites:
             test_mask = (sites == site)
-            if test_mask.sum() < 10:  # Skip small sites
+            if test_mask.sum() < 10:
                 continue
 
             train_mask = ~test_mask
@@ -1203,7 +1077,7 @@ class CVDRiskAnalysis:
             X_train, X_test = X[train_mask], X[test_mask]
             y_train, y_test = y[train_mask], y[test_mask]
 
-            if y_test.sum() == 0 or y_test.sum() == len(y_test):  # Skip if no variation
+            if y_test.sum() == 0 or y_test.sum() == len(y_test):
                 continue
 
             model_site = models[best_model_name]
@@ -1220,7 +1094,6 @@ class CVDRiskAnalysis:
         print(f"Min AUC: {np.min(site_aucs):.3f}")
         print(f"Max AUC: {np.max(site_aucs):.3f}")
 
-        # Store results
         rq4_results = {
             'baseline': {
                 'auc': baseline_auc,
@@ -1245,7 +1118,6 @@ class CVDRiskAnalysis:
 
         self.results['rq4'] = rq4_results
 
-        # Visualizations
         self._rq4_visualizations(X, y, results, best_model_name, y_pred_calib,
                                  importance_df, feature_cols, baseline_pred)
 
@@ -1256,17 +1128,14 @@ class CVDRiskAnalysis:
         """Create RQ4 visualizations"""
         fig = plt.figure(figsize=(20, 12))
 
-        # 1. ROC curves
         ax1 = plt.subplot(2, 3, 1)
 
-        # Baseline
         from sklearn.metrics import roc_curve
         fpr_base, tpr_base, _ = roc_curve(y, baseline_pred)
         baseline_auc = roc_auc_score(y, baseline_pred)
         plt.plot(fpr_base, tpr_base, label=f'WHO Non-Lab (AUC={baseline_auc:.3f})',
                  linewidth=2, linestyle='--')
 
-        # ML models
         colors = ['blue', 'green', 'orange']
         for (name, res), color in zip(results.items(), colors):
             fpr, tpr, _ = roc_curve(y, res['predictions'])
@@ -1280,16 +1149,13 @@ class CVDRiskAnalysis:
         plt.legend(loc='lower right')
         plt.grid(alpha=0.3)
 
-        # 2. Precision-Recall curves
         ax2 = plt.subplot(2, 3, 2)
 
         from sklearn.metrics import precision_recall_curve
 
-        # Baseline
         prec_base, rec_base, _ = precision_recall_curve(y, baseline_pred)
         plt.plot(rec_base, prec_base, label='WHO Non-Lab', linewidth=2, linestyle='--')
 
-        # ML models
         for (name, res), color in zip(results.items(), colors):
             prec, rec, _ = precision_recall_curve(y, res['predictions'])
             plt.plot(rec, prec, label=f'{name} (AP={res["auprc"]:.3f})',
@@ -1301,7 +1167,6 @@ class CVDRiskAnalysis:
         plt.legend()
         plt.grid(alpha=0.3)
 
-        # 3. Feature importance
         ax3 = plt.subplot(2, 3, 3)
         importance_sorted = importance_df.sort_values('Importance', ascending=True)
         plt.barh(importance_sorted['Feature'], importance_sorted['Importance'],
@@ -1309,7 +1174,6 @@ class CVDRiskAnalysis:
         plt.xlabel('Importance', fontsize=10)
         plt.title(f'Feature Importance ({best_model_name})', fontsize=12, fontweight='bold')
 
-        # 4. Calibration curve
         ax4 = plt.subplot(2, 3, 4)
 
         prob_true, prob_pred = calibration_curve(y, y_pred_calib, n_bins=10)
@@ -1321,14 +1185,12 @@ class CVDRiskAnalysis:
         plt.legend()
         plt.grid(alpha=0.3)
 
-        # 5. Performance comparison
         ax5 = plt.subplot(2, 3, 5)
 
         metrics_names = ['Sensitivity', 'Specificity', 'PPV', 'F1-Score']
         x = np.arange(len(metrics_names))
         width = 0.15
 
-        # Baseline
         baseline_metrics = [
             recall_score(y, baseline_pred),
             recall_score(1 - y, 1 - baseline_pred),
@@ -1341,7 +1203,6 @@ class CVDRiskAnalysis:
         plt.bar(x - width, baseline_metrics, width, label='WHO Non-Lab',
                 color='gray', edgecolor='black')
 
-        # Best ML model
         best_results = results[best_model_name]
         ml_metrics = [
             best_results['sensitivity'],
@@ -1360,19 +1221,16 @@ class CVDRiskAnalysis:
         plt.legend()
         plt.ylim(0, 1.1)
 
-        # Add value labels on bars
         for i, (b1, b2) in enumerate(zip(baseline_metrics, ml_metrics)):
             plt.text(i - width, b1 + 0.02, f'{b1:.2f}', ha='center', fontsize=8)
             plt.text(i, b2 + 0.02, f'{b2:.2f}', ha='center', fontsize=8)
 
-        # 6. Confusion matrices
         ax6 = plt.subplot(2, 3, 6)
 
         best_pred = (results[best_model_name]['predictions'] >= 0.5).astype(int)
         cm_ml = confusion_matrix(y, best_pred)
         cm_base = confusion_matrix(y, baseline_pred)
 
-        # Side by side
         fig_cm, (ax_base, ax_ml) = plt.subplots(1, 2, figsize=(12, 5))
 
         sns.heatmap(cm_base, annot=True, fmt='d', cmap='Blues', ax=ax_base,
@@ -1399,36 +1257,29 @@ class CVDRiskAnalysis:
         self.figures['rq4_cm'] = 'resource/images/rq4_confusion_matrices.png'
         print("\n✓ RQ4 visualizations saved")
 
-    # ==================== RQ5: DECISION UTILITY ====================
 
     def rq5_decision_utility(self, ml_model):
-        """
-        RQ5: Decision utility under risk-threshold treatment strategies
-        """
+        """RQ5: Decision utility under risk-threshold treatment strategies"""
         print("\n" + "=" * 80)
         print("RQ5: DECISION UTILITY & TREATMENT STRATEGIES")
         print("=" * 80)
 
         df = self.df_paired_analysis[self.df_paired_analysis['who_domain_ok_lab']].copy()
 
-        # Create highrisk_lab NOW so the later column subset never fails
         df['highrisk_lab'] = (df['risk_lab'] >= 20).astype(int)
 
-        # Prepare features
         df['sex_male'] = (df['gender'] == 'M').astype(int)
         df['smoker'] = (df['smoker_who'] == 'Smoker').astype(int)
         df['has_diabetes'] = df['has_diabetes'].astype(int)
 
         feature_cols = ['age', 'sex_male', 'sbp', 'bmi', 'smoker', 'has_diabetes']
 
-        # Keep only rows usable for ML prediction + risk columns
         needed_cols = feature_cols + ['highrisk_lab', 'risk_nonlab', 'risk_lab']
         df_ml = df.dropna(subset=feature_cols + ['risk_nonlab', 'risk_lab']).copy()
         df_ml = df_ml[needed_cols].copy()
 
         X = df_ml[feature_cols].values
 
-        # Get ML predictions (probability of lab high-risk, as %)
         df_ml['ml_risk_score'] = ml_model.predict_proba(X)[:, 1] * 100.0
 
         thresholds = [10, 20]
@@ -1441,7 +1292,6 @@ class CVDRiskAnalysis:
             print(f"THRESHOLD: ≥{threshold}% RISK")
             print('=' * 60)
 
-            # Define high-risk by each method at this threshold
             df_ml[f'hr_lab_{threshold}'] = (df_ml['risk_lab'] >= threshold).astype(int)
             df_ml[f'hr_nonlab_{threshold}'] = (df_ml['risk_nonlab'] >= threshold).astype(int)
             df_ml[f'hr_ml_{threshold}'] = (df_ml['ml_risk_score'] >= threshold).astype(int)
@@ -1456,7 +1306,6 @@ class CVDRiskAnalysis:
             print(f"Non-lab chart: {n_eligible_nonlab} ({n_eligible_nonlab / n_total * 100:.1f}%)")
             print(f"ML-augmented: {n_eligible_ml} ({n_eligible_ml / n_total * 100:.1f}%)")
 
-            # Missed high-risk (FN)
             n_missed_nonlab = int(((df_ml[f'hr_lab_{threshold}'] == 1) & (df_ml[f'hr_nonlab_{threshold}'] == 0)).sum())
             n_missed_ml = int(((df_ml[f'hr_lab_{threshold}'] == 1) & (df_ml[f'hr_ml_{threshold}'] == 0)).sum())
 
@@ -1470,7 +1319,6 @@ class CVDRiskAnalysis:
             print(f"ML-augmented: {n_missed_ml} ({n_missed_ml / denom * 100:.1f}% of lab-defined)")
             print(f"Reduction: {reduction_missed} ({pct_reduction:.1f}% reduction)")
 
-            # False positives (overtreated)
             n_overtreat_nonlab = int(
                 ((df_ml[f'hr_lab_{threshold}'] == 0) & (df_ml[f'hr_nonlab_{threshold}'] == 1)).sum())
             n_overtreat_ml = int(((df_ml[f'hr_lab_{threshold}'] == 0) & (df_ml[f'hr_ml_{threshold}'] == 1)).sum())
@@ -1482,7 +1330,6 @@ class CVDRiskAnalysis:
             print(f"Non-lab chart: {n_overtreat_nonlab} ({n_overtreat_nonlab / denom_nonlab * 100:.1f}% of identified)")
             print(f"ML-augmented: {n_overtreat_ml} ({n_overtreat_ml / denom_ml * 100:.1f}% of identified)")
 
-            # Two-stage workflow: ML screen then lab only for ML+
             print(f"\n4. TWO-STAGE WORKFLOW SIMULATION")
             print("-" * 60)
             print("Stage 1: ML screening → Stage 2: Lab testing for ML-positive")
@@ -1501,7 +1348,6 @@ class CVDRiskAnalysis:
             print(f"\nConfirmed high-risk from two-stage: {n_confirmed_highrisk}")
             print(f"Detection rate: {n_confirmed_highrisk / denom * 100:.1f}% of all lab-defined")
 
-            # Net benefit at the chosen threshold
             print(f"\n5. NET BENEFIT ANALYSIS")
             print("-" * 60)
 
@@ -1552,7 +1398,6 @@ class CVDRiskAnalysis:
 
     def _rq5_visualizations(self, df_ml, results, thresholds):
         """Create RQ5 visualizations (clean + correct)"""
-        # --- Figure 1: Bars (eligibility, missed, lab tests) ---
         fig = plt.figure(figsize=(20, 10))
 
         n_total = len(df_ml)
@@ -1560,7 +1405,6 @@ class CVDRiskAnalysis:
         for idx, threshold in enumerate(thresholds):
             base_col = idx * 3
 
-            # 1) Treatment eligibility
             ax1 = plt.subplot(2, 3, base_col + 1)
             methods = ['Lab\n(Gold)', 'Non-Lab\nChart', 'ML\nAugmented']
             eligible = [
@@ -1576,7 +1420,6 @@ class CVDRiskAnalysis:
                 plt.text(bar.get_x() + bar.get_width() / 2.0, bar.get_height(),
                          f"{int(val)}\n({pct:.1f}%)", ha="center", va="bottom", fontsize=9)
 
-            # 2) Missed high-risk
             ax2 = plt.subplot(2, 3, base_col + 2)
             methods2 = ['Non-Lab\nChart', 'ML\nAugmented']
             missed = [
@@ -1592,7 +1435,6 @@ class CVDRiskAnalysis:
                 plt.text(bar.get_x() + bar.get_width() / 2.0, bar.get_height(),
                          f"{int(val)}\n({pct:.1f}%)", ha="center", va="bottom", fontsize=9)
 
-            # 3) Lab tests required
             ax3 = plt.subplot(2, 3, base_col + 3)
             strategies = ['Universal\nLab', 'Two-Stage\n(ML+Lab)']
             lab_tests = [
@@ -1614,7 +1456,6 @@ class CVDRiskAnalysis:
         plt.savefig('resource/images/rq5_decision_utility.png', dpi=300, bbox_inches='tight')
         plt.close(fig)
 
-        # --- Figure 2: Decision curve-style net benefit over probability thresholds ---
         fig2 = plt.figure(figsize=(16, 6))
 
         threshold_range = np.linspace(0.05, 0.50, 50)
@@ -1623,7 +1464,6 @@ class CVDRiskAnalysis:
         for idx, threshold in enumerate(thresholds):
             ax = plt.subplot(1, 2, idx + 1)
 
-            # Use the actual binary rule columns for this threshold
             hr_lab = df_ml[f'hr_lab_{threshold}'].values
             hr_nonlab = df_ml[f'hr_nonlab_{threshold}'].values
             hr_ml = df_ml[f'hr_ml_{threshold}'].values
@@ -1702,7 +1542,6 @@ class CVDRiskAnalysis:
         report.append("=" * 80)
         report.append("")
 
-        # ---------------- RQ1 ----------------
         if 'rq1' in self.results:
             rq1 = self.results['rq1']
             report.append("RQ1: BASELINE RISK BURDEN & HETEROGENEITY")
@@ -1717,13 +1556,11 @@ class CVDRiskAnalysis:
             report.append(f"Age heterogeneity (p={fmt(get(rq1, ['age_test', 'p_value']), 4)})")
             report.append("")
 
-        # ---------------- RQ2 ----------------
         if 'rq2' in self.results:
             rq2 = self.results['rq2']
             report.append("RQ2: CONCORDANCE & SYSTEMATIC BIAS")
             report.append("-" * 80)
 
-            # n_paired may exist under different names depending on your edits
             n_paired = rq2.get('n_paired', rq2.get('n_paired_continuous', rq2.get('n', "NA")))
             report.append(
                 f"Paired sample: {n_paired:,}" if isinstance(n_paired, (int, float)) else f"Paired sample: {n_paired}")
@@ -1731,7 +1568,6 @@ class CVDRiskAnalysis:
             report.append(f"Mean bias (non-lab − lab): {fmt(get(rq2, ['continuous_agreement', 'mean_diff']), 2)}%")
             report.append(f"Correlation: r = {fmt(get(rq2, ['continuous_agreement', 'correlation']), 3)}")
 
-            # exact agreement key may differ: exact_agreement or exact_agreement_pct
             exact_agree = get(rq2, ['categorical_agreement', 'exact_agreement'], "NA")
             if exact_agree == "NA":
                 exact_agree = get(rq2, ['categorical_agreement', 'exact_agreement_pct'], "NA")
@@ -1742,7 +1578,6 @@ class CVDRiskAnalysis:
             report.append(f"High-risk (≥20%) specificity: {fmt(get(rq2, ['highrisk_agreement', 'specificity']), 3)}")
             report.append("")
 
-        # ---------------- RQ3 ----------------
         if 'rq3' in self.results:
             rq3 = self.results['rq3']
             report.append("RQ3: MISSED HIGH-RISK INDIVIDUALS")
@@ -1760,7 +1595,6 @@ class CVDRiskAnalysis:
                 report.append(f"  {feat}: OR = {fmt(orv, 2)}")
             report.append("")
 
-        # ---------------- RQ4 ----------------
         if 'rq4' in self.results:
             rq4 = self.results['rq4']
             report.append("RQ4: MACHINE LEARNING AUGMENTATION")
@@ -1795,7 +1629,6 @@ class CVDRiskAnalysis:
                           f"± {fmt(get(rq4, ['site_generalizability', 'std_auc']), 3)}")
             report.append("")
 
-        # ---------------- RQ5 ----------------
         if 'rq5' in self.results:
             rq5 = self.results['rq5']
             report.append("RQ5: DECISION UTILITY & TREATMENT STRATEGIES")
@@ -1818,7 +1651,6 @@ class CVDRiskAnalysis:
         report.append("ANALYSIS COMPLETE")
         report.append("=" * 80)
 
-        # Save report safely on Windows (UTF-8 fixes ≥, κ, etc.)
         report_text = "\n".join(report)
         with open('resource/images/analysis_summary_report.txt', 'w', encoding='utf-8') as f:
             f.write(report_text)
@@ -1827,8 +1659,6 @@ class CVDRiskAnalysis:
         return report_text
 
 
-# ==================== MAIN EXECUTION ====================
-
 def main():
     """Main execution function"""
     print("\n" + "=" * 80)
@@ -1836,7 +1666,6 @@ def main():
     print("Complete Analysis Pipeline for 5 Research Questions")
     print("=" * 80)
 
-    # Load data
     print("\nLoading data...")
     try:
         df_nonlab = pd.read_csv('resource/analyzed/v2.0/cvd_nonlab.csv')
@@ -1848,35 +1677,27 @@ def main():
 
         print("✓ Data loaded successfully")
 
-        # Initialize analysis
         analysis = CVDRiskAnalysis(df_nonlab, df_lab, df_paired, df_who_nonlab, df_who_lab, df_sites)
 
-        # Execute all research questions
         print("\n" + "=" * 80)
         print("EXECUTING COMPREHENSIVE ANALYSIS")
         print("=" * 80)
 
-        # RQ1
         results_rq1 = analysis.rq1_baseline_distribution()
 
-        # RQ2
         results_rq2 = analysis.rq2_concordance_analysis()
 
-        # RQ3
         results_rq3 = analysis.rq3_missed_highrisk_analysis()
 
-        # RQ4
         results_rq4, ml_model = analysis.rq4_ml_augmentation()
 
-        # RQ5
         results_rq5 = analysis.rq5_decision_utility(ml_model)
 
-        # Generate summary report
         summary_report = analysis.generate_summary_report()
 
-        # Save all results to JSON
         import json
         def convert_types(obj):
+            """Convert types."""
             if isinstance(obj, np.integer):
                 return int(obj)
             elif isinstance(obj, np.floating):
@@ -1889,12 +1710,7 @@ def main():
                 return [convert_types(item) for item in obj]
             return obj
 
-        # with open('resource/images/all_results.json', 'w') as f:
-        #     # Convert any numpy types to Python types
 
-        #
-        #     results_to_save = convert_types(analysis.results)
-        #     json.dump(results_to_save, f, indent=2)
         results_to_save = convert_types(analysis.results)
 
         with open('resource/images/all_results.txt', 'w', encoding='utf-8') as f:
@@ -1912,7 +1728,7 @@ def main():
         print("  - rq5_decision_utility.png")
         print("  - rq5_net_benefit_curves.png")
         print("  - analysis_summary_report.txt")
-        print("  - all_results.json")
+        print("  - overall_output.json")
 
         return analysis
 

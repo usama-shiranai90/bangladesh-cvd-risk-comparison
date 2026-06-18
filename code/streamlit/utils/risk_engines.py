@@ -31,14 +31,6 @@ import pandas as pd
 from typing import Optional, Tuple
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# 1. FRAMINGHAM RISK SCORE (FRS)
-# ═══════════════════════════════════════════════════════════════════════════
-
-# --- D'Agostino 2008 General CVD (Lab-based) Coefficients ---
-# These predict 10-year risk of a first cardiovascular event (CHD, stroke, PAD, HF)
-# Source: D'Agostino et al. Circulation 2008; 117(6):743–753
-
 _FRS_LAB_COEFFICIENTS = {
     "men": {
         "ln_age": 3.06117,
@@ -64,8 +56,6 @@ _FRS_LAB_COEFFICIENTS = {
     },
 }
 
-# --- FRS Non-lab (BMI) variant coefficients ---
-# D'Agostino 2008 Table 3 – replaces TC/HDL with ln(BMI)
 _FRS_NONLAB_COEFFICIENTS = {
     "men": {
         "ln_age": 3.11296,
@@ -94,24 +84,7 @@ def compute_frs_lab(age: float, sex: str, sbp: float,
                     tc: float, hdl: float,
                     smoking: bool, diabetes: bool,
                     on_bp_treatment: bool = False) -> Optional[float]:
-    """
-    Compute 10-year general CVD risk using the Framingham lab-based model.
-
-    Parameters
-    ----------
-    age : float  (30-74 ideally)
-    sex : str    'men' or 'women'
-    sbp : float  systolic blood pressure in mmHg
-    tc  : float  total cholesterol in mmol/L
-    hdl : float  HDL cholesterol in mmol/L
-    smoking : bool
-    diabetes : bool
-    on_bp_treatment : bool  (assume False when unknown)
-
-    Returns
-    -------
-    float : 10-year risk percentage [0-100], or None if inputs invalid
-    """
+    """Compute 10-year general CVD risk using the Framingham lab-based model."""
     if pd.isna(age) or pd.isna(sbp) or pd.isna(tc) or pd.isna(hdl):
         return None
     if age < 30 or age > 74:
@@ -140,9 +113,7 @@ def compute_frs_lab(age: float, sex: str, sbp: float,
 def compute_frs_nonlab(age: float, sex: str, sbp: float, bmi: float,
                        smoking: bool, diabetes: bool,
                        on_bp_treatment: bool = False) -> Optional[float]:
-    """
-    Compute 10-year general CVD risk using the Framingham BMI-based (non-lab) model.
-    """
+    """Compute 10-year general CVD risk using the Framingham BMI-based (non-lab) model."""
     if pd.isna(age) or pd.isna(sbp) or pd.isna(bmi):
         return None
     if age < 30 or age > 74:
@@ -167,18 +138,6 @@ def compute_frs_nonlab(age: float, sex: str, sbp: float, bmi: float,
     return round(max(0.0, min(100.0, risk * 100)), 1)
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# 2. SCORE2 ASIA-PACIFIC
-# ═══════════════════════════════════════════════════════════════════════════
-
-# SCORE2 uses a Weibull competing-risks model.
-# Published ESC 2024 SCORE2-Asia: recalibrated for Asia-Pacific low/moderate-risk zone
-# C-index ≈ 0.71 in validation cohorts.
-#
-# We use the simplified Cox-style implementation:
-#   10-year risk = 1 - S0(10)^exp(LP - LP_mean)
-# where S0 and LP coefficients come from the SCORE2-AP publication.
-
 _SCORE2_AP_COEFFICIENTS = {
     "men": {
         "age": 0.0643,
@@ -202,10 +161,6 @@ _SCORE2_AP_COEFFICIENTS = {
     },
 }
 
-# Non-lab variant – replaces TC/HDL with BMI
-# mean_lp recalibrated to average Bangladeshi profiles:
-# Men:   age~52, sbp~128, bmi~23, ~30% smoke, ~15% diabetes → LP ≈ 6.37
-# Women: age~50, sbp~125, bmi~24, ~2% smoke, ~18% diabetes  → LP ≈ 6.77
 _SCORE2_AP_NONLAB_COEFFICIENTS = {
     "men": {
         "age": 0.0650,
@@ -232,25 +187,7 @@ def compute_score2_ap(age: float, sex: str, sbp: float,
                       tc: Optional[float], hdl: Optional[float],
                       bmi: Optional[float],
                       smoking: bool, diabetes: bool) -> Optional[float]:
-    """
-    Compute 10-year CVD risk using SCORE2 Asia-Pacific.
-    Uses lab variant if TC/HDL available, otherwise falls back to BMI non-lab.
-
-    Parameters
-    ----------
-    age : float  (40-79)
-    sex : str    'men' or 'women'
-    sbp : float
-    tc  : float | None  total cholesterol mmol/L
-    hdl : float | None  HDL cholesterol mmol/L
-    bmi : float | None
-    smoking : bool
-    diabetes : bool
-
-    Returns
-    -------
-    float : 10-year risk %
-    """
+    """Compute 10-year CVD risk using SCORE2 Asia-Pacific."""
     if pd.isna(age) or pd.isna(sbp):
         return None
     if age < 40 or age > 79:
@@ -288,18 +225,6 @@ def compute_score2_ap(age: float, sex: str, sbp: float,
     return round(max(0.0, min(100.0, risk * 100)), 1)
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# 3. GLOBORISK
-# ═══════════════════════════════════════════════════════════════════════════
-
-# Globorisk (Ueda et al. Lancet 2017) is a country-recalibrated Framingham model.
-# It applies a recalibration factor (γ) and country-specific baseline to the
-# core Framingham LP. For Bangladesh (SEAR-D), recalibration factors are:
-#   - Higher baseline hazard than original Framingham (South Asian excess)
-#   - Menopausal adjustment factor for women ≥50
-
-# Coefficients for the "office-based" (non-lab) Globorisk model
-# Approximations from Ueda 2017 Supplementary Table S2 (SEAR-D region)
 _GLOBORISK_COEFFICIENTS = {
     "men": {
         "ln_age": 2.9880,
@@ -309,7 +234,7 @@ _GLOBORISK_COEFFICIENTS = {
         "ln_bmi": 0.7120,
         "mean_lp": 22.810,
         "baseline_survival": 0.8721,
-        "country_recalib": 1.18,  # Bangladesh ~18% higher hazard vs US
+        "country_recalib": 1.18,
     },
     "women": {
         "ln_age": 2.4512,
@@ -319,12 +244,11 @@ _GLOBORISK_COEFFICIENTS = {
         "ln_bmi": 0.4530,
         "mean_lp": 25.520,
         "baseline_survival": 0.9410,
-        "country_recalib": 1.22,  # Higher in women
-        "postmeno_adj": 0.1850,  # Additional risk factor for age ≥ 50 women
+        "country_recalib": 1.22,
+        "postmeno_adj": 0.1850,
     },
 }
 
-# Lab-based Globorisk coefficients (with TC/HDL)
 _GLOBORISK_LAB_COEFFICIENTS = {
     "men": {
         "ln_age": 3.0150,
@@ -357,22 +281,7 @@ def compute_globorisk(age: float, sex: str, sbp: float,
                       tc: Optional[float], hdl: Optional[float],
                       smoking: bool, diabetes: bool,
                       country: str = "Bangladesh") -> Optional[float]:
-    """
-    Compute 10-year CVD risk using Globorisk (country-recalibrated).
-
-    Uses lab variant if TC/HDL available, otherwise office-based (BMI).
-    Applies postmenopausal adjustment for women ≥ 50.
-
-    Parameters
-    ----------
-    age : float  (40-74)
-    sex : str    'men' or 'women'
-    country : str  (currently only 'Bangladesh' calibration available)
-
-    Returns
-    -------
-    float : 10-year risk %
-    """
+    """Compute 10-year CVD risk using Globorisk (country-recalibrated)."""
     if pd.isna(age) or pd.isna(sbp):
         return None
     if age < 40 or age > 74:
@@ -406,21 +315,15 @@ def compute_globorisk(age: float, sex: str, sbp: float,
             + c["diabetes"] * int(diabetes)
         )
 
-    # Postmenopausal adjustment
     if sex == "women" and age >= 50 and "postmeno_adj" in c:
         individual_sum += c["postmeno_adj"]
 
-    # Country recalibration
     recalib = c.get("country_recalib", 1.0)
     exponent = (individual_sum - c["mean_lp"]) * recalib
 
     risk = 1.0 - c["baseline_survival"] ** np.exp(exponent)
     return round(max(0.0, min(100.0, risk * 100)), 1)
 
-
-# ═══════════════════════════════════════════════════════════════════════════
-# BATCH COMPUTATION HELPERS
-# ═══════════════════════════════════════════════════════════════════════════
 
 def _safe_bool(val) -> bool:
     """Convert various boolean representations to Python bool."""
@@ -445,32 +348,17 @@ def _sex_key(val) -> str:
 
 
 def add_all_risk_scores(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Add FRS, SCORE2-AP, and Globorisk columns to a dataframe that already
-    has standardized WHO columns (age, gender_key, sbp, bmi, smoker_key,
-    has_diabetes, cholesterol_mmolL).
-
-    New columns added:
-    - risk_frs_lab, risk_frs_nonlab
-    - risk_score2_ap
-    - risk_globorisk
-    - risk_frs_cat, risk_score2_cat, risk_globorisk_cat  (5-band categories)
-
-    Returns
-    -------
-    pd.DataFrame with new risk columns
-    """
+    """Add FRS, SCORE2-AP, and Globorisk columns to a dataframe that already"""
     df = df.copy()
 
-    # Determine column names
     sex_col = "gender_key" if "gender_key" in df.columns else "gender"
     smoke_col = "smoker_key" if "smoker_key" in df.columns else "smoker"
     diab_col = "has_diabetes"
     tc_col = "cholesterol_mmolL"
-    # HDL not usually in this dataset, but check
     hdl_col = "hdl_mmolL" if "hdl_mmolL" in df.columns else None
 
     def _row_frs_lab(row):
+        """Row frs lab."""
         sex = _sex_key(row.get(sex_col, ""))
         tc_val = row.get(tc_col, np.nan)
         hdl_val = row.get(hdl_col, np.nan) if hdl_col else np.nan
@@ -484,6 +372,7 @@ def add_all_risk_scores(df: pd.DataFrame) -> pd.DataFrame:
         )
 
     def _row_frs_nonlab(row):
+        """Row frs nonlab."""
         sex = _sex_key(row.get(sex_col, ""))
         return compute_frs_nonlab(
             age=row["age"], sex=sex, sbp=row["sbp"], bmi=row.get("bmi", np.nan),
@@ -492,6 +381,7 @@ def add_all_risk_scores(df: pd.DataFrame) -> pd.DataFrame:
         )
 
     def _row_score2(row):
+        """Row score2."""
         sex = _sex_key(row.get(sex_col, ""))
         tc_val = row.get(tc_col, np.nan)
         hdl_val = row.get(hdl_col, np.nan) if hdl_col else np.nan
@@ -505,6 +395,7 @@ def add_all_risk_scores(df: pd.DataFrame) -> pd.DataFrame:
         )
 
     def _row_globorisk(row):
+        """Row globorisk."""
         sex = _sex_key(row.get(sex_col, ""))
         tc_val = row.get(tc_col, np.nan)
         hdl_val = row.get(hdl_col, np.nan) if hdl_col else np.nan
@@ -517,13 +408,11 @@ def add_all_risk_scores(df: pd.DataFrame) -> pd.DataFrame:
             diabetes=_safe_bool(row.get(diab_col)),
         )
 
-    # Apply row-wise (vectorized would be faster but this is more readable)
     df["risk_frs_lab"] = df.apply(_row_frs_lab, axis=1).astype("Float64")
     df["risk_frs_nonlab"] = df.apply(_row_frs_nonlab, axis=1).astype("Float64")
     df["risk_score2_ap"] = df.apply(_row_score2, axis=1).astype("Float64")
     df["risk_globorisk"] = df.apply(_row_globorisk, axis=1).astype("Float64")
 
-    # Categorize into 5-band labels
     risk_levels = ["<5%", "5% to <10%", "10% to <20%", "20% to <30%", "≥30%"]
     bins = [-np.inf, 5, 10, 20, 30, np.inf]
 
@@ -543,17 +432,7 @@ def add_all_risk_scores(df: pd.DataFrame) -> pd.DataFrame:
 def compute_discordance_matrix(df: pd.DataFrame,
                                col_a: str, col_b: str,
                                threshold: float = 20.0) -> dict:
-    """
-    Compute discordance between two risk models at a given threshold.
-
-    Returns
-    -------
-    dict with keys:
-      n_valid, agree_high, agree_low,
-      a_high_b_low  (model A flags high, B does not),
-      a_low_b_high  (model B flags high, A does not),
-      discordance_rate, kappa
-    """
+    """Compute discordance between two risk models at a given threshold."""
     valid = df[[col_a, col_b]].dropna()
     n = len(valid)
     if n == 0:
@@ -570,7 +449,6 @@ def compute_discordance_matrix(df: pd.DataFrame,
     concordance = (agree_high + agree_low) / n
     discordance = 1.0 - concordance
 
-    # Cohen's kappa
     p0 = concordance
     pe = (
         ((agree_high + a_high_b_low) / n) * ((agree_high + a_low_b_high) / n)

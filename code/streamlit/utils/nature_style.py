@@ -23,64 +23,44 @@ import numpy as np
 from pathlib import Path
 from typing import Literal, Sequence
 
-# ---------------------------------------------------------------------------
-# 1. Dimensional constants ( Reviews Artwork Guidelines)
-# ---------------------------------------------------------------------------
-# Single-column : 89 mm  → 3.504 inches
-# Double-column : 183 mm → 7.205 inches
-# Maximum height: 247 mm → 9.724 inches
-SINGLE_COL_IN: float = 89  / 25.4   # 3.504 in
-DOUBLE_COL_IN: float = 183 / 25.4   # 7.205 in
-MAX_HEIGHT_IN: float = 247 / 25.4   # 9.724 in
+SINGLE_COL_IN: float = 89  / 25.4
+DOUBLE_COL_IN: float = 183 / 25.4
+MAX_HEIGHT_IN: float = 247 / 25.4
 
-# ---------------------------------------------------------------------------
-# 2. Typographic constants
-# ---------------------------------------------------------------------------
-FONT_BASE   = 7    # pt  – axis labels, legend, tick labels
-FONT_TITLE  = 8    # pt  – panel titles / sub-headings
-FONT_PANEL  = 8    # pt  – panel labels (a, b, c)
-FONT_MIN    = 5    # pt  – absolute minimum for any text
+FONT_BASE   = 7
+FONT_TITLE  = 8
+FONT_PANEL  = 8
+FONT_MIN    = 5
 FONT_FAMILY = "sans-serif"
-FONT_SANS   = ["Arial", "Helvetica", "DejaVu Sans"]  # fallback chain
+FONT_SANS   = ["Arial", "Helvetica", "DejaVu Sans"]
 
-# ---------------------------------------------------------------------------
-# 3. Line-weight constants (pt → points used directly by Matplotlib)
-# ---------------------------------------------------------------------------
-LW_DEFAULT  = 0.75   # pt – plot lines, axes
-LW_THIN     = 0.5    # pt – ticks, minor lines
-LW_MIN      = 0.25   # pt – absolute minimum
-LW_THICK    = 1.0    # pt – emphasis lines, error bar caps
+LW_DEFAULT  = 0.75
+LW_THIN     = 0.5
+LW_MIN      = 0.25
+LW_THICK    = 1.0
 
-# ---------------------------------------------------------------------------
-# 4. Okabe-Ito colorblind-safe palette (8 colours)
-# Red-green combinations **never** used together to distinguish data.
-# ---------------------------------------------------------------------------
 OKABE_ITO: list[str] = [
-    "#E69F00",  # orange
-    "#56B4E9",  # sky blue
-    "#009E73",  # green
-    "#F0E442",  # yellow
-    "#0072B2",  # blue
-    "#D55E00",  # vermillion (avoid pairing with #009E73 for key distinctions)
-    "#CC79A7",  # reddish-purple
-    "#000000",  # black
+    "#E69F00",
+    "#56B4E9",
+    "#009E73",
+    "#F0E442",
+    "#0072B2",
+    "#D55E00",
+    "#CC79A7",
+    "#000000",
 ]
 
-# Curated 2-colour pairs guaranteed to be distinguishable by all CVD types
-PAIR_MALE_FEMALE: tuple[str, str] = ("#0072B2", "#CC79A7")   # blue / pink-purple
-PAIR_LAB_NONLAB:  tuple[str, str] = ("#0072B2", "#E69F00")   # blue / orange
-PAIR_HIGH_LOW:    tuple[str, str] = ("#D55E00", "#56B4E9")   # vermillion / sky-blue
+PAIR_MALE_FEMALE: tuple[str, str] = ("#0072B2", "#CC79A7")
+PAIR_LAB_NONLAB:  tuple[str, str] = ("#0072B2", "#E69F00")
+PAIR_HIGH_LOW:    tuple[str, str] = ("#D55E00", "#56B4E9")
 
-# Contextual / Main Backgrounds
 NATURE_STONE = ['#F3F2E9', '#E6E2D1', '#CFCBA9', '#B2AD81', '#8C8861', '#666345']
 NATURE_GREY  = ['#EBECEF', '#D1D4DB', '#A8AEBD', '#7E869B', '#5A6175', '#393E4D']
 
-# Main Accents (Primary Data)
 NATURE_RED   = ['#F6CDCD', '#EFA0A0', '#E26D6D', '#CE3737', '#A12626', '#711A1A']
 NATURE_BLUE  = ['#CDE3F6', '#A0CBEF', '#6DABDE', '#3783CE', '#2661A1', '#1A4271']
 NATURE_YELLOW= ['#F6EECD', '#EFDCA0', '#E2C66D', '#CEAD37', '#A18626', '#715D1A']
 
-# Extended Palette (For complex categorical data)
 NATURE_OLIVE = ['#EEF4B8', '#DCE87C', '#C2D148', '#99A82B', '#6D7A1A', '#454F0D']
 NATURE_GREEN = ['#D1E8CC', '#A5D49B', '#72BB62', '#3D9B2B', '#27701A', '#154A0F']
 NATURE_TEAL  = ['#CAEAEB', '#92D7D9', '#54BDC1', '#219DA1', '#127073', '#0A494B']
@@ -88,18 +68,9 @@ NATURE_PURPLE= ['#E4CAEA', '#CD92D9', '#B154C1', '#8F21A1', '#651273', '#400A4B'
 NATURE_ORANGE= ['#F6DECC', '#EFBE9B', '#E29762', '#CE6B2B', '#A14E1A', '#71320F']
 
 
-
-# ---------------------------------------------------------------------------
-# 5. Core Matplotlib rc configuration
-# ---------------------------------------------------------------------------
-
 def configure_rc() -> None:
-    """
-    Apply all  Reviews Artwork Guidelines to Matplotlib's global rc
-    parameters.  Call once at module load — side-effect free otherwise.
-    """
+    """Apply all  Reviews Artwork Guidelines to Matplotlib's global rc"""
     rc: dict = {
-        # --- Font ---
         "font.family":          FONT_FAMILY,
         "font.sans-serif":      FONT_SANS,
         "font.size":            FONT_BASE,
@@ -110,7 +81,6 @@ def configure_rc() -> None:
         "legend.fontsize":      FONT_BASE,
         "legend.title_fontsize": FONT_BASE,
 
-        # --- Line weights ---
         "axes.linewidth":       LW_THIN,
         "xtick.major.width":    LW_THIN,
         "ytick.major.width":    LW_THIN,
@@ -127,45 +97,34 @@ def configure_rc() -> None:
         "errorbar.capsize":     2.5,
         "hatch.linewidth":      LW_THIN,
 
-        # --- Spines: remove top + right ---
         "axes.spines.top":      False,
         "axes.spines.right":    False,
 
-        # --- Color cycle ---
         "axes.prop_cycle":      mpl.cycler(color=OKABE_ITO),
 
-        # --- Grid ---
         "axes.grid":            False,
         "grid.linewidth":       LW_MIN,
         "grid.alpha":           0.4,
 
-        # --- Legend ---
         "legend.frameon":       False,
         "legend.borderpad":     0.2,
         "legend.labelspacing":  0.3,
 
-        # --- Background ---
         "figure.facecolor":     "white",
         "axes.facecolor":       "white",
 
-        # --- PDF / SVG output ---
-        "pdf.fonttype":         42,   # embed TrueType fonts in PDF
+        "pdf.fonttype":         42,
         "svg.fonttype":         "none",
         "savefig.dpi":          600,
         "savefig.bbox":         "tight",
         "savefig.pad_inches":   0.02,
-        "figure.dpi":           150,  # screen preview
+        "figure.dpi":           150,
     }
     mpl.rcParams.update(rc)
 
 
-# Apply immediately on import
 configure_rc()
 
-
-# ---------------------------------------------------------------------------
-# 6. Figure factory
-# ---------------------------------------------------------------------------
 
 def apply_nature_style(
     nrows: int = 1,
@@ -175,22 +134,8 @@ def apply_nature_style(
     aspect: float | None = None,
     **subplot_kw,
 ) -> tuple[plt.Figure, np.ndarray]:
-    """
-    Create a -compliant Figure + Axes array.
-
-    Parameters
-    ----------
-    nrows, ncols : grid dimensions
-    layout       : "single" (89 mm) or "double" (183 mm) column width
-    height_in    : explicit height in inches (optional)
-    aspect       : height-to-width ratio when height_in is None
-    **subplot_kw : forwarded to plt.subplots()
-
-    Returns
-    -------
-    fig, axes  – (axes is always an ndarray, even if nrows==ncols==1)
-    """
-    configure_rc()   # always re-apply in case global state was reset
+    """Create a -compliant Figure + Axes array."""
+    configure_rc()
 
     width_in = SINGLE_COL_IN if layout == "single" else DOUBLE_COL_IN
 
@@ -198,7 +143,6 @@ def apply_nature_style(
         if aspect is not None:
             height_in = width_in * aspect
         else:
-            # Default: golden-ratio-ish per row
             height_in = min(width_in * 0.65 * nrows / max(ncols, 1), MAX_HEIGHT_IN)
 
     height_in = min(height_in, MAX_HEIGHT_IN)
@@ -211,15 +155,10 @@ def apply_nature_style(
 
     fig, axes = plt.subplots(nrows, ncols, **default_kw)
 
-    # Normalise axes to always be an ndarray
     axes = np.atleast_1d(axes)
 
     return fig, axes
 
-
-# ---------------------------------------------------------------------------
-# 7. Panel-label helper
-# ---------------------------------------------------------------------------
 
 def add_panel_labels(
     axes: Sequence[plt.Axes],
@@ -228,15 +167,7 @@ def add_panel_labels(
     y: float = 1.05,
     fontsize: int = FONT_PANEL,
 ) -> None:
-    """
-    Add lowercase bold panel labels (a, b, c…) to each axis.
-
-    Parameters
-    ----------
-    axes   : sequence of Axes objects
-    labels : explicit labels; defaults to ['a','b','c',…]
-    x, y   : label position in axis-fraction coordinates
-    """
+    """Add lowercase bold panel labels (a, b, c…) to each axis."""
     if labels is None:
         labels = [chr(ord("a") + i) for i in range(len(axes))]
     for ax, label in zip(axes, labels):
@@ -251,20 +182,12 @@ def add_panel_labels(
         )
 
 
-# ---------------------------------------------------------------------------
-# 8. Spine / tick cleanup helpers
-# ---------------------------------------------------------------------------
-
 def clean_axes(
     ax: plt.Axes,
     left: bool = True,
     bottom: bool = True,
 ) -> None:
-    """
-    Remove unwanted spines and ensure ticks point outward.
-    Top + right spines are already disabled via rc; call this for
-    finer control (e.g. removing left spine for horizontal bar charts).
-    """
+    """Remove unwanted spines and ensure ticks point outward."""
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.spines["left"].set_visible(left)
@@ -278,10 +201,6 @@ def clean_axes(
     ax.tick_params(direction="out", width=LW_THIN)
 
 
-# ---------------------------------------------------------------------------
-# 9. Save utility — always exports PDF + SVG
-# ---------------------------------------------------------------------------
-
 def save_figure(
     fig: plt.Figure,
     stem: str | Path,
@@ -289,21 +208,7 @@ def save_figure(
     formats: tuple[str, ...] = ("pdf", "svg"),
     tight: bool = True,
 ) -> list[str]:
-    """
-    Save *fig* to PDF and SVG (or any combination via *formats*).
-
-    Parameters
-    ----------
-    fig     : the Matplotlib Figure to save
-    stem    : path without extension (directory will be created)
-    dpi     : resolution for raster elements embedded in vector formats
-    formats : output formats to write
-    tight   : whether to use bbox_inches='tight'
-
-    Returns
-    -------
-    List of absolute paths to saved files.
-    """
+    """Save *fig* to PDF and SVG (or any combination via *formats*)."""
     stem = Path(stem)
     stem.parent.mkdir(parents=True, exist_ok=True)
 
@@ -322,16 +227,12 @@ def save_figure(
     return saved
 
 
-# ---------------------------------------------------------------------------
-# 10. Convenience: risk-band colour map (publication-safe, no red-green pair)
-# ---------------------------------------------------------------------------
-# Maps WHO risk band label → face colour
 RISK_BAND_COLORS: dict[str, str] = {
-    "<5%":          "#CCCCCC",   # light grey
-    "5% to <10%":   "#F0E442",   # yellow (Okabe-Ito)
-    "10% to <20%":  "#E69F00",   # orange
-    "20% to <30%":  "#D55E00",   # vermillion
-    "≥30%":         "#000000",   # black
+    "<5%":          "#CCCCCC",
+    "5% to <10%":   "#F0E442",
+    "10% to <20%":  "#E69F00",
+    "20% to <30%":  "#D55E00",
+    "≥30%":         "#000000",
 }
 
 RISK_BAND_ORDER = ["<5%", "5% to <10%", "10% to <20%", "20% to <30%", "≥30%"]

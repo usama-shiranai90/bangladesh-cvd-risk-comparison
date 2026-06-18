@@ -7,8 +7,8 @@ from utils.helpers import get_risk_cat, RISK_PALETTE
 from utils.export_utils import add_download_button
 
 def render_rq1(df_paired, datasets=None):
+    """Render RQ1."""
     st.caption("Preview (paired cohort)")
-    # st.dataframe(df_paired.head(10), use_container_width=True)
 
     st.title("RQ1: Baseline Risk Burden & Heterogeneity")
     
@@ -24,22 +24,18 @@ def render_rq1(df_paired, datasets=None):
         st.error("No paired data loaded. Please ensure 'cvd_paired.csv' is selected in the sidebar.")
         return
 
-    # --- DATA PREPARATION ---
     df = df_paired.copy()
     
-    # Filter for eligible paired records only
     if 'eligible_paired' in df.columns:
         df = df[df['eligible_paired']].reset_index(drop=True)
         st.info(f"📊 Using **eligible paired records**: {len(df):,} participants")
     else:
         st.info(f"📊 Using **paired records**: {len(df):,} participants")
     
-    # Ensure numeric risk scores
     for col in ['risk_lab', 'risk_nonlab', 'age']:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce')
     
-    # Drop rows without both risks or age_band
     required_cols = ['risk_lab', 'risk_nonlab', 'age_band']
     missing_cols = [col for col in required_cols if col not in df.columns]
     if missing_cols:
@@ -52,16 +48,13 @@ def render_rq1(df_paired, datasets=None):
         st.error("No valid data after filtering. Please check your dataset.")
         return
     
-    # Categorize risks into 5-band system
     risk_order = ["<5%", "5% to <10%", "10% to <20%", "20% to <30%", "≥30%"]
     df['risk_lab_cat'] = df['risk_lab'].apply(get_risk_cat).astype(pd.CategoricalDtype(risk_order, ordered=True))
     df['risk_nonlab_cat'] = df['risk_nonlab'].apply(get_risk_cat).astype(pd.CategoricalDtype(risk_order, ordered=True))
     
-    # Create binary high-risk indicators (≥20%)
     df['lab_high_risk'] = (df['risk_lab'] >= 20).astype(int)
     df['nonlab_high_risk'] = (df['risk_nonlab'] >= 20).astype(int)
     
-    # Sort age bands for proper ordering
     age_band_order = ['40-44', '45-49', '50-54', '55-59', '60-64', '65-69', '70-74']
     df['age_band'] = pd.Categorical(df['age_band'], categories=age_band_order, ordered=True)
     df = df.sort_values('age_band')
@@ -69,18 +62,12 @@ def render_rq1(df_paired, datasets=None):
     st.markdown(f"**Total Paired Observations Used:** {len(df):,}")
     st.markdown("---")
     
-    # =========================================================================
-    # CHART 1: GROUPED BAR CHART - RISK DISTRIBUTION BY AGE GROUP
-    # =========================================================================
     st.subheader("📊 Chart 1: Risk Distribution by Age Group (Lab vs Non-Lab)")
     st.caption("Comparison of cardiovascular risk distribution across age groups using laboratory-based and non-laboratory-based methods")
     
-    # Create grouped bar chart using high-risk (≥20%) vs low-risk (<20%)
-    # Aggregate into binary categories for clearer visualization
     df['lab_risk_binary'] = df['risk_lab_cat'].apply(lambda x: '≥20% (High Risk)' if x in ['20% to <30%', '≥30%'] else '<20% (Low Risk)')
     df['nonlab_risk_binary'] = df['risk_nonlab_cat'].apply(lambda x: '≥20% (High Risk)' if x in ['20% to <30%', '≥30%'] else '<20% (Low Risk)')
     
-    # Calculate percentages for binary risk
     lab_binary = df.groupby(['age_band', 'lab_risk_binary'], observed=False).size().reset_index(name='count')
     lab_binary_totals = df.groupby('age_band', observed=False).size().reset_index(name='total')
     lab_binary = lab_binary.merge(lab_binary_totals, on='age_band')
@@ -97,27 +84,21 @@ def render_rq1(df_paired, datasets=None):
     
     combined_binary = pd.concat([lab_binary, nonlab_binary], ignore_index=True)
     
-    # Create the grouped bar chart
     fig_bar = go.Figure()
     
-    # Get unique age bands and methods
     age_bands = sorted(combined_binary['age_band'].unique())
     methods = ['Lab-based', 'Non-Lab-based']
     risk_levels = ['<20% (Low Risk)', '≥20% (High Risk)']
     
-    # Define colors for risk levels
     colors = {'<20% (Low Risk)': '#52b788', '≥20% (High Risk)': '#d62828'}
     
-    # Create bars for each combination
     for risk_level in risk_levels:
         for method in methods:
             data = combined_binary[(combined_binary['risk_level'] == risk_level) & (combined_binary['method'] == method)]
             
-            # Create x-axis positions with offset for grouped bars
             offset = 0.2 if method == 'Lab-based' else -0.2
             x_positions = [f"{age_band}" for age_band in data['age_band']]
             
-            # Determine pattern for non-lab
             pattern_shape = "" if method == 'Lab-based' else "/"
             
             fig_bar.add_trace(go.Bar(
@@ -167,7 +148,6 @@ def render_rq1(df_paired, datasets=None):
     st.plotly_chart(fig_bar, use_container_width=True)
     add_download_button(fig_bar, "risk_distribution_by_age", "plotly")
     
-    # Display summary statistics
     with st.expander("📋 View Detailed Distribution Table"):
         st.markdown("### Lab-based Risk Distribution")
         lab_pivot = lab_binary.pivot(index='age_band', columns='risk_level', values='percentage').fillna(0)
@@ -179,31 +159,23 @@ def render_rq1(df_paired, datasets=None):
     
     st.markdown("---")
     
-    # =========================================================================
-    # CHART 2: MULTI-SERIES LINE CHART - AGE-STRATIFIED RISK ESCALATION
-    # =========================================================================
     st.subheader("📈 Chart 2: Age-Stratified Escalation of Cardiovascular Risk")
     st.caption("Comparative line chart showing mean CVD risk scores across age groups for both assessment methods")
     
-    # Calculate mean risk scores by age group
     age_risk_summary = df.groupby('age_band', observed=True).agg({
         'risk_lab': ['mean', 'std', 'count'],
         'risk_nonlab': ['mean', 'std', 'count']
     }).reset_index()
     
-    # Flatten column names
     age_risk_summary.columns = ['age_band', 'lab_mean', 'lab_std', 'lab_count', 
                                   'nonlab_mean', 'nonlab_std', 'nonlab_count']
     
-    # Calculate 95% confidence intervals
     from scipy import stats as scipy_stats
     age_risk_summary['lab_ci'] = 1.96 * age_risk_summary['lab_std'] / np.sqrt(age_risk_summary['lab_count'])
     age_risk_summary['nonlab_ci'] = 1.96 * age_risk_summary['nonlab_std'] / np.sqrt(age_risk_summary['nonlab_count'])
     
-    # Create the line chart
     fig_line = go.Figure()
     
-    # Lab-based line
     fig_line.add_trace(go.Scatter(
         x=age_risk_summary['age_band'].astype(str),
         y=age_risk_summary['lab_mean'],
@@ -224,7 +196,6 @@ def render_rq1(df_paired, datasets=None):
                      '<extra></extra>'
     ))
     
-    # Non-Lab-based line
     fig_line.add_trace(go.Scatter(
         x=age_risk_summary['age_band'].astype(str),
         y=age_risk_summary['nonlab_mean'],
@@ -245,7 +216,6 @@ def render_rq1(df_paired, datasets=None):
                      '<extra></extra>'
     ))
     
-    # Add reference line at 20% (high-risk threshold)
     fig_line.add_hline(
         y=20,
         line_dash="dot",
@@ -256,7 +226,6 @@ def render_rq1(df_paired, datasets=None):
         annotation_font_color="red"
     )
     
-    # Add reference line at 10% (moderate-risk threshold)
     fig_line.add_hline(
         y=10,
         line_dash="dot",
@@ -292,7 +261,6 @@ def render_rq1(df_paired, datasets=None):
     st.plotly_chart(fig_line, use_container_width=True)
     add_download_button(fig_line, "age_stratified_risk_escalation", "plotly")
     
-    # Display summary statistics
     with st.expander("📋 View Age-Stratified Risk Summary Table"):
         summary_display = age_risk_summary[['age_band', 'lab_mean', 'lab_std', 'lab_count', 
                                              'nonlab_mean', 'nonlab_std', 'nonlab_count']].copy()
@@ -313,9 +281,6 @@ def render_rq1(df_paired, datasets=None):
     
     st.markdown("---")
     
-    # =========================================================================
-    # SUMMARY STATISTICS
-    # =========================================================================
     st.subheader("📊 Summary Statistics")
     
     col1, col2, col3 = st.columns(3)
@@ -345,13 +310,11 @@ def render_rq1(df_paired, datasets=None):
             help="Percentage of participants classified as high-risk by Non-Lab-based method"
         )
     
-    # Risk escalation analysis
     st.markdown("### 📈 Risk Escalation Analysis")
     
     col_a, col_b = st.columns(2)
     
     with col_a:
-        # Lab-based escalation
         first_age_lab_risk = age_risk_summary.iloc[0]['lab_mean']
         last_age_lab_risk = age_risk_summary.iloc[-1]['lab_mean']
         lab_escalation = last_age_lab_risk - first_age_lab_risk
@@ -365,7 +328,6 @@ def render_rq1(df_paired, datasets=None):
         )
     
     with col_b:
-        # Non-Lab-based escalation
         first_age_nonlab_risk = age_risk_summary.iloc[0]['nonlab_mean']
         last_age_nonlab_risk = age_risk_summary.iloc[-1]['nonlab_mean']
         nonlab_escalation = last_age_nonlab_risk - first_age_nonlab_risk
@@ -378,13 +340,10 @@ def render_rq1(df_paired, datasets=None):
             help=f"From {age_risk_summary.iloc[0]['age_band']} to {age_risk_summary.iloc[-1]['age_band']}"
         )
     
-    # Key Findings
     st.markdown("### 🔍 Key Findings")
     
-    # Calculate correlation between age and risk
     from scipy.stats import pearsonr
     
-    # Convert age_band to numeric for correlation (use midpoint of range)
     age_mapping = {'40-44': 42, '45-49': 47, '50-54': 52, '55-59': 57, '60-64': 62, '65-69': 67, '70-74': 72}
     df['age_numeric'] = df['age_band'].map(age_mapping)
     

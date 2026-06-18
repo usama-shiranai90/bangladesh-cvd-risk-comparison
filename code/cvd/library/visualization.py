@@ -14,16 +14,12 @@ import seaborn as sns
 try:
     plt.style.use(['science', 'nature', 'no-latex'])
 except Exception:
-    pass  # Fallback to default style
+    pass
 plt.rcParams.update({'font.family': 'sans-serif', 'font.size': 12})
 
 
-# sns.set_style("whitegrid")
-
-
-# Implementations moved here from data_utils to avoid circular imports
-
 def annotate_bars(ax, total, fmt="{:.1f}%"):
+    """Annotate bars."""
     for p in ax.patches:
         h = p.get_height()
         if not h:
@@ -36,22 +32,18 @@ def annotate_bars(ax, total, fmt="{:.1f}%"):
 
 
 def check_Outliers(dataframe, plt, sns):
-    # 1. Identify Numeric Columns (exclude IDs)
+    """Check Outliers."""
     drop_cols = {"pid", "cid", "patient_id", "checkup_id", "barcode_id"}
 
-    # Select numeric types
     numeric_cols = dataframe.select_dtypes(include=[np.number]).columns.tolist()
-    # Filter out IDs and completely empty columns
     cols_to_check = [c for c in numeric_cols if c not in drop_cols and dataframe[c].notna().any()]
 
     if not cols_to_check:
         print("No suitable numeric columns found for outlier analysis.")
         return
 
-    # Work with a slice for calculation
     numeric_df = dataframe[cols_to_check].copy()
 
-    # 2. Calculate IQR Statistics
     Q1 = numeric_df.quantile(0.25)
     Q3 = numeric_df.quantile(0.75)
     IQR = Q3 - Q1
@@ -59,14 +51,10 @@ def check_Outliers(dataframe, plt, sns):
     lower_bound = Q1 - 1.5 * IQR
     upper_bound = Q3 + 1.5 * IQR
 
-    # 3. Identify Outliers
-    # Returns a boolean DataFrame of the same shape
     outlier_mask = (numeric_df < lower_bound) | (numeric_df > upper_bound)
 
-    # Flag rows in original dataframe (Create 'Outlier' column: True if ANY column has an outlier)
     dataframe["Outlier"] = outlier_mask.any(axis=1)
 
-    # 4. Summary Table
     summary = pd.DataFrame({
         "non_null": numeric_df.count(),
         "outliers": outlier_mask.sum(),
@@ -77,9 +65,7 @@ def check_Outliers(dataframe, plt, sns):
     from IPython.display import display as _display
     _display(summary)
 
-    # 5. Visualization
 
-    # Plot A: Overview Boxplot
     plt.figure(figsize=(12, 6))
     sns.boxplot(data=numeric_df)
     plt.title("Overview: Distribution of Numeric Features")
@@ -87,7 +73,6 @@ def check_Outliers(dataframe, plt, sns):
     plt.tight_layout()
     plt.show()
 
-    # Plot B: Detailed Stripplots (2 columns per row)
     n = len(cols_to_check)
     ncols = 2
     nrows = math.ceil(n / ncols)
@@ -98,17 +83,15 @@ def check_Outliers(dataframe, plt, sns):
     for i, col in enumerate(cols_to_check):
         ax = axes[i]
 
-        # Data for this specific column
         s = numeric_df[col].dropna()
-        m = outlier_mask.loc[s.index, col]  # Mask for valid values only
+        m = outlier_mask.loc[s.index, col]
 
-        # Horizontal Boxplot + Stripplot
         sns.boxplot(x=s.values, orient="h", ax=ax, color="lightgray")
         sns.stripplot(
             x=s.values,
             orient="h",
             hue=m.values,
-            palette={False: "#4c72b0", True: "#c44e52"},  # Blue=Normal, Red=Outlier
+            palette={False: "#4c72b0", True: "#c44e52"},
             alpha=0.6,
             size=3,
             ax=ax,
@@ -120,7 +103,6 @@ def check_Outliers(dataframe, plt, sns):
         total = len(s)
         ax.set_title(f"{col}\n(Outliers: {int(count)} / {total} -> {count / total:.1%})")
 
-    # Turn off unused axes
     for ax in axes[len(cols_to_check):]:
         ax.axis("off")
 
@@ -135,7 +117,6 @@ __all__ = [
     'plot_missingness_by_site',
     'plot_who_bin_occupancy',
     'plot_distributions',
-    # Age impact & trend utilities
     'calculate_age_prevalence',
     'run_trend_tests',
     'plot_age_impact',
@@ -143,9 +124,9 @@ __all__ = [
 
 
 def plot_data_quality_audit(df, filename="Fig_Suppl_Data_Quality_Audit"):
+    """Plot data quality audit."""
     df = df.copy()
 
-    # 1. Define the Flags to Check
     flags = {
         'BMI Calculation Mismatch': 'flag_bmi_discrepancy',
         'WHR Calculation Mismatch': 'flag_whr_discrepancy',
@@ -156,7 +137,6 @@ def plot_data_quality_audit(df, filename="Fig_Suppl_Data_Quality_Audit"):
 
     stats = []
 
-    # 2. Calculate counts and percentages
     total_n = len(df)
 
     for label, col in flags.items():
@@ -179,15 +159,12 @@ def plot_data_quality_audit(df, filename="Fig_Suppl_Data_Quality_Audit"):
 
     stats_df = pd.DataFrame(stats).sort_values('Percent', ascending=True)
 
-    # 3. Plotting with Seaborn
-    sns.set(style="whitegrid")  # optional
+    sns.set(style="whitegrid")
 
     fig, ax = plt.subplots(figsize=(10, 5), dpi=300)
 
-    # Sequential Reds palette, ordered by Percent
-    palette = sns.color_palette("Reds", n_colors=len(stats_df))  # [web:10]
+    palette = sns.color_palette("Reds", n_colors=len(stats_df))
 
-    # Horizontal barplot: x = Percent, y = Issue
     sns.barplot(
         data=stats_df,
         x="Percent",
@@ -196,14 +173,13 @@ def plot_data_quality_audit(df, filename="Fig_Suppl_Data_Quality_Audit"):
         edgecolor="black",
         ax=ax,
         orient="h"
-    )  # [web:3][web:6]
+    )
 
     ax.set_xlabel('Percentage of Records Flagged (%)', fontsize=12, fontweight='bold')
     ax.set_title('Data Quality Audit: Prevalence of Data Irregularities',
                  fontsize=14, fontweight='bold', pad=15)
     ax.set_xlim(0, stats_df['Percent'].max() * 1.2)
 
-    # Add labels to bar ends
     for i, (p, n) in enumerate(zip(ax.patches, stats_df['Count'])):
         width = p.get_width()
         y = p.get_y() + p.get_height() / 2
@@ -214,9 +190,8 @@ def plot_data_quality_audit(df, filename="Fig_Suppl_Data_Quality_Audit"):
             va='center',
             fontsize=10,
             color='#333333'
-        )  # [web:8]
+        )
 
-    # Footnote
     plt.figtext(
         0.5, -0.05,
         f"Total Cohort Size: N={total_n:,}. 'Mismatch' indicates calculated metric differed from raw record.",
@@ -232,7 +207,9 @@ def plot_data_quality_audit(df, filename="Fig_Suppl_Data_Quality_Audit"):
 
 
 def plot_cohort_counts(df: pd.DataFrame):
+    """Plot cohort counts."""
     def _sum(col: str) -> int:
+        """Sum."""
         if col not in df.columns:
             return 0
         s = df[col]
@@ -265,6 +242,7 @@ def plot_missingness_by_site(
         min_records_per_site: int = 30,
         top_n_sites: int = 30,
 ):
+    """Plot missingness by site."""
     if site_col not in df.columns:
         raise KeyError(f"'{site_col}' not found in df columns")
 
@@ -298,6 +276,7 @@ def plot_missingness_by_site(
 
 
 def plot_who_bin_occupancy(df: pd.DataFrame, which: str = "nonlab"):
+    """Plot who bin occupancy."""
     flag = "who_domain_ok_nonlab" if which == "nonlab" else "who_domain_ok_lab"
     d = df[df.get(flag, False)].copy()
     if d.empty:
@@ -320,6 +299,7 @@ def plot_who_bin_occupancy(df: pd.DataFrame, which: str = "nonlab"):
 
 
 def plot_distributions(df: pd.DataFrame, cols=None, bins=40):
+    """Plot distributions."""
     if cols is None:
         cols = ["age", "sbp", "bmi", "cholesterol_mmolL"]
     for col in cols:
@@ -333,17 +313,8 @@ def plot_distributions(df: pd.DataFrame, cols=None, bins=40):
             plt.show()
 
 
-# ==========================================
-# Age impact & trend visualizations (moved from notebooks)
-# ==========================================
-
 def calculate_age_prevalence(df: pd.DataFrame, score_col: str) -> pd.DataFrame:
-    """
-    Calculates percent of high risk (>=10% and >=20%) per age band.
-    Returns a DataFrame with columns: n, n_10, n_20, pct_10, pct_20, se_10, se_20
-    - df: DataFrame containing at least 'age_band' and the given score column.
-    - score_col: Column with WHO/ASCVD risk percentage values.
-    """
+    """Calculates percent of high risk (>=10% and >=20%) per age band."""
     if 'age_band' not in df.columns:
         raise KeyError("'age_band' column is required in df")
     d = df.copy()
@@ -357,11 +328,9 @@ def calculate_age_prevalence(df: pd.DataFrame, score_col: str) -> pd.DataFrame:
         n_20=('high_risk_20', 'sum'),
     )
 
-    # Percentages
     stats_df['pct_10'] = (stats_df['n_10'] / stats_df['n']) * 100
     stats_df['pct_20'] = (stats_df['n_20'] / stats_df['n']) * 100
 
-    # Standard error for binomial proportions (expressed in percentage points)
     stats_df['se_10'] = np.sqrt((stats_df['pct_10'] / 100 * (1 - stats_df['pct_10'] / 100)) / stats_df['n']) * 100
     stats_df['se_20'] = np.sqrt((stats_df['pct_20'] / 100 * (1 - stats_df['pct_20'] / 100)) / stats_df['n']) * 100
 
@@ -369,17 +338,11 @@ def calculate_age_prevalence(df: pd.DataFrame, score_col: str) -> pd.DataFrame:
 
 
 def run_trend_tests(df: pd.DataFrame, score_col: str, cohort_name: str):
-    """
-    Prints simple trend diagnostics for risk vs age.
-    - Linear regression on continuous age vs risk score.
-    - Logistic trend by ordinal age band for >=10% risk.
-    Dependencies (imported lazily): scipy, statsmodels.
-    """
+    """Prints simple trend diagnostics for risk vs age."""
     print(f"\n=== Statistical Trend Tests: {cohort_name} ===")
 
-    # A) Continuous trend (Linear Regression)
     try:
-        from scipy import stats as _scistats  # lazy import
+        from scipy import stats as _scistats
     except Exception:
         _scistats = None
 
@@ -396,25 +359,21 @@ def run_trend_tests(df: pd.DataFrame, score_col: str, cohort_name: str):
     else:
         print("1. Continuous Trend: skipped (missing scipy.stats or required columns)")
 
-    # B) Categorical trend (Logistic Regression)
     try:
-        import statsmodels.api as sm  # lazy import
+        import statsmodels.api as sm
     except Exception:
         sm = None
 
     if sm is not None and 'age_band' in df.columns:
         df_reg = df.copy()
         df_reg['outcome_10'] = (pd.to_numeric(df_reg[score_col], errors='coerce') >= 10).astype('Int64')
-        # Ordinal mapping from categorical order if present
         if hasattr(df_reg['age_band'], 'cat'):
             categories = df_reg['age_band'].cat.categories
             cat_map = {cat: i for i, cat in enumerate(categories)}
             df_reg['age_ordinal'] = df_reg['age_band'].map(cat_map)
         else:
-            # Fallback: sort unique labels naturally
             uniq = pd.unique(df_reg['age_band'].astype(str))
             try:
-                # Try numeric sort if possible
                 uniq_sorted = sorted(uniq, key=lambda x: float(x.split('-')[0]))
             except Exception:
                 uniq_sorted = sorted(uniq)
@@ -445,18 +404,13 @@ def plot_age_impact(
         score_col_valid: str,
         save_path: str | None = "Fig_Age_Impact_Analysis.png",
 ):
-    """
-    Plot prevalence of >=10% and >=20% risk across age bands for the main cohort,
-    with the validation cohort (paired subset) overlaid as markers.
-    Returns (fig, ax, stats_main, stats_valid).
-    """
+    """Plot prevalence of >=10% and >=20% risk across age bands for the main cohort,"""
     stats_main = calculate_age_prevalence(df_main, score_col_main)
     stats_valid = calculate_age_prevalence(df_valid, score_col_valid)
 
     fig, ax = plt.subplots(figsize=(10, 6), dpi=300)
     x = np.arange(len(stats_main.index))
 
-    # Main cohort lines
     ax.plot(x, stats_main['pct_10'], marker='o', color='#d62828', linewidth=2, label='Main (≥10% Risk)')
     ax.fill_between(x,
                     stats_main['pct_10'] - 1.96 * stats_main['se_10'],
@@ -465,11 +419,9 @@ def plot_age_impact(
     ax.plot(x, stats_main['pct_20'], marker='s', color='#f4a261', linewidth=2, linestyle='--',
             label='Main (≥20% Risk)')
 
-    # Validation cohort overlay
     ax.scatter(x, stats_valid['pct_10'], color='#2a9d8f', marker='x', s=80, zorder=5,
                label='Validation (≥10% Risk)')
 
-    # Formatting
     ax.set_xticks(x)
     ax.set_xticklabels(stats_main.index, fontsize=11, fontweight='bold')
     ax.set_xlabel("Age Band (Years)", fontsize=12, fontweight='bold')
@@ -481,7 +433,6 @@ def plot_age_impact(
 
     ax.legend(loc='upper left', frameon=True, fontsize=10)
 
-    # Add N counts
     for i, n in enumerate(stats_main['n']):
         try:
             ax.text(i, 5, f"n={int(n)}", ha='center', fontsize=8, color='gray')

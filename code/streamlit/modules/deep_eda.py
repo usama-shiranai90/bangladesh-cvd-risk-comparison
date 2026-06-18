@@ -26,7 +26,6 @@ try:
 except Exception:
     SCIPLOT = False
 
-# ── colour palette ─────────────────────────────────────────────────────────
 _C = {
     "male":   "#2980b9",
     "female": "#e74c3c",
@@ -49,14 +48,15 @@ RISK_BINS   = [-np.inf, 5, 10, 20, 30, np.inf]
 RISK_LABELS = ["<5%", "5% to <10%", "10% to <20%", "20% to <30%", "≥30%"]
 
 
-# ── helpers ────────────────────────────────────────────────────────────────
 def _fig(w=10, h=5):
+    """Fig."""
     fig, ax = plt.subplots(figsize=(w, h))
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     return fig, ax
 
 def _savefig(fig, key):
+    """Savefig."""
     from utils.export_utils import add_download_button
     st.pyplot(fig)
     try:
@@ -66,6 +66,7 @@ def _savefig(fig, key):
     plt.close(fig)
 
 def _prep(df: pd.DataFrame) -> pd.DataFrame:
+    """Prep."""
     d = df.copy()
     d["risk_nonlab"]  = pd.to_numeric(d.get("risk_nonlab",  pd.Series()), errors="coerce")
     d["bmi"]          = pd.to_numeric(d.get("bmi",          pd.Series()), errors="coerce")
@@ -76,7 +77,6 @@ def _prep(df: pd.DataFrame) -> pd.DataFrame:
     d["age"]          = pd.to_numeric(d.get("age",          pd.Series()), errors="coerce")
     d["pulse"]        = pd.to_numeric(d.get("pulse",        pd.Series()), errors="coerce")
 
-    # gender_key normalised → 'men'/'women'
     if "gender_key" in d.columns:
         sex = d["gender_key"]
     elif "gender" in d.columns:
@@ -85,7 +85,6 @@ def _prep(df: pd.DataFrame) -> pd.DataFrame:
         sex = pd.Series("unknown", index=d.index)
     d["_sex"] = sex
 
-    # binary diabetes
     if "has_diabetes" in d.columns:
         d["_diab"] = d["has_diabetes"].astype(bool)
     elif "diab_group" in d.columns:
@@ -93,7 +92,6 @@ def _prep(df: pd.DataFrame) -> pd.DataFrame:
     else:
         d["_diab"] = False
 
-    # binary smoker
     if "smoker_key" in d.columns:
         d["_smoke"] = d["smoker_key"] == "yes"
     elif "smoker" in d.columns:
@@ -101,31 +99,25 @@ def _prep(df: pd.DataFrame) -> pd.DataFrame:
     else:
         d["_smoke"] = False
 
-    # age_band
     if "age_band" not in d.columns:
         bins   = [40, 45, 50, 55, 60, 65, 70, 75]
         labels = ["40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74"]
         d["age_band"] = pd.cut(d["age"], bins=bins, labels=labels, right=False)
 
-    # risk category
     d["_risk_cat"] = pd.cut(d["risk_nonlab"], bins=RISK_BINS, labels=RISK_LABELS, right=False)
 
-    # hr flags
     d["_hr10"] = (d["risk_nonlab"] >= 10).astype(int)
     d["_hr20"] = (d["risk_nonlab"] >= 20).astype(int)
 
-    # HTN
     if "sbp" in d.columns:
         d["_htn"] = d["sbp"] >= 140
 
-    # abdominal obesity (WHO thresholds for South Asia)
     if "whr" in d.columns:
         d["_abdo_obes"] = np.where(
             d["_sex"] == "men",   d["whr"] >= 0.90,
             np.where(d["_sex"] == "women", d["whr"] >= 0.85, False)
         ).astype(bool)
 
-    # BMI category (Asian thresholds)
     if "bmi" in d.columns:
         d["_bmi_cat"] = pd.cut(
             d["bmi"],
@@ -137,9 +129,8 @@ def _prep(df: pd.DataFrame) -> pd.DataFrame:
     return d
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 def render_deep_eda(df_merged, datasets=None):
-# ══════════════════════════════════════════════════════════════════════════════
+    """Render deep EDA."""
     st.title("🔬 Deep EDA — PHC CVD Cohort")
     st.info(
         "Eight targeted analytical deep-dives revealing clinically actionable patterns "
@@ -150,7 +141,6 @@ def render_deep_eda(df_merged, datasets=None):
         st.error("No data available. Please load a dataset.")
         return
 
-    # use who_nonlab from datasets if available, else fall back
     src = df_merged
     if datasets and "who_nonlab" in datasets and datasets["who_nonlab"] is not None:
         src = datasets["who_nonlab"]
@@ -168,9 +158,6 @@ def render_deep_eda(df_merged, datasets=None):
         "8️⃣ Arrhythmia & Pulse",
     ])
 
-    # ──────────────────────────────────────────────────────────────────────────
-    # TAB 1: Diabetes × CVD Risk Interaction
-    # ──────────────────────────────────────────────────────────────────────────
     with tabs[0]:
         st.subheader("Diabetes × CVD Risk Interaction")
         st.caption(
@@ -181,7 +168,6 @@ def render_deep_eda(df_merged, datasets=None):
 
         d = df.dropna(subset=["risk_nonlab", "_diab", "_sex", "age_band"])
 
-        # ── summary metrics ──
         c1, c2, c3, c4 = st.columns(4)
         for sex, label, col in [("men","Male",c1),("women","Female",c2)]:
             sub = d[d["_sex"] == sex]
@@ -196,7 +182,6 @@ def render_deep_eda(df_merged, datasets=None):
 
         st.markdown("---")
 
-        # ── Mean CVD risk: diabetic vs non-diabetic × age × sex ──
         g = d.groupby(["_sex","age_band","_diab"])["risk_nonlab"].mean().reset_index()
         g.columns = ["sex","age_band","diabetic","mean_risk"]
         g["label"] = g["diabetic"].map({True:"Diabetic", False:"Non-diabetic"})
@@ -216,7 +201,6 @@ def render_deep_eda(df_merged, datasets=None):
             ax.set_xticks(x); ax.set_xticklabels(age_bands, rotation=30, ha="right")
             ax.set_ylabel("Mean 10-year CVD Risk (%)"); ax.legend()
             ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
-            # delta annotation
             for i, (yn, nn) in enumerate(zip(d_yes, d_no)):
                 if yn > 0:
                     ax.annotate(f"+{yn-nn:.1f}",
@@ -227,14 +211,12 @@ def render_deep_eda(df_merged, datasets=None):
         plt.tight_layout()
         _savefig(fig, "deep_diab_cvd")
 
-        # ── high-risk prevalence table ──
         st.markdown("**High-Risk (≥10%) Prevalence by Diabetes Status & Gender**")
         tbl = d.groupby(["_sex","_diab"])[["_hr10","_hr20"]].mean().mul(100).round(1)
         tbl.index = tbl.index.map(lambda x: f"{x[0].capitalize()} – {'Diabetic' if x[1] else 'Non-diabetic'}")
         tbl.columns = ["≥10% HR (%)", "≥20% HR (%)"]
         st.dataframe(tbl, use_container_width=True)
 
-        # ── Mann-Whitney test ──
         st.markdown("**Statistical Test (Mann-Whitney U): Diabetic vs Non-diabetic CVD risk**")
         rows = []
         for sex in ["men","women"]:
@@ -251,9 +233,6 @@ def render_deep_eda(df_merged, datasets=None):
         if rows:
             st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
-    # ──────────────────────────────────────────────────────────────────────────
-    # TAB 2: Hypertension Cascade
-    # ──────────────────────────────────────────────────────────────────────────
     with tabs[1]:
         st.subheader("Hypertension Profile & CVD Risk Cascade")
         st.caption(
@@ -263,12 +242,10 @@ def render_deep_eda(df_merged, datasets=None):
 
         d = df.dropna(subset=["sbp", "risk_nonlab", "_sex"])
 
-        # SBP categories
         sbp_bins   = [0, 120, 130, 140, 160, 300]
         sbp_labels = ["Normal\n(<120)", "Elevated\n(120-129)", "HTN Stage 1\n(130-139)", "HTN Stage 2\n(140-159)", "Severe\n(≥160)"]
         d["_sbp_cat"] = pd.cut(d["sbp"], bins=sbp_bins, labels=sbp_labels, right=False)
 
-        # ── summary metrics ──
         c1, c2, c3, c4 = st.columns(4)
         htn_rate = (d["sbp"] >= 140).mean() * 100
         c1.metric("Hypertension prevalence (≥140)", f"{htn_rate:.1f}%")
@@ -280,7 +257,6 @@ def render_deep_eda(df_merged, datasets=None):
 
         st.markdown("---")
 
-        # ── Bar: Mean CVD risk per SBP category ──
         bp_risk = d.groupby(["_sbp_cat","_sex"])["risk_nonlab"].mean().reset_index()
         bp_risk.columns = ["sbp_cat","sex","mean_risk"]
 
@@ -302,7 +278,6 @@ def render_deep_eda(df_merged, datasets=None):
         plt.tight_layout()
         _savefig(fig, "deep_htn_cvd")
 
-        # ── table ──
         st.markdown("**SBP Category Distribution & High-Risk Prevalence**")
         tbl_bp = d.groupby("_sbp_cat").agg(
             n=("sbp","count"),
@@ -317,7 +292,6 @@ def render_deep_eda(df_merged, datasets=None):
         tbl_bp["≥20% HR"] = tbl_bp["≥20% HR"].mul(100).map("{:.1f}%".format)
         st.dataframe(tbl_bp, use_container_width=True)
 
-        # ── Scatter: SBP vs CVD risk coloured by diabetes ──
         st.markdown("**SBP vs CVD Risk (coloured by diabetes status)**")
         fig2, ax2 = _fig(10, 5)
         for diab, lbl, col in [(True,"Diabetic",_C["diab"]),(False,"Non-diabetic",_C["nodiab"])]:
@@ -329,9 +303,6 @@ def render_deep_eda(df_merged, datasets=None):
         ax2.legend(); plt.tight_layout()
         _savefig(fig2, "deep_sbp_scatter")
 
-    # ──────────────────────────────────────────────────────────────────────────
-    # TAB 3: Abdominal Obesity Paradox
-    # ──────────────────────────────────────────────────────────────────────────
     with tabs[2]:
         st.subheader("Abdominal Obesity Paradox — BMI vs WHR")
         st.caption(
@@ -352,7 +323,6 @@ def render_deep_eda(df_merged, datasets=None):
 
         st.markdown("---")
 
-        # ── BMI cat distribution ──
         st.markdown("**BMI Category Distribution (Asian Thresholds)**")
         bmi_vc = d["_bmi_cat"].value_counts().reindex(
             ["Underweight","Normal","Overweight\n(Asian)","Overweight","Obese"]
@@ -367,7 +337,6 @@ def render_deep_eda(df_merged, datasets=None):
         plt.tight_layout()
         _savefig(fig, "deep_bmi_dist")
 
-        # ── Normal BMI but abdominal obese ──
         if "_abdo_obes" in d.columns and "_bmi_cat" in d.columns:
             paradox = d[d["_bmi_cat"].isin(["Normal","Underweight"]) & d["_abdo_obes"]]
             st.markdown(f"**'Thin-Fat' Paradox: Normal/Underweight BMI + Abdominal Obesity**")
@@ -393,7 +362,6 @@ def render_deep_eda(df_merged, datasets=None):
                 }).round(2)
                 st.dataframe(par_vs_norm, use_container_width=True, hide_index=True)
 
-        # ── WHR vs CVD Risk scatter ──
         st.markdown("**WHR vs CVD Risk (sampled)**")
         fig2, ax2 = _fig(10, 5)
         for sex, col_s in [("men",_C["male"]),("women",_C["female"])]:
@@ -406,7 +374,6 @@ def render_deep_eda(df_merged, datasets=None):
         ax2.legend(); plt.tight_layout()
         _savefig(fig2, "deep_whr_scatter")
 
-        # ── BMI vs WHR risk table ──
         st.markdown("**Mean CVD Risk by BMI × WHR Category**")
         if "_abdo_obes" in d.columns and "_bmi_cat" in d.columns:
             d["_bmi_simple"] = d["_bmi_cat"].astype(str).map({
@@ -418,9 +385,6 @@ def render_deep_eda(df_merged, datasets=None):
             cross.columns = ["Mean CVD Risk", "N"]
             st.dataframe(cross, use_container_width=True)
 
-    # ──────────────────────────────────────────────────────────────────────────
-    # TAB 4: Blood Glucose Burden
-    # ──────────────────────────────────────────────────────────────────────────
     with tabs[3]:
         st.subheader("Blood Glucose Distribution & Pre-diabetes Burden")
         st.caption(
@@ -441,7 +405,6 @@ def render_deep_eda(df_merged, datasets=None):
 
         st.markdown("---")
 
-        # ── BG category distribution ──
         st.markdown("**Blood Glucose Classification (Fasting-equivalent thresholds)**")
         bg_bins   = [0, 100, 126, 200, 9999]
         bg_labels = ["Normoglycaemia\n(<100)", "Pre-diabetes\n(100-125)", "Diabetes\n(126-199)", "Severe hyperglycaemia\n(≥200)"]
@@ -462,14 +425,12 @@ def render_deep_eda(df_merged, datasets=None):
         plt.tight_layout()
         _savefig(fig, "deep_bg_dist")
 
-        # ── Mean CVD risk by BG category ──
         dd = d.dropna(subset=["risk_nonlab"])
         bg_risk = dd.groupby("_bg_cat")["risk_nonlab"].agg(["mean","median","count"]).round(2)
         bg_risk.columns = ["Mean CVD Risk", "Median CVD Risk", "N"]
         st.markdown("**Mean CVD Risk by Blood Glucose Category**")
         st.dataframe(bg_risk, use_container_width=True)
 
-        # ── Hidden hyperglycaemia (glucose ≥126 but no diabetes diagnosis) ──
         if "_diab" in d.columns:
             hidden = d[(d["bg_mgdl"] >= 126) & (d["_diab"]==False)]
             st.markdown(f"**Undiagnosed Hyperglycaemia (BG ≥ 126 but no diabetes diagnosis): {len(hidden):,} "
@@ -485,9 +446,6 @@ def render_deep_eda(df_merged, datasets=None):
                     ]
                 }), use_container_width=True, hide_index=True)
 
-    # ──────────────────────────────────────────────────────────────────────────
-    # TAB 5: Site Heterogeneity Deep-Dive
-    # ──────────────────────────────────────────────────────────────────────────
     with tabs[4]:
         st.subheader("Site-Level CVD Risk Heterogeneity")
         st.caption(
@@ -516,7 +474,6 @@ def render_deep_eda(df_merged, datasets=None):
 
         st.markdown("---")
 
-        # ── Sorted site bar chart ──
         site_sorted = site.sort_values("mean_risk")
         fig, ax = _fig(14, 6)
         colors_s = ["#27ae60" if r < 5 else "#e67e22" if r < 8 else "#c0392b"
@@ -534,7 +491,6 @@ def render_deep_eda(df_merged, datasets=None):
         plt.tight_layout()
         _savefig(fig, "deep_site_ranked")
 
-        # ── Top / bottom sites table ──
         st.markdown("**Top-10 Highest Risk Sites**")
         st.dataframe(
             site.nlargest(10,"mean_risk")[["site_id","n","mean_risk","pct_hr10","pct_hr20"]]
@@ -548,7 +504,6 @@ def render_deep_eda(df_merged, datasets=None):
             .round(1), use_container_width=True, hide_index=True
         )
 
-        # ── Scatter: site size vs mean risk ──
         st.markdown("**Site Size vs Mean Risk (bubble = ≥10% HR rate)**")
         fig2, ax2 = _fig(9, 5)
         sc = ax2.scatter(site["n"], site["mean_risk"],
@@ -561,9 +516,6 @@ def render_deep_eda(df_merged, datasets=None):
         plt.tight_layout()
         _savefig(fig2, "deep_site_scatter")
 
-    # ──────────────────────────────────────────────────────────────────────────
-    # TAB 6: Co-morbidity Clustering
-    # ──────────────────────────────────────────────────────────────────────────
     with tabs[5]:
         st.subheader("Co-morbidity Clustering")
         st.caption(
@@ -577,7 +529,6 @@ def render_deep_eda(df_merged, datasets=None):
         flags = {"Diabetes": "_diab", "HTN": "_htn", "Abdominal Obesity": "_abdo_obes"}
         avail = {k: v for k, v in flags.items() if v in d.columns}
 
-        # ── Single-flag rates ──
         st.markdown("**Single Co-morbidity Prevalence**")
         single_rows = []
         for lbl, col in avail.items():
@@ -592,7 +543,6 @@ def render_deep_eda(df_merged, datasets=None):
             })
         st.dataframe(pd.DataFrame(single_rows), use_container_width=True, hide_index=True)
 
-        # ── 2-way combinations ──
         st.markdown("**Two-way Co-morbidity Combinations**")
         combs2 = []
         keys = list(avail.keys())
@@ -612,7 +562,6 @@ def render_deep_eda(df_merged, datasets=None):
         if combs2:
             st.dataframe(pd.DataFrame(combs2), use_container_width=True, hide_index=True)
 
-        # ── Triple ──
         if len(avail) >= 3:
             st.markdown("**Triple Co-morbidity**")
             cols_v = list(avail.values())
@@ -624,7 +573,6 @@ def render_deep_eda(df_merged, datasets=None):
             if triple.sum() > 0:
                 st.metric("Mean CVD Risk (triple co-morbidity)", f"{d[triple]['risk_nonlab'].mean():.2f}%")
 
-        # ── Heatmap: risk by diabetes × HTN ──
         st.markdown("**Mean CVD Risk Heatmap: Diabetes × HTN**")
         pivot = d.groupby(["_diab","_htn"])["risk_nonlab"].mean().unstack()
         pivot.index = ["No Diabetes","Diabetes"]
@@ -636,9 +584,6 @@ def render_deep_eda(df_merged, datasets=None):
         plt.tight_layout()
         _savefig(fig, "deep_comorbidity_heatmap")
 
-    # ──────────────────────────────────────────────────────────────────────────
-    # TAB 7: Smoking & Gender Gap
-    # ──────────────────────────────────────────────────────────────────────────
     with tabs[6]:
         st.subheader("Smoking Prevalence & Gender Gap")
         st.caption(
@@ -650,7 +595,6 @@ def render_deep_eda(df_merged, datasets=None):
 
         d = df.dropna(subset=["_sex","_smoke"])
 
-        # ── metrics ──
         c1, c2, c3, c4 = st.columns(4)
         m_smoke = d[d["_sex"]=="men"]["_smoke"].mean()*100
         f_smoke = d[d["_sex"]=="women"]["_smoke"].mean()*100
@@ -667,7 +611,6 @@ def render_deep_eda(df_merged, datasets=None):
             "or (3) selection of healthier patients at PHCs."
         )
 
-        # ── smoking × CVD risk ──
         st.markdown("**CVD Risk: Smokers vs Non-Smokers**")
         d_r = d.dropna(subset=["risk_nonlab"])
         smoke_risk = d_r.groupby(["_sex","_smoke"])["risk_nonlab"].agg(["mean","median","count"]).round(2)
@@ -677,12 +620,11 @@ def render_deep_eda(df_merged, datasets=None):
         smoke_risk.columns = ["Mean CVD Risk","Median CVD Risk","N"]
         st.dataframe(smoke_risk, use_container_width=True)
 
-        # ── Age distribution of smokers ──
         smokers = d[(d["_smoke"]==True) & d["age"].notna()]
         if len(smokers) > 5:
             st.markdown("**Age Distribution of Smokers**")
             fig, ax = _fig(8, 4)
-            for sex, col_s in [("men",_C["male"])]:   # women too few
+            for sex, col_s in [("men",_C["male"])]:
                 sub = smokers[smokers["_sex"]==sex]
                 if len(sub) > 2:
                     ax.hist(sub["age"], bins=10, color=col_s, alpha=0.7, label=sex.capitalize(), edgecolor="black")
@@ -691,9 +633,6 @@ def render_deep_eda(df_merged, datasets=None):
             ax.legend(); plt.tight_layout()
             _savefig(fig, "deep_smoker_age")
 
-    # ──────────────────────────────────────────────────────────────────────────
-    # TAB 8: Arrhythmia & Pulse
-    # ──────────────────────────────────────────────────────────────────────────
     with tabs[7]:
         st.subheader("Arrhythmia & Elevated Pulse Analysis")
         st.caption(
@@ -717,7 +656,6 @@ def render_deep_eda(df_merged, datasets=None):
 
         st.markdown("---")
 
-        # ── Arrhythmia × CVD risk ──
         if "arrhythmia" in d.columns:
             d_r = d.dropna(subset=["risk_nonlab","arrhythmia"])
             arrh_risk = d_r.groupby(["_sex","arrhythmia"])["risk_nonlab"].agg(["mean","median","count"]).round(2)
@@ -726,7 +664,6 @@ def render_deep_eda(df_merged, datasets=None):
             st.markdown("**CVD Risk by Arrhythmia Status**")
             st.dataframe(arrh_risk, use_container_width=True)
 
-        # ── Pulse distribution ──
         if "pulse" in d.columns:
             d_p = d.dropna(subset=["pulse"])
             st.markdown("**Resting Pulse Distribution**")
@@ -740,14 +677,12 @@ def render_deep_eda(df_merged, datasets=None):
             ax.legend(); plt.tight_layout()
             _savefig(fig, "deep_pulse_dist")
 
-            # tachycardia
             tachy_m = (d_p[d_p["_sex"]=="men"]["pulse"] > 100).mean()*100
             tachy_f = (d_p[d_p["_sex"]=="women"]["pulse"] > 100).mean()*100
             cc1, cc2 = st.columns(2)
             cc1.metric("Tachycardia (>100 bpm) — Men",   f"{tachy_m:.1f}%")
             cc2.metric("Tachycardia (>100 bpm) — Women", f"{tachy_f:.1f}%")
 
-            # Pulse × CVD risk
             d_pr = d_p.dropna(subset=["risk_nonlab"])
             d_pr["_pulse_cat"] = pd.cut(d_pr["pulse"],
                                         bins=[0,60,80,100,200],
@@ -758,7 +693,6 @@ def render_deep_eda(df_merged, datasets=None):
             st.markdown("**Mean CVD Risk by Pulse Category**")
             st.dataframe(pulse_risk, use_container_width=True)
 
-        # ── Interpretation ──
         st.markdown("---")
         with st.expander("📝 Clinical Interpretation", expanded=False):
             st.markdown("""

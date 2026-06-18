@@ -20,14 +20,12 @@ class UIConfig:
     - Text and messaging
     """
     
-    # ==================== Page Configuration ====================
     
     PAGE_TITLE: str = "Bangladesh CVD Risk Tracker"
     PAGE_ICON: str = "❤️"
     LAYOUT: str = "wide"
     INITIAL_SIDEBAR_STATE: str = "expanded"
     
-    # ==================== Navigation Menu ====================
     
     MAIN_MENU_ITEMS: List[str] = field(default_factory=lambda: [
         "Overview",
@@ -41,7 +39,6 @@ class UIConfig:
         "Data Browser"
     ])
     
-    # Menu icons (optional, for enhanced UI)
     MENU_ICONS: Dict[str, str] = field(default_factory=lambda: {
         "Overview": "📊",
         "RQ0: Baseline Burden": "📋",
@@ -54,7 +51,6 @@ class UIConfig:
         "Data Browser": "🔍"
     })
     
-    # ==================== Custom CSS ====================
     
     CUSTOM_CSS: str = """
     <style>
@@ -125,9 +121,7 @@ class UIConfig:
     </style>
     """
     
-    # ==================== Form Controls ====================
     
-    # Number input defaults
     NUMBER_INPUT_DEFAULTS: Dict[str, Any] = field(default_factory=lambda: {
         'min_site_n': {
             'min_value': 10,
@@ -145,7 +139,6 @@ class UIConfig:
         }
     })
     
-    # Radio button options
     RADIO_OPTIONS: Dict[str, List[str]] = field(default_factory=lambda: {
         'risk_threshold': [
             "High Risk (≥10%)",
@@ -166,9 +159,7 @@ class UIConfig:
         ]
     })
     
-    # ==================== Messages and Labels ====================
     
-    # Error messages
     ERROR_MESSAGES: Dict[str, str] = field(default_factory=lambda: {
         'no_data': "No data loaded. Please select a dataset from the sidebar.",
         'insufficient_data': "Insufficient data for this analysis. Minimum {min_n} records required.",
@@ -177,7 +168,6 @@ class UIConfig:
         'model_failed': "Model fitting failed. Please check data quality and try again."
     })
     
-    # Warning messages
     WARNING_MESSAGES: Dict[str, str] = field(default_factory=lambda: {
         'low_sample': "⚠️ Warning: Sample size is below recommended minimum (n < {min_n}).",
         'high_missing': "⚠️ Warning: High missing data rate ({rate:.1%}) detected.",
@@ -185,14 +175,12 @@ class UIConfig:
         'no_variation': "⚠️ Not enough variation in {variable} for analysis."
     })
     
-    # Info messages
     INFO_MESSAGES: Dict[str, str] = field(default_factory=lambda: {
         'data_loaded': "✅ Successfully loaded {n:,} records.",
         'analysis_complete': "✅ Analysis completed successfully.",
         'filtering_applied': "📊 Filters applied: {description}"
     })
     
-    # ==================== Tab Configurations ====================
     
     RQ0_TABS: List[str] = field(default_factory=lambda: [
         "📋 Baseline Table 1",
@@ -205,26 +193,17 @@ class UIConfig:
         "📊 Paired Data Analysis (Lab vs Non-Lab)"
     ])
     
-    # ==================== Chart Dimensions ====================
     
-    # Default figure sizes
     CHART_HEIGHT_SMALL: int = 400
     CHART_HEIGHT_MEDIUM: int = 600
     CHART_HEIGHT_LARGE: int = 800
     
-    # Dynamic height calculation
     MIN_CHART_HEIGHT: int = 400
-    PIXELS_PER_ROW: int = 25  # For forest plots, site rankings, etc.
+    PIXELS_PER_ROW: int = 25
     
-    # ==================== Helper Methods ====================
     
     def get_page_config(self) -> Dict[str, str]:
-        """
-        Get Streamlit page configuration dictionary.
-        
-        Returns:
-            Dictionary suitable for st.set_page_config()
-        """
+        """Get Streamlit page configuration dictionary."""
         return {
             'page_title': self.PAGE_TITLE,
             'page_icon': self.PAGE_ICON,
@@ -233,16 +212,7 @@ class UIConfig:
         }
     
     def get_error_message(self, key: str, **kwargs) -> str:
-        """
-        Get formatted error message.
-        
-        Args:
-            key: Error message key
-            **kwargs: Format arguments
-            
-        Returns:
-            Formatted error message
-        """
+        """Get formatted error message."""
         msg = self.ERROR_MESSAGES.get(key, "An error occurred.")
         return msg.format(**kwargs) if kwargs else msg
     
@@ -257,32 +227,15 @@ class UIConfig:
         return msg.format(**kwargs) if kwargs else msg
     
     def calculate_dynamic_height(self, num_items: int) -> int:
-        """
-        Calculate dynamic chart height based on number of items.
-        
-        Args:
-            num_items: Number of items to display (e.g., sites in forest plot)
-            
-        Returns:
-            Calculated height in pixels
-        """
+        """Calculate dynamic chart height based on number of items."""
         calculated = self.MIN_CHART_HEIGHT + (num_items * self.PIXELS_PER_ROW)
         return max(self.MIN_CHART_HEIGHT, calculated)
     
     def get_menu_item_with_icon(self, item: str) -> str:
-        """
-        Get menu item with its icon.
-        
-        Args:
-            item: Menu item name
-            
-        Returns:
-            Menu item with icon prefix
-        """
+        """Get menu item with its icon."""
         icon = self.MENU_ICONS.get(item, "")
         return f"{icon} {item}" if icon else item
     
-    # ==================== Formatting Helpers ====================
     
     @staticmethod
     def format_number(value: float, decimals: int = 1) -> str:
@@ -301,7 +254,6 @@ class UIConfig:
         """Format confidence interval."""
         return f"95% CI: [{lower:.{decimals}f}, {upper:.{decimals}f}]"
     
-    # ==================== Session State Keys ====================
     
     SESSION_STATE_KEYS: Dict[str, str] = field(default_factory=lambda: {
         'path_main': 'path_main',
@@ -314,12 +266,7 @@ class UIConfig:
     })
     
     def init_session_state(self, st_session_state) -> None:
-        """
-        Initialize session state with default values.
-        
-        Args:
-            st_session_state: Streamlit session state object
-        """
+        """Initialize session state with default values."""
         for key in self.SESSION_STATE_KEYS.values():
             if key not in st_session_state:
                 st_session_state[key] = None

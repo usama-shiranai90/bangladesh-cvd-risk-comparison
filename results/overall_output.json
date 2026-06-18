@@ -1,0 +1,325 @@
+{
+  "source_dataset": "cvd/resource/analyzed/v2.30",
+  "source_version": "v2.30",
+  "cohorts": {
+    "general_nonlab": 35768,
+    "general_lab": 3241,
+    "paired": 1762,
+    "who_nonlab": 14085,
+    "who_lab": 1762
+  },
+  "rq1": {
+    "who_nonlab_n": 14085,
+    "mean_risk": 6.0798012069577565,
+    "median_risk": 5.0,
+    "risk_distribution": [
+      {
+        "risk_category": "<5%",
+        "n": 6821,
+        "pct": 0.48427405040823573
+      },
+      {
+        "risk_category": "5% to <10%",
+        "n": 4520,
+        "pct": 0.32090876819311326
+      },
+      {
+        "risk_category": "10% to <20%",
+        "n": 2492,
+        "pct": 0.17692580759673412
+      },
+      {
+        "risk_category": "20% to <30%",
+        "n": 237,
+        "pct": 0.016826411075612353
+      },
+      {
+        "risk_category": ">=30%",
+        "n": 15,
+        "pct": 0.0010649627263045794
+      }
+    ],
+    "age_risk": [
+      {
+        "age_band": "40-44",
+        "n": 3453,
+        "risk_ge10_n": 23,
+        "risk_ge10_pct": 0.00666087460179554,
+        "risk_ge20_n": 0,
+        "risk_ge20_pct": 0.0,
+        "M_n": 1712,
+        "M_ge10_pct": 0.012850467289719626,
+        "M_ge20_pct": 0.0,
+        "F_n": 1741,
+        "F_ge10_pct": 0.0005743825387708214,
+        "F_ge20_pct": 0.0
+      },
+      {
+        "age_band": "45-49",
+        "n": 3000,
+        "risk_ge10_n": 49,
+        "risk_ge10_pct": 0.01633333333333333,
+        "risk_ge20_n": 2,
+        "risk_ge20_pct": 0.0006666666666666666,
+        "M_n": 1510,
+        "M_ge10_pct": 0.031788079470198675,
+        "M_ge20_pct": 0.0013245033112582781,
+        "F_n": 1490,
+        "F_ge10_pct": 0.0006711409395973154,
+        "F_ge20_pct": 0.0
+      },
+      {
+        "age_band": "50-54",
+        "n": 2547,
+        "risk_ge10_n": 216,
+        "risk_ge10_pct": 0.08480565371024736,
+        "risk_ge20_n": 6,
+        "risk_ge20_pct": 0.002355712603062426,
+        "M_n": 1466,
+        "M_ge10_pct": 0.14529331514324692,
+        "M_ge20_pct": 0.004092769440654843,
+        "F_n": 1081,
+        "F_ge10_pct": 0.0027752081406105457,
+        "F_ge20_pct": 0.0
+      },
+      {
+        "age_band": "55-59",
+        "n": 1895,
+        "risk_ge10_n": 536,
+        "risk_ge10_pct": 0.2828496042216359,
+        "risk_ge20_n": 20,
+        "risk_ge20_pct": 0.010554089709762533,
+        "M_n": 1204,
+        "M_ge10_pct": 0.4260797342192691,
+        "M_ge20_pct": 0.016611295681063124,
+        "F_n": 691,
+        "F_ge10_pct": 0.03328509406657019,
+        "F_ge20_pct": 0.0
+      },
+      {
+        "age_band": "60-64",
+        "n": 1619,
+        "risk_ge10_n": 647,
+        "risk_ge10_pct": 0.3996294008647313,
+        "risk_ge20_n": 24,
+        "risk_ge20_pct": 0.014823965410747375,
+        "M_n": 855,
+        "M_ge10_pct": 0.6280701754385964,
+        "M_ge20_pct": 0.026900584795321637,
+        "F_n": 764,
+        "F_ge10_pct": 0.14397905759162305,
+        "F_ge20_pct": 0.0013089005235602095
+      },
+      {
+        "age_band": "65-69",
+        "n": 935,
+        "risk_ge10_n": 637,
+        "risk_ge10_pct": 0.681283422459893,
+        "risk_ge20_n": 57,
+        "risk_ge20_pct": 0.06096256684491978,
+        "M_n": 519,
+        "M_ge10_pct": 0.8227360308285164,
+        "M_ge20_pct": 0.10789980732177264,
+        "F_n": 416,
+        "F_ge10_pct": 0.5048076923076923,
+        "F_ge20_pct": 0.002403846153846154
+      },
+      {
+        "age_band": "70-74",
+        "n": 636,
+        "risk_ge10_n": 636,
+        "risk_ge10_pct": 1.0,
+        "risk_ge20_n": 143,
+        "risk_ge20_pct": 0.2248427672955975,
+        "M_n": 314,
+        "M_ge10_pct": 1.0,
+        "M_ge20_pct": 0.39171974522292996,
+        "F_n": 322,
+        "F_ge10_pct": 1.0,
+        "F_ge20_pct": 0.062111801242236024
+      }
+    ],
+    "location_risk": [
+      {
+        "location_type": "Rural",
+        "n": 9285,
+        "mean_risk": 5.956488960689284,
+        "risk_ge10_n": 1724,
+        "risk_ge10_pct": 0.1856758212170167,
+        "risk_ge20_n": 159,
+        "risk_ge20_pct": 0.017124394184168012
+      },
+      {
+        "location_type": "Semi-urban",
+        "n": 806,
+        "mean_risk": 4.991315136476427,
+        "risk_ge10_n": 102,
+        "risk_ge10_pct": 0.12655086848635236,
+        "risk_ge20_n": 17,
+        "risk_ge20_pct": 0.02109181141439206
+      },
+      {
+        "location_type": "Unknown",
+        "n": 326,
+        "mean_risk": 7.380368098159509,
+        "risk_ge10_n": 89,
+        "risk_ge10_pct": 0.27300613496932513,
+        "risk_ge20_n": 15,
+        "risk_ge20_pct": 0.046012269938650305
+      },
+      {
+        "location_type": "Urban",
+        "n": 3668,
+        "mean_risk": 6.5155398037077425,
+        "risk_ge10_n": 829,
+        "risk_ge10_pct": 0.22600872410032716,
+        "risk_ge20_n": 61,
+        "risk_ge20_pct": 0.01663031624863686
+      }
+    ]
+  },
+  "rq2": {
+    "paired_n": 1762,
+    "numeric_metrics": {
+      "paired_n": 1762.0,
+      "mean_nonlab": 7.507377979568672,
+      "mean_lab": 9.696367763904654,
+      "median_nonlab": 7.0,
+      "median_lab": 8.0,
+      "mean_bias_lab_minus_nonlab": 2.188989784335982,
+      "sd_bias": 3.5218202279840223,
+      "median_bias_lab_minus_nonlab": 1.0,
+      "loa_low": -4.713777862512702,
+      "loa_high": 9.091757431184666,
+      "pearson_r": 0.8723389208915512,
+      "pearson_p": 0.0,
+      "spearman_rho": 0.8834723437553577,
+      "spearman_p": 0.0,
+      "wilcoxon_statistic": 97486.5,
+      "wilcoxon_p": 6.76816848061385e-120,
+      "exact_agreement_n": 1111.0,
+      "exact_agreement_pct": 0.6305334846765039,
+      "within_one_category_n": 1740.0,
+      "within_one_category_pct": 0.9875141884222475,
+      "kappa_unweighted": 0.47589211180303015,
+      "kappa_linear": 0.623333019927527,
+      "kappa_quadratic": 0.7668235875185354
+    },
+    "threshold_metrics": [
+      {
+        "threshold": ">=10%",
+        "lab_positive_n": 736,
+        "nonlab_positive_n": 498,
+        "true_positive": 466,
+        "false_negative_missed": 270,
+        "false_positive": 32,
+        "true_negative": 994,
+        "sensitivity": 0.6331521739130435,
+        "specificity": 0.9688109161793372,
+        "ppv": 0.9357429718875502,
+        "npv": 0.7863924050632911,
+        "accuracy": 0.8286038592508513,
+        "missed_lab_positive_pct": 0.36684782608695654
+      },
+      {
+        "threshold": ">=20%",
+        "lab_positive_n": 177,
+        "nonlab_positive_n": 49,
+        "true_positive": 40,
+        "false_negative_missed": 137,
+        "false_positive": 9,
+        "true_negative": 1576,
+        "sensitivity": 0.22598870056497175,
+        "specificity": 0.9943217665615142,
+        "ppv": 0.8163265306122449,
+        "npv": 0.9200233508464681,
+        "accuracy": 0.9171396140749148,
+        "missed_lab_positive_pct": 0.7740112994350282
+      }
+    ],
+    "confusion_5band": [
+      {
+        "risk_nonlab": "<5%",
+        "<5%": 400,
+        "5% to <10%": 151,
+        "10% to <20%": 9,
+        "20% to <30%": 0,
+        ">=30%": 0
+      },
+      {
+        "risk_nonlab": "5% to <10%",
+        "<5%": 44,
+        "5% to <10%": 399,
+        "10% to <20%": 257,
+        "20% to <30%": 4,
+        ">=30%": 0
+      },
+      {
+        "risk_nonlab": "10% to <20%",
+        "<5%": 0,
+        "5% to <10%": 32,
+        "10% to <20%": 284,
+        "20% to <30%": 124,
+        ">=30%": 9
+      },
+      {
+        "risk_nonlab": "20% to <30%",
+        "<5%": 0,
+        "5% to <10%": 0,
+        "10% to <20%": 9,
+        "20% to <30%": 23,
+        ">=30%": 11
+      },
+      {
+        "risk_nonlab": ">=30%",
+        "<5%": 0,
+        "5% to <10%": 0,
+        "10% to <20%": 0,
+        "20% to <30%": 1,
+        ">=30%": 5
+      }
+    ],
+    "underestimation_by_lab_band": [
+      {
+        "lab_risk_band": "<5%",
+        "n": 444,
+        "mean_bias_lab_minus_nonlab": -0.19144144144144143,
+        "median_bias_lab_minus_nonlab": 0.0,
+        "nonlab_underestimated_n": 32,
+        "nonlab_underestimated_pct": 0.07207207207207207
+      },
+      {
+        "lab_risk_band": "5% to <10%",
+        "n": 582,
+        "mean_bias_lab_minus_nonlab": 0.9896907216494846,
+        "median_bias_lab_minus_nonlab": 1.0,
+        "nonlab_underestimated_n": 302,
+        "nonlab_underestimated_pct": 0.5189003436426117
+      },
+      {
+        "lab_risk_band": "10% to <20%",
+        "n": 559,
+        "mean_bias_lab_minus_nonlab": 3.524150268336315,
+        "median_bias_lab_minus_nonlab": 4.0,
+        "nonlab_underestimated_n": 440,
+        "nonlab_underestimated_pct": 0.7871198568872988
+      },
+      {
+        "lab_risk_band": "20% to <30%",
+        "n": 152,
+        "mean_bias_lab_minus_nonlab": 7.309210526315789,
+        "median_bias_lab_minus_nonlab": 8.0,
+        "nonlab_underestimated_n": 139,
+        "nonlab_underestimated_pct": 0.9144736842105263
+      },
+      {
+        "lab_risk_band": ">=30%",
+        "n": 25,
+        "mean_bias_lab_minus_nonlab": 11.4,
+        "median_bias_lab_minus_nonlab": 11.0,
+        "nonlab_underestimated_n": 24,
+        "nonlab_underestimated_pct": 0.96
+      }
+    ]
+  }
+}

@@ -1,0 +1,37 @@
+CARDIOVASCULAR RISK STRATIFICATION ANALYSIS
+WHO 2019 Lab vs Non-Lab Charts in Bangladeshi Primary Care
+Source dataset: cvd/resource/analyzed/v2.30
+
+COHORTS
+General non-lab cohort: 35,768
+General lab cohort: 3,241
+WHO non-lab domain cohort: 14,085
+WHO lab/paired domain cohort: 1,762
+
+RQ1: BASELINE RISK BURDEN
+WHO non-lab mean risk: 6.08% (SD 4.61)
+WHO non-lab median risk: 5.0%
+WHO non-lab >=10% risk: 2,744 (19.5%)
+WHO non-lab >=20% risk: 252 (1.8%)
+
+RQ2: CONCORDANCE AND SYSTEMATIC BIAS
+Paired sample: 1,762
+Mean non-lab risk: 7.51%
+Mean lab risk: 9.70%
+Mean bias (lab - non-lab): 2.19 percentage points
+Median bias (lab - non-lab): 1.0 percentage points
+95% limits of agreement: -4.71 to 9.09 percentage points
+Pearson r: 0.872
+Spearman rho: 0.883
+Exact categorical agreement: 1,111 (63.1%)
+Within-one-category agreement: 1,740 (98.8%)
+Cohen kappa, unweighted: 0.476
+Cohen kappa, linear weighted: 0.623
+Cohen kappa, quadratic weighted: 0.767
+Non-lab lower than lab: 937 (53.2%)
+Equal scores: 503 (28.5%)
+Non-lab higher than lab: 322 (18.3%)
+
+THRESHOLD PERFORMANCE
+>=10% threshold: lab-positive 736, non-lab-positive 498, sensitivity 63.3%, specificity 96.9%, missed 270 (36.7%).
+>=20% threshold: lab-positive 177, non-lab-positive 49, sensitivity 22.6%, specificity 99.4%, missed 137 (77.4%).

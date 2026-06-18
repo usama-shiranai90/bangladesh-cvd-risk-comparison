@@ -3,6 +3,7 @@ import numpy as np
 import streamlit as st
 
 def n_pct(n, total, decimals=1):
+    """N pct."""
     if total == 0:
         return "0 (0.0%)"
     return f"{int(n):,} ({(n / total) * 100:.{decimals}f}%)"
@@ -18,6 +19,7 @@ def summarize_continuous(df, col, decimals=1):
     return f"{v.mean():.{decimals}f} ± {v.std():.{decimals}f}", n
 
 def count_age_bin(df, age_col="age", lo=None, hi=None, lo_inclusive=True, hi_inclusive=True):
+    """Count age bin."""
     if age_col not in df.columns:
         return 0
     a = pd.to_numeric(df[age_col], errors="coerce")
@@ -29,6 +31,7 @@ def count_age_bin(df, age_col="age", lo=None, hi=None, lo_inclusive=True, hi_inc
     return int(m.sum())
 
 def sex_counts(df, col="gender"):
+    """Sex counts."""
     if col not in df.columns:
         return (0, 0, len(df))
     s = df[col].astype("string").str.strip().str.lower()
@@ -38,6 +41,7 @@ def sex_counts(df, col="gender"):
     return men, women, unk
 
 def smoker_count(df, col="smoker"):
+    """Smoker count."""
     if col not in df.columns:
         return 0
     s = df[col]
@@ -63,6 +67,7 @@ def smoker_missing_count(df, col="smoker"):
     return int(df[col].isna().sum())
 
 def diabetes_count(df, col="has_diabetes"):
+    """Diabetes count."""
     if col not in df.columns:
         return 0
     return int(df[col].fillna(False).astype(bool).sum())
@@ -96,7 +101,7 @@ def bmi_band_count(df, band, col="bmi_band"):
     return int((df[col] == band).sum())
 
 def attach_location_type(df, df_sites=None, site_col="site_id", out_col="location_type"):
-    # (Same logic as before, crucial for correct counts)
+    """Attach location type."""
     d = df.copy()
     if out_col in d.columns:
         x = d[out_col].astype("string").str.strip().str.title()
@@ -123,11 +128,13 @@ def attach_location_type(df, df_sites=None, site_col="site_id", out_col="locatio
 
 
 def _clean_site_text(s: pd.Series, unknown="Unknown") -> pd.Series:
+    """Clean site text."""
     x = s.astype("string").str.strip()
     x = x.fillna(unknown).replace({"Nan": unknown, "None": unknown, "": unknown})
     return x
 
 def _clean_location_type(s: pd.Series, unknown="Unknown") -> pd.Series:
+    """Clean location type."""
     x = s.astype("string").str.strip().str.title()
     x = x.replace({"Semi-urban": "Semi-Urban", "Semi Urban": "Semi-Urban"})
     x = x.fillna(unknown).replace({"Nan": unknown, "None": unknown, "": unknown})
@@ -142,17 +149,9 @@ def attach_site_info(
     title_out="site_title",
     name_out="project_title",
 ):
-    """
-    Attach location_type, site_title, site_name to df.
-    Priority:
-      1) If df already has a given output column -> clean it and keep it
-      2) Else if df has a compatible source column (e.g., urban_rural for location) -> derive it
-      3) Else merge from df_sites on site_col (if possible)
-      4) Else set to 'Unknown'
-    """
+    """Attach location_type, site_title, site_name to df."""
     d = df.copy()
 
-    # --- 1) If already present in df, just clean and return later ---
     if location_out in d.columns:
         d[location_out] = _clean_location_type(d[location_out])
     elif "urban_rural" in d.columns:
@@ -163,12 +162,10 @@ def attach_site_info(
     if name_out in d.columns:
         d[name_out] = _clean_site_text(d[name_out])
 
-    # If we already have all three, we can return now
     have_all = all(c in d.columns for c in [location_out, title_out, name_out])
     if have_all:
         return d
 
-    # --- 2) Merge from df_sites if possible (only for missing outputs) ---
     can_merge = (
         df_sites is not None
         and isinstance(df_sites, pd.DataFrame)
@@ -185,26 +182,21 @@ def attach_site_info(
         tmp = df_sites[want_cols].drop_duplicates(site_col)
         out = d.merge(tmp, on=site_col, how="left", suffixes=("", "_site"))
 
-        # Fill location_type if missing
         if location_out not in out.columns:
             out[location_out] = "Unknown"
         else:
-            # if df had it, keep; else clean merged
             out[location_out] = _clean_location_type(out[location_out])
 
-        # Fill site_title
         if title_out not in out.columns:
             out[title_out] = "Unknown"
         else:
             out[title_out] = _clean_site_text(out[title_out])
 
-        # Fill site_name
         if name_out not in out.columns:
             out[name_out] = "Unknown"
         else:
             out[name_out] = _clean_site_text(out[name_out])
 
-        # For any still-missing values, ensure Unknown
         for c in [location_out, title_out, name_out]:
             if c not in out.columns:
                 out[c] = "Unknown"
@@ -213,6 +205,7 @@ def attach_site_info(
         return out
 
 def bmi_category_series(df, col="bmi"):
+    """Bmi category series."""
     if col not in df.columns:
         return pd.Series(["N/A"] * len(df), index=df.index)
     b = pd.to_numeric(df[col], errors="coerce")
@@ -224,7 +217,6 @@ def bmi_category_series(df, col="bmi"):
     )
     return cat.astype("object").fillna("Missing")
 
-# --- HTML CSS Styles ---
 TABLE_CSS = """
 <style>
     table.report-table {
@@ -278,6 +270,7 @@ def generate_html_table1(
     df_sites=None,
     site_col="site_id"
 ):
+    """Generate html table1."""
     cols_keys = ["NL_Gen", "L_Gen", "NL_WHO", "L_WHO"]
     inputs = [df_nonlab, df_lab, df_who_nonlab_domain, df_who_lab_domain]
     dfs = {}
@@ -291,7 +284,6 @@ def generate_html_table1(
     html = [TABLE_CSS]
     html.append('<table class="report-table">')
 
-    # Header
     html.append('<thead>')
     html.append('<tr>')
     html.append('<th rowspan="2" style="text-align:left; border-right:2px solid #ddd;">Variable</th>')
@@ -307,9 +299,11 @@ def generate_html_table1(
     html.append('<tbody>')
 
     def add_section(title):
+        """Add section."""
         html.append(f'<tr class="section-row"><td colspan="5">{title}</td></tr>')
 
     def add_row(label, val_func, is_n_row=False):
+        """Add row."""
         row_html = '<tr class="var-row">'
         style = 'font-style:italic; color:#666;' if is_n_row else ''
         row_html += f'<td style="{style}">{label}</td>'
@@ -319,18 +313,19 @@ def generate_html_table1(
         row_html += '</tr>'
         html.append(row_html)
 
-    # --- Content (unchanged until Top Sites) ---
 
     add_section("Study Sample")
     add_row("Total N", lambda d: f"{len(d):,}")
 
     add_section("Age")
     def agg_age(d):
+        """Agg age."""
         s, n = summarize_continuous(d, "age", 1)
         return s
     add_row("Mean ± SD (years)", agg_age)
 
     def agg_age_n(d):
+        """Agg age n."""
         _, n = summarize_continuous(d, "age", 1)
         return f"(n={n:,})"
     add_row("<i>(n for Mean)</i>", agg_age_n, is_n_row=True)
@@ -369,7 +364,9 @@ def generate_html_table1(
     bp_categories = ["Normal", "Elevated", "HTN Stage 1", "HTN Stage 2", "Hypertensive Crisis"]
     for bp_cat in bp_categories:
         def make_bp_counter(category):
+            """Make bp counter."""
             def counter(d):
+                """Counter."""
                 if "bp_category" not in d.columns:
                     return "N/A"
                 count = int((d["bp_category"] == category).sum())
@@ -378,6 +375,7 @@ def generate_html_table1(
         add_row(bp_cat, make_bp_counter(bp_cat))
 
     def bp_missing(d):
+        """Bp missing."""
         if "bp_category" not in d.columns:
             return "N/A"
         return n_pct(int(d["bp_category"].isna().sum()), len(d))
@@ -388,7 +386,9 @@ def generate_html_table1(
     bmi_labels = ["Underweight (<20)", "Normal (20-24)", "Overweight (25-29)", "Obese I (30-34)", "Obese II/III (≥35)"]
     for band, label in zip(bmi_bands, bmi_labels):
         def make_bmi_counter(bmi_band):
+            """Make bmi counter."""
             def counter(d):
+                """Counter."""
                 if "bmi_band" not in d.columns:
                     return "N/A"
                 count = int((d["bmi_band"] == bmi_band).sum())
@@ -397,6 +397,7 @@ def generate_html_table1(
         add_row(label, make_bmi_counter(band))
 
     def bmi_missing(d):
+        """Bmi missing."""
         if "bmi_band" not in d.columns:
             return "N/A"
         return n_pct(int(d["bmi_band"].isna().sum()), len(d))
@@ -406,7 +407,9 @@ def generate_html_table1(
     location_types = ["Urban", "Rural", "Semi-Urban"]
     for loc_type in location_types:
         def make_loc_counter(location):
+            """Make loc counter."""
             def counter(d):
+                """Counter."""
                 if "location_type" not in d.columns:
                     return "N/A"
                 count = int((d["location_type"] == location).sum())
@@ -414,7 +417,6 @@ def generate_html_table1(
             return counter
         add_row(loc_type, make_loc_counter(loc_type))
 
-    # --- Top Sites (now uses site_title / site_name reliably) ---
     add_section("Top sites, n (%)")
 
     ref_df = dfs["NL_Gen"]
@@ -426,10 +428,7 @@ def generate_html_table1(
         top_sites = ref_df[site_col].value_counts().head(5).index.tolist()
 
     def site_label_for(site_id):
-        """
-        Prefer site_title, then site_name, else fall back to site_id as string.
-        Uses the same ref_df we selected above, which has had attach_site_info applied.
-        """
+        """Prefer site_title, then site_name, else fall back to site_id as string."""
         label = str(site_id)
         if ref_df.empty or site_col not in ref_df.columns:
             return label
@@ -438,7 +437,6 @@ def generate_html_table1(
         if m.empty:
             return label
         
-        # project_title,site_title
         for c in ["project_title", "site_title", "facility_name"]:
             if c in m.columns:
                 v = m.iloc[0][c]
@@ -447,6 +445,7 @@ def generate_html_table1(
         return label
 
     def site_percentage(d, site, site_col):
+        """Site percentage."""
         print("---- Debug site_percentage ----")
         print("Rows:", len(d))
         print("Empty:", d.empty)

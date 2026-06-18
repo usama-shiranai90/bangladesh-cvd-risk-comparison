@@ -40,8 +40,6 @@ from .data_utils import (
     fix_id_dtype,
 )
 
-# Import huge risk tables separately if needed, or rely on passing them in
-# from .risk_data import risk_data  # Uncomment if we want to bind it strictly here
 
 __all__ = [
     'normalize_bg_type',
@@ -81,33 +79,25 @@ __all__ = [
 
 
 def encode_categoricals(df, categorical_columns):
+    """Encode categoricals."""
     df = df.copy()
     encoders = {}
 
-    # --- PRE-PROCESSING FIX ---
-    # Convert "Unknown" text to real NaNs so they don't get encoded
-    cleanup_vals = ["Unknown", "unknown", "UNK", "None"]  # Add your specific label
+    cleanup_vals = ["Unknown", "unknown", "UNK", "None"]
     for col in categorical_columns:
         if col in df.columns:
             df[col] = df[col].replace(cleanup_vals, np.nan)
 
     for col in categorical_columns:
         if col in df.columns:
-            # Only encode non-NaN values to preserve NaNs
             valid_mask = df[col].notna()
             le = LabelEncoder()
-            # Fit only on valid text (Yes/No)
             df.loc[valid_mask, col] = le.fit_transform(df.loc[valid_mask, col].astype(str))
-            # Ensure the column is numeric (object -> float to hold NaNs)
             df[col] = pd.to_numeric(df[col], errors='coerce')
             encoders[col] = le
 
     return df, encoders
 
-
-# ============================================================
-# WHO CVD Risk (Non-lab + Lab) — LOGIC
-# ============================================================
 
 STR = "string"
 
@@ -117,19 +107,17 @@ AGE_LABELS = ["40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74"]
 SBP_BINS = [-np.inf, 120, 140, 160, 180, np.inf]
 SBP_LABELS = ["<120", "120-139", "140-159", "160-179", ">="]
 
-BMI_BINS = [-np.inf, 20, 25, 30, 35, np.inf]  # -> 0..4
+BMI_BINS = [-np.inf, 20, 25, 30, 35, np.inf]
 BMI_LABELS = ["<20", "20-24", "25-29", "30-34", ">=35"]
 
-CHOL_BINS = [-np.inf, 4, 5, 6, 7, np.inf]  # mmol/L -> 0..4
+CHOL_BINS = [-np.inf, 4, 5, 6, 7, np.inf]
 CHOL_LABELS = ["<4", "4-4.9", "5-5.9", "6-6.9", ">=7"]
 
 RISK_LEVELS = ["<5%", "5% to <10%", "10% to <20%", "20% to <30%", "≥30%"]
 
 
-# ----------------------------
-# B) Small utils (DEFINE ONCE)
-# ----------------------------
 def _ensure_cols(df: pd.DataFrame, cols: list[str], fill=np.nan) -> pd.DataFrame:
+    """Ensure cols."""
     df = df.copy()
     missing = [c for c in cols if c not in df.columns]
     if missing:
@@ -140,6 +128,7 @@ def _ensure_cols(df: pd.DataFrame, cols: list[str], fill=np.nan) -> pd.DataFrame
 
 
 def _to_num(s: pd.Series) -> pd.Series:
+    """To num."""
     return pd.to_numeric(s, errors="coerce")
 
 
@@ -180,12 +169,7 @@ def _normalize_yes_no_na(s: pd.Series) -> pd.Series:
 
 
 def normalize_smoker_key(smoker: pd.Series, smoker_who: Optional[pd.Series] = None) -> Tuple[pd.Series, pd.Series]:
-    """
-    Row-wise preference:
-      - use smoker_who if present for that row
-      - else fallback to smoker
-    Returns: (smoker_key, smoker_key_source)
-    """
+    """Row-wise preference:"""
     s1 = _normalize_yes_no_na(smoker) if smoker is not None else pd.Series(pd.NA, dtype=STR)
     if smoker_who is None:
         src = pd.Series(np.where(s1.notna(), "smoker", "missing"), index=s1.index, dtype=STR)
@@ -201,11 +185,7 @@ def normalize_smoker_key(smoker: pd.Series, smoker_who: Optional[pd.Series] = No
 
 
 def infer_cholesterol_mmolL(chol: pd.Series) -> Tuple[pd.Series, pd.Series]:
-    """
-    Heuristic:
-      - if median >= 25 -> assume mg/dL, convert: mmol/L = mg/dL / 38.67
-      - else assume mmol/L
-    """
+    """Heuristic:"""
     x = _to_num(chol)
     med = x.dropna().median()
     unit = pd.Series(pd.NA, index=x.index, dtype=STR)
@@ -223,6 +203,7 @@ def to_index(series: pd.Series, bins: list[float]) -> pd.Series:
 
 
 def risk_bucket(series: pd.Series) -> pd.Series:
+    """Risk bucket."""
     x = _to_num(series)
     return pd.cut(
         x,
@@ -233,9 +214,6 @@ def risk_bucket(series: pd.Series) -> pd.Series:
     ).astype(pd.CategoricalDtype(RISK_LEVELS, ordered=True))
 
 
-# ----------------------------
-# C) WHO risk lookup map builders (DEFINE ONCE)
-# ----------------------------
 def build_nonlab_map(risk_data: dict) -> Dict[tuple, float]:
     """(sex, smoker, age_band, sbp_band, bmi_i) -> risk%"""
     out: Dict[tuple, float] = {}
@@ -261,23 +239,18 @@ def build_lab_map(risk_data: dict) -> Dict[tuple, float]:
     return out
 
 
-# ----------------------------
-# 0) Core standardization (ONE VERSION)
-# ----------------------------
 def standardize_core_fields(df: pd.DataFrame) -> pd.DataFrame:
+    """Standardize core fields."""
     df = df.copy()
     df = _ensure_cols(df, ["gender", "age", "sbp", "dbp", "bmi", "cholesterol", "smoker", "smoker_who", "has_diabetes"])
 
-    # numeric coercions
     for c in ["age", "sbp", "dbp", "bmi", "cholesterol"]:
         df[c] = _to_num(df[c])
 
-    # keys
     df["gender_key"] = normalize_gender_key(df["gender"])
     df["smoker_key"], df["smoker_key_source"] = normalize_smoker_key(df["smoker"], df["smoker_who"])
     df["has_diabetes"] = _to_bool_na(df["has_diabetes"])
 
-    # plausibility flags (no auto-drop)
     df["flag_age_implausible"] = ((df["age"] < 0) | (df["age"] > 120)).fillna(False)
     df["flag_bmi_implausible"] = ((df["bmi"] < 10) | (df["bmi"] > 70)).fillna(False)
     df["flag_sbp_implausible"] = ((df["sbp"] < 70) | (df["sbp"] > 260)).fillna(False)
@@ -286,10 +259,8 @@ def standardize_core_fields(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# ----------------------------
-# 1) Cholesterol canonicalization (ONE VERSION)
-# ----------------------------
 def add_cholesterol_mmolL(df: pd.DataFrame, chol_col: str = "cholesterol") -> pd.DataFrame:
+    """Add cholesterol mmol L."""
     df = df.copy()
     if "cholesterol_mmolL" in df.columns and df["cholesterol_mmolL"].notna().any():
         df["cholesterol_mmolL"] = _to_num(df["cholesterol_mmolL"])
@@ -301,10 +272,8 @@ def add_cholesterol_mmolL(df: pd.DataFrame, chol_col: str = "cholesterol") -> pd
     return df
 
 
-# ----------------------------
-# 2) Eligibility cohorts (ONE VERSION)
-# ----------------------------
 def build_cohorts(df: pd.DataFrame) -> pd.DataFrame:
+    """Build cohorts."""
     df = df.copy()
     df = _ensure_cols(df, ["gender_key", "age", "smoker_key", "sbp", "bmi", "has_diabetes", "cholesterol_mmolL"])
 
@@ -314,24 +283,19 @@ def build_cohorts(df: pd.DataFrame) -> pd.DataFrame:
     df["eligible_nonlab"] = df[nonlab_req].notna().all(axis=1)
     df["eligible_lab"] = df[lab_req].notna().all(axis=1)
     df["eligible_paired"] = df["eligible_nonlab"] & df["eligible_lab"]
-    # df["who_chol_col_used"] = "cholesterol_mmolL"
     return df
 
 
-# ----------------------------
-# 3) WHO domain flags + WHO bins (ONE VERSION)
-# ----------------------------
 def add_who_bins_and_domain_flags(df: pd.DataFrame) -> pd.DataFrame:
+    """Add who bins and domain flags."""
     df = df.copy()
 
-    # WHO domain flags (do not drop)
     df["in_who_age_domain"] = df["age"].between(40, 74, inclusive="both")
     df["in_who_sbp_domain"] = df["sbp"].between(70, 260, inclusive="both")
 
     df["who_domain_ok_nonlab"] = df["eligible_nonlab"] & df["in_who_age_domain"] & df["in_who_sbp_domain"]
     df["who_domain_ok_lab"] = df["eligible_lab"] & df["in_who_age_domain"] & df["in_who_sbp_domain"]
 
-    # bands
     df["age_band"] = pd.cut(df["age"], bins=AGE_BINS, right=False, labels=AGE_LABELS)
     df["sbp_band"] = pd.cut(df["sbp"], bins=SBP_BINS, right=False, labels=SBP_LABELS)
     df["bmi_band"] = pd.cut(df["bmi"], bins=BMI_BINS, right=False, labels=BMI_LABELS)
@@ -341,7 +305,6 @@ def add_who_bins_and_domain_flags(df: pd.DataFrame) -> pd.DataFrame:
     else:
         df["chol_band"] = pd.NA
 
-    # ordered categoricals (stable plots / crosstabs)
     df["age_band"] = df["age_band"].astype(pd.CategoricalDtype(AGE_LABELS, ordered=True))
     df["sbp_band"] = df["sbp_band"].astype(pd.CategoricalDtype(SBP_LABELS, ordered=True))
     df["bmi_band"] = df["bmi_band"].astype(pd.CategoricalDtype(BMI_LABELS, ordered=True))
@@ -349,25 +312,20 @@ def add_who_bins_and_domain_flags(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# ----------------------------
-# 4) WHO risk computation (ONE VERSION)
-# ----------------------------
 def add_who_risks(df: pd.DataFrame, risk_data: dict) -> pd.DataFrame:
+    """Add who risks."""
     df = df.copy()
 
-    # build lookup maps (OK to do here; for speed you can prebuild once and reuse)
     print("processing........")
     nonlab_map = build_nonlab_map(risk_data)
     print("nonlab_map", nonlab_map)
     lab_map = build_lab_map(risk_data)
 
-    # indices required by WHO tables
     df["bmi_i"] = to_index(df["bmi"], BMI_BINS)
     df["chol_i"] = to_index(df["cholesterol_mmolL"], CHOL_BINS)
 
     df["diab_group"] = df["has_diabetes"].map({True: "with_diabetes", False: "no_diabetes"}).astype(STR)
 
-    # --- non-lab lookup ---
     nonlab_keys = list(zip(
         df["gender_key"],
         df["smoker_key"],
@@ -377,7 +335,6 @@ def add_who_risks(df: pd.DataFrame, risk_data: dict) -> pd.DataFrame:
     ))
     df["risk_nonlab"] = pd.Series(nonlab_keys, index=df.index).map(nonlab_map)
 
-    # --- lab lookup ---
     lab_keys = list(zip(
         df["diab_group"],
         df["gender_key"],
@@ -388,7 +345,6 @@ def add_who_risks(df: pd.DataFrame, risk_data: dict) -> pd.DataFrame:
     ))
     df["risk_lab"] = pd.Series(lab_keys, index=df.index).map(lab_map)
 
-    # --- comparisons (safe) ---
     df["risk_diff_nonlab_minus_lab"] = df["risk_nonlab"] - df["risk_lab"]
     df["underestimates"] = df["eligible_paired"] & (df["risk_nonlab"] < df["risk_lab"])
 
@@ -396,17 +352,14 @@ def add_who_risks(df: pd.DataFrame, risk_data: dict) -> pd.DataFrame:
     df["highrisk_nonlab_20"] = df["risk_nonlab"].ge(20) & df["risk_nonlab"].notna()
     df["missed_highrisk_20"] = df["highrisk_lab_20"] & (~df["highrisk_nonlab_20"])
 
-    # buckets (optional but useful)
     df["risk_nonlab_cat"] = risk_bucket(df["risk_nonlab"])
     df["risk_lab_cat"] = risk_bucket(df["risk_lab"])
 
     return df
 
 
-# ----------------------------
-# 5) One-call prep (YOUR df2 step)
-# ----------------------------
 def prepare_who_analysis_df(df_who: pd.DataFrame) -> pd.DataFrame:
+    """Prepare who analysis df."""
     df = standardize_core_fields(df_who)
     df = add_cholesterol_mmolL(df, chol_col="cholesterol")
     df = build_cohorts(df)

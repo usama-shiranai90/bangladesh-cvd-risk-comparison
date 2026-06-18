@@ -6,21 +6,12 @@ of concerns while preserving backward compatibility.
 """
 import pandas as pd
 
-# Implementations moved here to avoid circular imports and keep a clear split.
 import numpy as np
 from IPython.display import display
 
 
 def quick_analysis(df, name="DataFrame", show_examples=False, top_n=5):
-    """
-    Print a quick summary of the given DataFrame.
-
-    Args:
-        df: pandas DataFrame
-        name: Name to display in header
-        show_examples: Include up to `top_n` sample unique values
-        top_n: Number of example values to display per column
-    """
+    """Print a quick summary of the given DataFrame."""
     if df is None or df.empty:
         print(f"\n📊 Quick Analysis — {name}")
         print("⚠️ DataFrame is empty or None.\n")
@@ -58,23 +49,7 @@ def quick_analysis(df, name="DataFrame", show_examples=False, top_n=5):
 
 
 def deep_analysis(df: pd.DataFrame, name: str = "DataFrame", show_examples: bool = True, top_n: int = 5):
-    """
-    Perform an in-depth quick analysis of a pandas DataFrame.
-
-    Includes:
-        - dtype, nulls, null %, unique counts
-        - top example values
-        - numeric summary stats (min, max, mean, std)
-        - duplicated row count
-        - memory usage
-        - missing-value overview
-
-    Args:
-        df (pd.DataFrame): The DataFrame to analyze.
-        name (str): Label for the DataFrame (for display headers).
-        show_examples (bool): If True, shows top_n unique examples for each column.
-        top_n (int): Number of sample unique values to display per column.
-    """
+    """Perform an in-depth quick analysis of a pandas DataFrame."""
 
     if df is None or df.empty:
         print(f"\n📊 Deep Analysis — {name}")
@@ -85,7 +60,6 @@ def deep_analysis(df: pd.DataFrame, name: str = "DataFrame", show_examples: bool
     print("=" * (22 + len(name)))
     print(f"Shape: {df.shape[0]} rows × {df.shape[1]} columns\n")
 
-    # ---- Basic column summary
     summary = pd.DataFrame({
         "dtype": df.dtypes.astype(str),
         "non_null": df.notna().sum(),
@@ -94,7 +68,6 @@ def deep_analysis(df: pd.DataFrame, name: str = "DataFrame", show_examples: bool
         "unique": df.nunique(dropna=True),
     })
 
-    # ---- Add examples of values
     if show_examples:
         summary["examples"] = [
             ", ".join(map(str, df[col].dropna().unique()[:top_n]))
@@ -102,32 +75,27 @@ def deep_analysis(df: pd.DataFrame, name: str = "DataFrame", show_examples: bool
             for col in df.columns
         ]
 
-    # ---- Numeric summary statistics
     num_summary = df.describe(include=[np.number]).T
     num_summary = num_summary[["mean", "std", "min", "max"]].round(2)
     summary = summary.join(num_summary, how="left")
 
-    # ---- Display nicely
     try:
         from IPython.display import display as _display
         _display(summary.sort_index())
     except ImportError:
         print(summary.sort_index())
 
-    # ---- General info
     mem_mb = df.memory_usage(deep=True).sum() / 1e6
     print("\n🧾 Memory usage: {:.2f} MB".format(mem_mb))
     print("🔁 Duplicated rows:", df.duplicated().sum())
     print("🧩 Columns with missing values:", int(df.isnull().any().sum()))
 
-    # ---- Null distribution overview
     print("\n🔸 Top columns by missing percentage:")
     print(summary["null_%"].sort_values(ascending=False).head(10))
 
-    # ---- Optional: Top value counts for categorical columns
     print("\n🔹 Example value distributions (categorical cols):")
     cat_cols = df.select_dtypes(include=["object", "category"]).columns
-    for col in cat_cols[:5]:  # limit display for brevity
+    for col in cat_cols[:5]:
         print(f"\n▶ {col}:")
         print(df[col].value_counts(dropna=False).head(top_n))
 
@@ -154,13 +122,13 @@ def missing_value_report(
         threshold: float = 0.0,
         verbose: bool = True
 ) -> pd.DataFrame:
+    """Missing value report."""
     missing_stats = pd.DataFrame({
         "missing_count": df.isnull().sum(),
         "total_count": len(df),
         "missing_pct": (df.isnull().sum() / len(df) * 100).round(2)
     })
 
-    # Filter by threshold
     missing_stats = missing_stats[missing_stats["missing_pct"] > threshold]
     missing_stats = missing_stats.sort_values("missing_pct", ascending=False)
 
@@ -187,6 +155,7 @@ def missing_value_report(
 
 
 def completeness_matrix(df: pd.DataFrame) -> pd.DataFrame:
+    """Completeness matrix."""
     return df.notna().astype(int)
 
 
@@ -194,18 +163,17 @@ def numeric_summary(
         df: pd.DataFrame,
         percentiles: Optional[list] = None
 ) -> pd.DataFrame:
+    """Numeric summary."""
     if percentiles is None:
         percentiles = [.25, .5, .75]
 
     summary = df.describe(percentiles=percentiles, include=[np.number]).T
 
-    # Add additional statistics
     summary["missing"] = df.isnull().sum()
     summary["missing_pct"] = (df.isnull().sum() / len(df) * 100).round(2)
     summary["zeros"] = (df == 0).sum()
     summary["negative"] = (df < 0).sum()
 
-    # Reorder columns
     col_order = ["count", "missing", "missing_pct", "mean", "std", "min"] + \
                 [f"{int(p * 100)}%" for p in percentiles] + \
                 ["max", "zeros", "negative"]
@@ -219,6 +187,7 @@ def categorical_summary(
         df: pd.DataFrame,
         top_n: int = 10
 ) -> dict:
+    """Categorical summary."""
     cat_cols = df.select_dtypes(include=["object", "category"]).columns
 
     summaries = {}
@@ -235,13 +204,13 @@ def categorical_summary(
 
 
 def data_quality_score(df: pd.DataFrame) -> dict:
+    """Data quality score."""
     total_cells = df.size
     non_null_cells = df.notna().sum().sum()
 
     completeness = (non_null_cells / total_cells * 100) if total_cells > 0 else 0
     uniqueness = (len(df.drop_duplicates()) / len(df) * 100) if len(df) > 0 else 0
 
-    # Type consistency (columns with expected types)
     numeric_cols = df.select_dtypes(include=[np.number]).columns
     type_consistency = len(numeric_cols) / len(df.columns) * 100 if len(df.columns) > 0 else 0
 
@@ -257,6 +226,7 @@ def data_quality_score(df: pd.DataFrame) -> dict:
 
 
 def print_quality_report(df: pd.DataFrame, name: str = "DataFrame"):
+    """Print quality report."""
     print(f"\n📋 Data Quality Report — {name}")
     print("=" * (25 + len(name)))
 
@@ -270,7 +240,6 @@ def print_quality_report(df: pd.DataFrame, name: str = "DataFrame"):
     print(f"  Missing values: {metrics['missing_values']:,}")
     print(f"  Duplicate rows: {metrics['duplicate_rows']:,}")
 
-    # Column-level issues
     print(f"\n🔍 Column-Level Issues:")
 
     high_missing = df.columns[df.isnull().sum() / len(df) > 0.5]
@@ -291,6 +260,7 @@ def correlation_summary(
         threshold: float = 0.7,
         verbose: bool = True
 ) -> pd.DataFrame:
+    """Correlation summary."""
     numeric_df = df.select_dtypes(include=[np.number])
 
     if numeric_df.empty or len(numeric_df.columns) < 2:
@@ -300,7 +270,6 @@ def correlation_summary(
 
     corr_matrix = numeric_df.corr(method=method)
 
-    # Find high correlations
     high_corr = []
 
     for i in range(len(corr_matrix.columns)):
@@ -349,14 +318,12 @@ LAB_FEATURES = ["age", "gender", "smoker", "sbp", "cholesterol_mmolL", "has_diab
 NON_LAB_FEATURES = ["age", "gender", "smoker", "sbp", "bmi"]
 DIABETES_FEATURES = ["has_diabetes", "bs", "bsType", "bg_mgdl", "bg_pbs_equiv_mgdl"]
 
-# Descriptive Statistics (Univariate Analysis)
 UNIVARIATE_METRICS = [
     "count", "mean", "median", "mode", "std", "var",
     "min", "max", "range", "q1", "q3", "iqr",
     "skewness", "kurtosis"
 ]
 
-# Multivariate & Correlation Analysis
 MULTIVARIATE_METRICS = [
     "pearson", "spearman", "kendall",
     "partial_correlation", "autocorrelation", "cross_correlation",
@@ -365,6 +332,7 @@ MULTIVARIATE_METRICS = [
 
 
 def cohort_summary(df: pd.DataFrame, name: str) -> dict:
+    """Cohort summary."""
     out = {"name": name, "n": int(len(df))}
     print(f"\n✅ {name}")
     print(f"   Records: {out['n']:,}")

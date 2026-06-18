@@ -30,6 +30,7 @@ UPAZILA_COL_CSV = "upazila_name"
 
 
 def clean_coordinates(df, lat_col=LAT_COL, lon_col=LON_COL):
+    """Clean coordinates."""
     df = df.copy()
     df[lat_col] = pd.to_numeric(df[lat_col], errors="coerce")
     df[lon_col] = pd.to_numeric(df[lon_col], errors="coerce")
@@ -37,6 +38,7 @@ def clean_coordinates(df, lat_col=LAT_COL, lon_col=LON_COL):
 
 
 def aggregate_sites(df):
+    """Aggregate sites."""
     return (
         df.groupby([SITE_NAME_COL, LAT_COL, LON_COL])[PATIENT_ID_COL]
         .nunique()
@@ -45,13 +47,13 @@ def aggregate_sites(df):
 
 
 def build_sites_geodataframe(df_sites_agg):
+    """Build sites geodataframe."""
     gdf = gpd.GeoDataFrame(
         df_sites_agg,
         geometry=gpd.points_from_xy(df_sites_agg[LON_COL], df_sites_agg[LAT_COL]),
         crs="EPSG:4326"
     )
 
-    # Volume categories
     if gdf["patient_count"].nunique() >= 3:
         gdf["volume_cat"] = pd.qcut(
             gdf["patient_count"], q=3, labels=["Low", "Medium", "High"]
@@ -68,6 +70,7 @@ def plot_admin_level_spatial(
         gdf_sites,
         base_map_dir
 ):
+    """Plot admin level spatial."""
     print(f"Generating map for {level_name}...")
 
     shp_path = base_map_dir + cfg["shp_file"]
@@ -75,7 +78,6 @@ def plot_admin_level_spatial(
 
     boundaries = gpd.read_file(shp_path).to_crs("EPSG:4326")
 
-    # Spatial join
     sites_with_region = gpd.sjoin(
         gdf_sites,
         boundaries[[name_col, "geometry"]],
@@ -97,7 +99,6 @@ def plot_admin_level_spatial(
 
     fig, ax = plt.subplots(figsize=(16, 16))
 
-    # Choropleth
     level_map.plot(
         column="total_patients",
         cmap="Blues",
@@ -113,11 +114,9 @@ def plot_admin_level_spatial(
         }
     )
 
-    # Boundaries
     level_map[level_map["has_patients"]].boundary.plot(ax=ax, edgecolor="black", linewidth=1)
     level_map[~level_map["has_patients"]].boundary.plot(ax=ax, edgecolor="#ccc", linewidth=0.5)
 
-    # Labels
     label_limit = 50 if level_name == "Upazila" else 30
     labels = (
         level_map[level_map["has_patients"]]
@@ -136,7 +135,6 @@ def plot_admin_level_spatial(
             bbox=dict(boxstyle="round", fc="white", alpha=0.6)
         )
 
-    # Site markers
     styles = {
         "Low": ("v", "#4CAF50"),
         "Medium": ("s", "#FFC107"),
@@ -156,7 +154,6 @@ def plot_admin_level_spatial(
             label=f"{cat} Volume"
         )
 
-    # Top sites
     for _, row in gdf_sites.sort_values("patient_count", ascending=False).head(5).iterrows():
         ax.annotate(
             f"{row[SITE_NAME_COL]} ({int(row['patient_count'])})",
@@ -175,6 +172,7 @@ def plot_admin_level_spatial(
 
 
 def generate_text_site_report(df):
+    """Generate text site report."""
     if UPAZILA_COL_CSV not in df.columns:
         print("Upazila column not found.")
         return
@@ -191,6 +189,7 @@ def generate_text_site_report(df):
 
 
 def run_spatial_analysis(df_final, base_map_dir):
+    """Run spatial analysis."""
     df_clean = clean_coordinates(df_final)
     df_sites_agg = aggregate_sites(df_clean)
     gdf_sites = build_sites_geodataframe(df_sites_agg)
@@ -202,4 +201,3 @@ def run_spatial_analysis(df_final, base_map_dir):
             print(f"❌ Failed for {level}: {e}")
 
     generate_text_site_report(df_final)
-

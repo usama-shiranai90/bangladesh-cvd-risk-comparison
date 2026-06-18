@@ -18,12 +18,10 @@ import pandas as pd
 from IPython.display import display
 
 from .constants import BD_DISTRICT_CANON, ALIAS
-# Re-export selected functions from split modules to make data_utils a facade
 from .eda import quick_analysis, deep_analysis
 from .visualization import annotate_bars, check_Outliers
 
 
-# Blood glucose
 def normalize_bg_type(x):
     """Fallback normalizer. If you already have normalize_bg_type imported, remove this."""
     if pd.isna(x):
@@ -53,6 +51,7 @@ def normalize_bg_type(x):
 
 
 def classify_pbs_mgdl(x):
+    """Classify pbs mgdl."""
     if pd.isna(x): return np.nan
     x = float(x)
     if x < 54:  return "Lower Warning (<54)"
@@ -62,11 +61,6 @@ def classify_pbs_mgdl(x):
     if x < 540: return "Severe High (300–539)"
     return "Critical High (>=540)"
 
-
-
-# ---------------------------------------------------------------------
-# 🧹 Data Cleaning Utilities
-# ---------------------------------------------------------------------
 
 def normcols(df: pd.DataFrame) -> pd.DataFrame:
     """Normalize column names (lowercase, snake_case, alphanumeric only)."""
@@ -103,16 +97,14 @@ def first_existing(df: pd.DataFrame, aliases: Tuple[str, ...]) -> Optional[str]:
 
 
 def to_numeric_safe(s: pd.Series) -> pd.Series:
+    """To numeric safe."""
     if s.dtype.kind in "biufc": return s
     cleaned = s.astype(str).str.replace(r"[^0-9\.\-]+", "", regex=True)
     return pd.to_numeric(cleaned, errors="coerce")
 
 
-# ---------------------------------------------------------------------
-# 🔤 Standardization Functions
-# ---------------------------------------------------------------------
-
 def gender_std(x):
+    """Gender std."""
     if pd.isna(x):
         return np.nan
     s = str(x).strip().lower()
@@ -176,20 +168,21 @@ def district_from_address(addr: str) -> Any:
     if pd.isna(addr):
         return np.nan
     s = re.sub(r'[^A-Za-z ]+', ' ', str(addr)).strip().title()
-    for k, v in ALIAS.items():  # apply aliases first
+    for k, v in ALIAS.items():
         if k in s:
             s = s.replace(k, v)
     tokens = set(s.split())
-    for d in BD_DISTRICT_CANON:  # exact token match
+    for d in BD_DISTRICT_CANON:
         if set(d.split()).issubset(tokens):
             return d
-    for d in BD_DISTRICT_CANON:  # substring fallback
+    for d in BD_DISTRICT_CANON:
         if d in s:
             return d
     return np.nan
 
 
 def yn(x):
+    """Yn."""
     if pd.isna(x): return np.nan
     s = str(x).strip().lower()
     if s in {"yes", "y", "1", "true"}:  return "Yes"
@@ -198,6 +191,7 @@ def yn(x):
 
 
 def gtype(x):
+    """Gtype."""
     if pd.isna(x): return np.nan
     s = str(x).strip().lower()
     if s in {"fbs", "fb", "fasting"}: return "FBS"
@@ -207,6 +201,7 @@ def gtype(x):
 
 
 def bp_category(sys, dia):
+    """Bp category."""
     if pd.isna(sys) or pd.isna(dia): return np.nan
     if sys < 120 and dia < 80: return "Normal"
     if 120 <= sys <= 129 and dia < 80: return "Elevated"
@@ -216,11 +211,8 @@ def bp_category(sys, dia):
     return "Other"
 
 
-# ---------------------------------------------------------------------
-# 🌡️ UNIT DETECTORS & LABELING HELPERS
-# ---------------------------------------------------------------------
-
 def detect_temp_unit(s):
+    """Detect temp unit."""
     x = pd.to_numeric(s, errors="coerce").dropna()
     if x.empty: return "unknown"
     m = x.median()
@@ -228,6 +220,7 @@ def detect_temp_unit(s):
 
 
 def detect_glu_unit(s):
+    """Detect glu unit."""
     x = pd.to_numeric(s, errors="coerce").dropna()
     if x.empty: return "unknown"
     m = x.median()
@@ -235,12 +228,14 @@ def detect_glu_unit(s):
 
 
 def _bands(lo, hi):
+    """Bands."""
     lo = float(lo) if lo is not None else -np.inf
     hi = float(hi) if hi is not None else np.inf
     return lo, hi
 
 
 def label_by_ranges(x: pd.Series, bands: list[tuple[str, float, float]]) -> pd.Series:
+    """Label by ranges."""
     out = pd.Series(np.nan, index=x.index, dtype="object")
     x = pd.to_numeric(x, errors="coerce")
     for color, lo, hi in bands:
@@ -249,6 +244,7 @@ def label_by_ranges(x: pd.Series, bands: list[tuple[str, float, float]]) -> pd.S
 
 
 def label_discrete(x: pd.Series, mapping: dict[str, list[str]]) -> pd.Series:
+    """Label discrete."""
     out = pd.Series(np.nan, index=x.index, dtype="object")
     xc = x.astype(str).str.strip().str.lower()
     for color, values in mapping.items():
@@ -260,6 +256,7 @@ def label_discrete(x: pd.Series, mapping: dict[str, list[str]]) -> pd.Series:
 
 
 def label_sex_split(df: pd.DataFrame, value_col: str, sex_col: str, male_bands, female_bands) -> pd.Series:
+    """Label sex split."""
     res = pd.Series(np.nan, index=df.index, dtype="object")
     if sex_col not in df.columns or value_col not in df.columns:
         return res
@@ -274,6 +271,7 @@ def label_sex_split(df: pd.DataFrame, value_col: str, sex_col: str, male_bands, 
 
 
 def build_bands_from_tv(TV, prefix):
+    """Build bands from tv."""
     colors = ["GREEN", "YELLOW", "ORANGE", "RED"]
     out = []
     for color in colors:
@@ -284,6 +282,7 @@ def build_bands_from_tv(TV, prefix):
 
 
 def apply_vectorized_triage(df: pd.DataFrame, TV: dict, sex_col: str = "gender") -> pd.DataFrame:
+    """Apply vectorized triage."""
     d = df.copy()
 
     rename_for_triage = {
@@ -304,19 +303,16 @@ def apply_vectorized_triage(df: pd.DataFrame, TV: dict, sex_col: str = "gender")
         if src in d.columns and dst not in d.columns:
             d[dst] = d[src]
 
-    # Temperature °F → °C
     if "temperature" in d.columns:
         f_mask = pd.to_numeric(d["temperature"], errors="coerce") > 45
         d.loc[f_mask, "temperature"] = (pd.to_numeric(d.loc[f_mask, "temperature"], errors="coerce") - 32) * (5 / 9)
 
-    # Glucose mg/dL → mmol/L heuristic
     if "blood_sugar" in d.columns:
         bs = pd.to_numeric(d["blood_sugar"], errors="coerce")
         mgdl_like = bs.between(30, 800)
         d["blood_sugar_mmol"] = np.where(mgdl_like, bs / 18.0, bs)
         d["blood_sugar_for_rules"] = d["blood_sugar_mmol"]
 
-    # Bands and labeling
     if "bmi" in d.columns:
         bands_bmi = build_bands_from_tv(TV, "BMI")
         if bands_bmi: d["BMI_COLOR".lower()] = label_by_ranges(d["bmi"], bands_bmi)
@@ -382,7 +378,6 @@ def apply_vectorized_triage(df: pd.DataFrame, TV: dict, sex_col: str = "gender")
                                                          [("GREEN", 3.5, 7.0), ("ORANGE", 7.1, 7.9),
                                                           ("RED", 8.0, 12.0)])
 
-    # Discrete urine
     if "u_sugar" in d.columns:
         us_map = {"GREEN": ["-"], "YELLOW": ["+-", "±"], "ORANGE": ["+", "++", "+++", "++++", "others"], "RED": []}
         d["URINARY_SUGAR_COLOR"] = label_discrete(d["u_sugar"], us_map)
@@ -394,11 +389,11 @@ def apply_vectorized_triage(df: pd.DataFrame, TV: dict, sex_col: str = "gender")
                   "RED": []}
         d["UROBILINOGEN_COLOR"] = label_discrete(d["u_urobilinogen"], uu_map)
 
-    # Overall health status by max severity
     COLOR_RANK = {"RED": 3, "ORANGE": 2, "YELLOW": 1, "GREEN": 0}
     color_cols = [c for c in d.columns if c.endswith("_COLOR")]
     if color_cols:
         def max_color(row):
+            """Max color."""
             best = None
             best_rank = -1
             for c in color_cols:
@@ -416,10 +411,6 @@ def apply_vectorized_triage(df: pd.DataFrame, TV: dict, sex_col: str = "gender")
     return d
 
 
-# ---------------------------------------------------------------------
-# 🧾 Utility Functions
-# ---------------------------------------------------------------------
-
 def fix_id_dtype(df, key, is_index=False):
     """Convert ID column or index to pandas nullable integer (Int64)."""
     if is_index:
@@ -431,10 +422,8 @@ def fix_id_dtype(df, key, is_index=False):
     return df
 
 
-# -------------------------
-# Helpers: WHO normalization + binning
-# -------------------------
 def norm_sex(x):
+    """Norm sex."""
     if pd.isna(x):
         return np.nan
     s = str(x).strip().lower()
@@ -446,7 +435,7 @@ def norm_sex(x):
 
 
 def norm_smoker_from_status(x):
-    # input can be smoker_status ("Yes"/"No"/"Ex-smoker") or raw smoker
+    """Norm smoker from status."""
     if pd.isna(x):
         return np.nan
     s = str(x).strip().lower()
@@ -455,14 +444,14 @@ def norm_smoker_from_status(x):
     if s in {"no", "n", "0", "false", "non-smoker", "nonsmoker", "never"}:
         return "no"
     if s in {"ex", "ex-smoker", "former", "quit"}:
-        return "no"  # WHO charts are yes/no
-    # if coming from smoker_status:
+        return "no"
     if s in {"ex-smoker"}:
         return "no"
     return np.nan
 
 
 def who_age_band(age):
+    """Who age band."""
     if pd.isna(age):
         return np.nan
     try:
@@ -479,7 +468,7 @@ def who_age_band(age):
 
 
 def who_sbp_band(sbp):
-    # ✅ FIX: must match your dict keys: "<120", "120-139", "140-159", "160-179", ">="
+    """Who sbp band."""
     if pd.isna(sbp):
         return np.nan
     try:
@@ -494,10 +483,11 @@ def who_sbp_band(sbp):
         return "140-159"
     if sbp < 180:
         return "160-179"
-    return ">="  # 180+
+    return ">="
 
 
 def bmi_idx(bmi):
+    """Bmi idx."""
     if pd.isna(bmi):
         return np.nan
     try:
@@ -516,6 +506,7 @@ def bmi_idx(bmi):
 
 
 def chol_idx(chol_mmol):
+    """Chol idx."""
     if pd.isna(chol_mmol):
         return np.nan
     try:
@@ -534,17 +525,15 @@ def chol_idx(chol_mmol):
 
 
 def diabetes_key(v):
+    """Diabetes key."""
     if pd.isna(v):
         return np.nan
     return "with_diabetes" if bool(v) else "no_diabetes"
 
 
-# Rebind facade exports to ensure split-module implementations take precedence
-# (importing again at the end to override any local legacy definitions)
 from .eda import quick_analysis as _qa, deep_analysis as _da
 from .visualization import annotate_bars as _ab, check_Outliers as _co
 
-# Expose under original names
 quick_analysis = _qa
 deep_analysis = _da
 annotate_bars = _ab
