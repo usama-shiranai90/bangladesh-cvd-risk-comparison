@@ -10,8 +10,8 @@
 
 | Item | File(s) | Purpose | Key v2.30 values |
 | :--- | :--- | :--- | :--- |
-| **Table 1** | `tables/table1_baseline.csv` | Baseline characteristics | WHO non-lab N=14,085; paired/lab N=1,762 |
-| **Table 2** | `tables/table2_threshold_performance.csv` | Clinical threshold performance | Sensitivity 22.6% vs 63.3% vs 97.7% |
+| **Table 1** | `tables/Table 1 baseline_characteristics.csv` | Baseline characteristics | WHO non-lab N=14,085; paired/lab N=1,762 |
+| **Table 2** | `tables/Table 2 threshold_performance.csv` | Clinical threshold performance | Sensitivity 22.6% vs 63.3% vs 97.7% |
 | **Figure 1** | `figures/Fig1_study_flow.svg` / `.pdf` | Cohort flow diagram | General non-lab 35,768; general lab 3,241; paired 1,762 |
 | **Figure 2** | `figures/Fig2_risk_distribution.svg` / `.pdf` | Risk distribution by model | Non-lab ≥20% 49; lab ≥20% 177 |
 | **Figure 3** | `figures/Fig3_agreement.svg` / `.pdf` | Agreement and Bland-Altman | Exact agreement 63.1%; quadratic kappa 0.767 |
@@ -52,11 +52,11 @@
 ## Main Tables
 
 ### Table 1. Baseline Characteristics: Comprehensive Cohort Analysis
-* **File:** `tables/table1_baseline.csv` (CSV version)
+* **File:** `tables/Table 1 baseline_characteristics.csv` (CSV version)
 * **Description:** Provides the demographical, vitals, and clinical characteristic differences between the General Cohort (Non-Lab and Lab subsets) and the WHO Domain Cohorts.
 
 ### Table 2. Clinical classification performance at key thresholds
-* **File:** `tables/table2_threshold_performance.csv` (CSV version)
+* **File:** `tables/Table 2 threshold_performance.csv` (CSV version)
 * **Data:**
 | Threshold | TP | FN | FP | TN | Sensitivity % (95% CI) | Specificity % (95% CI) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -71,7 +71,7 @@
 ## Supplementary Tables
 
 ### Table S1: Distribution of 10-year CVD risk by sex using laboratory and non-laboratory models
-* **File:** `tables/table_s1_risk_distribution.csv`
+* **File:** `tables/Table S1 risk_distribution.csv`
 * **Data:**
 | Risk category | Non-lab male | Non-lab female | Lab male | Lab female |
 | :--- | :---: | :---: | :---: | :---: |
@@ -82,7 +82,7 @@
 | **≥30%** | 6 (0.6%) | 0 (0.0%) | 24 (2.5%) | 1 (0.1%) |
 
 ### Table S2: Bias between non-laboratory and laboratory risk scores, stratified by laboratory risk band
-* **File:** `tables/table_s2_bias.csv`
+* **File:** `tables/Table S2 bias.csv`
 * **Data:**
 | Lab risk band | n | Mean bias (pp) | SD (pp) | Underestimated (%) |
 | :--- | :---: | :---: | :---: | :---: |
@@ -94,7 +94,7 @@
 | **Overall** | 1,762 | -2.19 | 3.52 | 53.2% |
 
 ### Table S3: Clinical profile of missed vs. detected high-risk individuals
-* **File:** `tables/table_s3_missed_vs_detected.csv`
+* **File:** `tables/Table S3 missed_vs_detected.csv`
 * **Data:**
 | Characteristic | Missed (n=137) | Detected (n=40) |
 | :--- | :---: | :---: |
